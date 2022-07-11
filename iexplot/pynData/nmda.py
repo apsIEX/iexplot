@@ -7,8 +7,9 @@ import re
 import ast
 import numpy as np
 
-from IEX_nData.pynData import nData, nData_h5Group_w, nData_h5Group_r
-from IEX_nData.mda.mda import readMDA
+from iexplot.mda.mda import readMDA
+from iexplot.pynData.pynData import nData, nData_h5Group_w, nData_h5Group_r
+
 
 
 if __name__ == "__main__":

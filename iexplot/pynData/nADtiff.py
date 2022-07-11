@@ -8,7 +8,7 @@ import ast
 import numpy as np
 import tifffile
 
-from .pynData import nData
+from iexplot.pynData.pynData import nData
 
 
 def main():

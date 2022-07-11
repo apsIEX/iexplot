@@ -19,13 +19,15 @@ try:
 except:
     print("netCDF4 and/or tifffile are not part of the environment")
     
-from pynData.pynData import *
-from pynData.nmda import nmda,nmda_h5Group_w,nmda_h5Group_r
-from pynData.nEA import nEA
-from pynData.pynData_ARPES import nARPES_h5Group_w, nARPES_h5Group_r
-from pynData.nADtiff import nTiff     
-from PyImageTool.pyimagetool.ImageTool import ImageTool
-from PyImageTool.pyimagetool.DataMatrix import RegularDataArray
+from iexplot.pynData.nmda import nmda,nmda_h5Group_w,nmda_h5Group_r
+from iexplot.pynData.nEA import nEA
+from iexplot.pynData.pynData_ARPES import nARPES_h5Group_w, nARPES_h5Group_r
+from iexplot.pynData.nADtiff import nTiff   
+from iexplot.pynData.pynData import niceplot  
+
+#import iexplot.PyImageTool.pyimagetool
+#from iexplot.PyImageTool.pyimagetool.ImageTool import ImageTool
+#from iexplot.PyImageTool.pyimagetool.DataMatrix import RegularDataArray
 
 try:
     from IEX_beamline.beamline import BL_ioc
@@ -339,11 +341,14 @@ class IEXdata:
         sets self.var kwargs 
         """
         kwargs.setdefault('overwrite',True)
-        kwargs.setdefault("path",CurrentDirectory(self.dtype))
-        kwargs.setdefault("prefix",CurrentPrefix(self.dtype))
         kwargs.setdefault("suffix",'')
         kwargs.setdefault("nzeros",4)
         kwargs.setdefault("debug",False)
+
+        if 'path' not in kwargs:
+            kwargs.setdefault("path",CurrentDirectory(self.dtype))
+        if 'prefix' not in kwargs:
+            kwargs.setdefault("prefix",CurrentPrefix(self.dtype))
         
         if kwargs["debug"]:
             print("\nIEX_nData._key2var kwargs:",kwargs)

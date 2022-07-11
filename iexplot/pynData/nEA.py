@@ -9,8 +9,8 @@ import numpy as np
 import h5py
 import netCDF4 as nc
 
-from .pynData import nData
-from .pynData_ARPES import nARPES
+from iexplot.pynData.pynData import nData
+from iexplot.pynData.pynData_ARPES import nARPES
 
 class nEA_IEXheader:
     """
