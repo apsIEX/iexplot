@@ -12,6 +12,7 @@ import numpy as np
 from numpy import inf
 import h5py
 import pandas as pd
+import matplotlib.pyplot as plt
 
 try:
     import netCDF4 as nc
@@ -1190,8 +1191,12 @@ class IEXdata:
                             stack=np.flip(stack,2)
                     else: 
                         Mscale=np.arange(0,len(list(self.mda[shortlist[0]].EA.keys())))
+
+            if len(stack.shape) == 2:
+                ra=RegularDataArray(stack,axes=[Escale,Mscale],dims=["energy",Munit])
+            else:
                 ra=RegularDataArray(stack,axes=[Ascale,Escale,Mscale],dims=["angle","energy",Munit])
-            return ra     
+            return ra
 
  #########################################################################################################
     
