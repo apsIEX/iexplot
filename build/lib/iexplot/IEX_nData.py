@@ -25,9 +25,8 @@ from iexplot.pynData.pynData_ARPES import nARPES_h5Group_w, nARPES_h5Group_r
 from iexplot.pynData.nADtiff import nTiff   
 from iexplot.pynData.pynData import niceplot  
 
-import iexplot.PyImageTool.pyimagetool
-#from iexplot.PyImageTool.pyimagetool.ImageTool import ImageTool
-#from iexplot.PyImageTool.pyimagetool.DataMatrix import RegularDataArray
+from pyimagetool import ImageTool, RegularDataArray
+
 
 try:
     from IEX_beamline.beamline import BL_ioc

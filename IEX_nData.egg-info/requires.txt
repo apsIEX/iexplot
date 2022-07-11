@@ -2,9 +2,12 @@ pandas
 matplotlib
 h5py
 numpy
-netCDF4
-tifffile
+
 xarray
 PyQt5
 PyQt5-sip
 pyqtgraph
+
+netCDF4
+tifffile
+pyimagetool
