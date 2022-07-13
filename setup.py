@@ -12,10 +12,10 @@ with open('requirements.txt') as reqs:
 setup(
     name='IEX_nData',
     description='plotting tools for IEX beamline (29ID of the APS)',
-    url='https://github.com/xxx',
+    url='https://github.com/apsiex/iexplot',
     maintainer='Jessica McChesney',
     maintainer_email='jmcchesn@anl.gov',
-    version='0.0.1',
+    version='1.0.0',
     packages=find_packages(),
     install_requires=install_requires,
     scripts=[],
