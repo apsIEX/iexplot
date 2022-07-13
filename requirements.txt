@@ -10,4 +10,4 @@ PyQt5
 PyQt5-sip
 pyqtgraph
 
-pyimagetool
+#pyimagetool
