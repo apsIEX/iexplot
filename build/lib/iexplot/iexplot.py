@@ -25,8 +25,10 @@ from iexplot.pynData.pynData_ARPES import nARPES_h5Group_w, nARPES_h5Group_r
 from iexplot.pynData.nADtiff import nTiff   
 from iexplot.pynData.pynData import niceplot  
 
-from pyimagetool import ImageTool, RegularDataArray
-
+try:
+    from pyimagetool import ImageTool, RegularDataArray
+except:
+    print("pyimagetool not imported")
 
 try:
     from IEX_beamline.beamline import BL_ioc
