@@ -10,7 +10,7 @@ with open('requirements.txt') as reqs:
         install_requires.append(req)
 
 setup(
-    name='IEX_nData',
+    name='iexplot',
     description='plotting tools for IEX beamline (29ID of the APS)',
     url='https://github.com/apsiex/iexplot',
     maintainer='Jessica McChesney',

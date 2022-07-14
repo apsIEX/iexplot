@@ -1,0 +1,7 @@
+pandas
+matplotlib
+h5py
+numpy
+netCDF4
+tifffile
+xarray
