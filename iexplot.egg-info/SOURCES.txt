@@ -1,7 +1,7 @@
 README.md
 setup.py
-iexplot/IEX_nData.py
 iexplot/__init__.py
+iexplot/iexplot.py
 iexplot/plottingUtils.py
 iexplot.egg-info/PKG-INFO
 iexplot.egg-info/SOURCES.txt

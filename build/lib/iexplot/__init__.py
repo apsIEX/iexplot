@@ -1,3 +1,3 @@
 from iexplot.mda import *
-from iexplot.IEX_nData import *
-
+from iexplot.iexplot import *
+from iexplot.plottingUtils import *
