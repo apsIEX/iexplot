@@ -388,7 +388,7 @@ def niceplot(*ds,**plotkwargs):
                     plt.xlabel(d.unit['x'])
             elif dim==2:
                 xx, yy = np.meshgrid(d.scale['x'], d.scale['y'])
-                plt.pcolormesh(xx, yy, d.data,shading='auto')
+                plt.pcolormesh(xx, yy, d.data)
                 plt.xlabel(d.unit['x'])
                 plt.ylabel(d.unit['y'])
             elif dim>2:
@@ -483,7 +483,7 @@ def plot2D(d, xCen=np.nan, xWidthPix=0, yCen=np.nan, yWidthPix=0, vmin=np.nan, v
 	gs = fig.add_gridspec(3, 3)
 
 	ax1 = fig.add_subplot(gs[1:, :-1])
-	im1 = ax1.pcolormesh(xyScale[0], xyScale[1], img, vmin=vmin, vmax=vmax,shading='auto')
+	im1 = ax1.pcolormesh(xyScale[0], xyScale[1], img, vmin=vmin, vmax=vmax)
 	ax1.set_xlabel(xUnit) # The line will do nothing if xUnit==''
 	ax1.set_ylabel(yUnit)
 
