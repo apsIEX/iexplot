@@ -17,3 +17,6 @@ pip install -U git+https://github.com/apsIEX/iexplot
 
     cd iexplot/examples
     
+## TO-DO
+
+* `iexplot.readMDA` does not work if verbose=1
