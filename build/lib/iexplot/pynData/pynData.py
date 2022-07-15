@@ -43,13 +43,23 @@
 
 # import all plotting packages
 import matplotlib.pyplot as plt
+#from matplotlib import colors, cm
+#from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 # importing system packages
 import os
+#import sys
+#import glob
 import h5py
+#import time
+#import itertools
 
 # importing the workhorse
 import numpy as np
+#import pandas as pd
+#from scipy import io, signal, interpolate, ndimage
+#from math import floor
+
 
 
 #==============================================================================
@@ -233,7 +243,7 @@ def load_nData(fname, fdir=''):
         d.updateAx(ax, np.array(h['scale/'+ax]), h['unit'].attrs[ax])
     
     for key in h['extras'].keys():
-        d.updateExtrasByKey(key,h['extras'].attrs[key])
+        updateExtrasByKey(self,key,h['extras'].attrs[key])
     
     d.info()
     h.close()
@@ -312,26 +322,26 @@ def nAppend(data1,data2,**kwargs):
 	else:
 	## Making stack1 a volume
 		if len(np.shape(data1.data)) <3:
-			if args['ax']=='z':
+			if args['ax'] is 'z':
 				vol1=data1.data[np.newaxis,:,:]
-			if args['ax'] =='y':
+			if args['ax']  is 'y':
 				vol1=data1.data[:,np.newaxis,:]
-			if args['ax'] =='z':
+			if args['ax']  is 'z':
 				vol1=data1.data[:,:,np.newaxis]
 		else:
 			vol1=data1.data
 	## Making stack2 a volume
 		if len(np.shape(data2.data)) <3:
-			if args['ax'] =='z':
+			if args['ax']  is 'z':
 				vol2=data2.data[np.newaxis,:,:]
-			if args['ax'] =='y':
+			if args['ax']  is 'y':
 				vol2=data2.data[:,np.newaxis,:]
-			if args['ax'] =='z':
+			if args['ax']  is 'z':
 				vol2=data2.data[:,:,np.newaxis]
 		else:
 			vol2=data2.data
 	## Stacking vol2 ontop of vol1
-		if args['ax'] =='x':
+		if args['ax']  is 'x':
 			if (np.shape(vol1)[1]==np.shape(vol2)[1]) and (np.shape(vol1)[2]==np.shape(vol2)[2]):
 				vol1=np.dstack((vol1,vol2))
 				xscale=np.append(data1.scale['x'],data2.scale['x'])
@@ -339,7 +349,7 @@ def nAppend(data1,data2,**kwargs):
 				zscale=data1.scale['z']
 			else:
 				print("Data sets must be the same size in y and z")
-		if args['ax'] =='y':
+		if args['ax']  is 'y':
 			if (np.shape(vol1)[0]==np.shape(vol2)[0]) and (np.shape(vol1)[2]==np.shape(vol2)[2]):
 				vol1=np.hstack((vol1,vol2))
 				xscale=data1.scale['x']
@@ -347,7 +357,7 @@ def nAppend(data1,data2,**kwargs):
 				zscale=data1.scale['z']
 			else:
 				print("Data sets must be the same size in x and z")
-		if args['ax'] =='z':
+		if args['ax']  is 'z':
 			if (np.shape(vol1)[0]==np.shape(vol2)[0]) and (np.shape(vol1)[1]==np.shape(vol2)[1]):
 				vol1=np.vstack((vol1,vol2))
 				xscale=data1.scale['x']
@@ -356,7 +366,7 @@ def nAppend(data1,data2,**kwargs):
 			else:
 				print("Data sets must be the same size in x and y")
 		nVol=nData(vol1)
-		if args['scale']=='data': 
+		if args['scale'] is 'data': 
 			nVol.updateAx('x',xscale,data1.unit['x'])
 			nVol.updateAx('y',yscale,data1.unit['y'])
 			nVol.updateAx('z',zscale,data1.unit['z'])
@@ -388,7 +398,7 @@ def niceplot(*ds,**plotkwargs):
                     plt.xlabel(d.unit['x'])
             elif dim==2:
                 xx, yy = np.meshgrid(d.scale['x'], d.scale['y'])
-                plt.pcolormesh(xx, yy, d.data)
+                plt.pcolormesh(xx, yy, d.data,shading='auto')
                 plt.xlabel(d.unit['x'])
                 plt.ylabel(d.unit['y'])
             elif dim>2:
@@ -416,10 +426,10 @@ def niceplot_avg(d,ax='y',Cen=np.nan,WidthPix=np.nan):
         if np.isnan(WidthPix):
             WidthPix=len(Scale)//2
 
-        if(ax=='x'):
+        if(ax is 'x'):
             img_avg = np.nansum(d.data[:,CenPix-WidthPix:CenPix+WidthPix], axis=1)
             bx='y'
-        elif(ax=='y'):
+        elif(ax is 'y'):
             img_avg = np.nansum(d.data[CenPix-WidthPix:CenPix+WidthPix,:], axis=0)
             bx='x'
         avg=nData(img_avg)
@@ -483,7 +493,7 @@ def plot2D(d, xCen=np.nan, xWidthPix=0, yCen=np.nan, yWidthPix=0, vmin=np.nan, v
 	gs = fig.add_gridspec(3, 3)
 
 	ax1 = fig.add_subplot(gs[1:, :-1])
-	im1 = ax1.pcolormesh(xyScale[0], xyScale[1], img, vmin=vmin, vmax=vmax)
+	im1 = ax1.pcolormesh(xyScale[0], xyScale[1], img, vmin=vmin, vmax=vmax,shading='auto')
 	ax1.set_xlabel(xUnit) # The line will do nothing if xUnit==''
 	ax1.set_ylabel(yUnit)
 
@@ -643,7 +653,7 @@ def Compare2D(d1,d2,**kwargs): #JM added
 	ax1.set_xlabel(x1Unit) # The line will do nothing if xUnit==''
 	ax1.set_ylabel(y2Unit)
 	# adding cursors
-	if csr != None:
+	if csr is not None:
 		ax1.plot(x1Scale, np.ones(len(x1Scale))*y1Scale[y1CenPix], color='r', linewidth=0.5)
 		ax1.plot(np.ones(len(y1Scale))*x1Scale[x1CenPix], y1Scale, color='b', linewidth=0.5)
 		if xWidthPix>0:
@@ -659,7 +669,7 @@ def Compare2D(d1,d2,**kwargs): #JM added
 	ax2.set_xlabel(x2Unit) # The line will do nothing if xUnit==''
 	ax2.set_ylabel(y2Unit)
 	#adding cursors
-	if csr != None:
+	if csr is not None:
 		ax2.plot(x1Scale, np.ones(len(x1Scale))*y1Scale[y1CenPix], color='r', linewidth=0.5)
 		ax2.plot(np.ones(len(y1Scale))*x1Scale[x1CenPix], y2Scale, color='b', linewidth=0.5)
 		if xWidthPix>0:
@@ -673,7 +683,7 @@ def Compare2D(d1,d2,**kwargs): #JM added
 	ax3 = fig.add_subplot(gs[0, 0:2], sharex=ax1)
 	ax3.plot(x1Scale, y1Cut, 'r-')
 	ax3.plot(x1Scale, y2Cut, 'm-')
-	if csr != None:
+	if csr is not None:
 		y1, y2 = ax2.get_ylim()
 		ax2.plot(np.array([x1Scale[x1CenPix],x1Scale[x1CenPix]]), np.array([y1, y2]), color='b', linewidth=0.5)
 		if xWidthPix>0:
@@ -685,7 +695,7 @@ def Compare2D(d1,d2,**kwargs): #JM added
 	ax3 = fig.add_subplot(gs[1:3,2], sharey=ax1)
 	ax3.plot(x1Cut, y1Scale,'b-')
 	ax3.plot(x2Cut, y2Scale,'g-')
-	if csr != None:
+	if csr is not None:
 		x1, x2 = ax3.get_xlim()
 		ax3.plot(np.array([x1, x2]), np.array([y1Scale[y1CenPix],y1Scale[y1CenPix]]), color='r', linewidth=0.5)
 		if yWidthPix>0:
@@ -750,7 +760,7 @@ def plot3D(d, ax='z', xCen=np.nan, xWidthPix=0, yCen=np.nan, yWidthPix=0, zCen=n
         xImage = img3D[:,:,xCenPix]
 
     # Plotting fig
-    if ax == 'z':
+    if ax=='z':
         fig = plt.figure(figsize=(5,5))
         gs = fig.add_gridspec(2, 2)
 
@@ -804,7 +814,7 @@ def plot3D(d, ax='z', xCen=np.nan, xWidthPix=0, yCen=np.nan, yWidthPix=0, zCen=n
         
         cut = nData(zCut)
         cut.updateAx('x', zScale, zUnit)
-    elif ax == 'y':
+    elif ax=='y':
         fig = plt.figure(figsize=(5,5))
         gs = fig.add_gridspec(2, 2)
 
@@ -858,7 +868,7 @@ def plot3D(d, ax='z', xCen=np.nan, xWidthPix=0, yCen=np.nan, yWidthPix=0, zCen=n
         
         cut = nData(yCut)
         cut.updateAx('x', yScale, yUnit)
-    elif ax == 'x':
+    elif ax=='x':
         fig = plt.figure(figsize=(5,5))
         gs = fig.add_gridspec(2, 2)
 
@@ -978,26 +988,26 @@ def crop(d, ax, ROI):
     '''
     idmin, idmax = lim_to_bounds(d.scale[ax], ROI)
     dim = len(d.data.shape)
-    if dim == 1:
-        if ax == 'x':
+    if dim==1:
+        if ax=='x':
             d_c = nData(d.data[idmin:idmax])
-    elif dim == 2:
-        if ax == 'y':
+    elif dim==2:
+        if ax=='y':
             d_c = nData(d.data[idmin:idmax])
-        elif ax == 'x':
+        elif ax=='x':
             d_c = nData(d.data[:, idmin:idmax])
-    elif dim == 3:
-        if ax == 'z':
+    elif dim==3:
+        if ax=='z':
             d_c = nData(d.data[idmin:idmax])
-        elif ax == 'y':
+        elif ax=='y':
             d_c = nData(d.data[:, idmin:idmax])
-        elif ax == 'x':
+        elif ax=='x':
             d_c = nData(d.data[:, :, idmin:idmax])
     else:
         print('Warning: cropping a non-existent dim.')
     
     for key in d.unit.keys():
-        if key == ax:
+        if key==ax:
             d_c.updateAx(key, d.scale[key][idmin:idmax], d.unit[key])
         else:
             d_c.updateAx(key, d.scale[key], d.unit[key])
@@ -1108,16 +1118,16 @@ def _rotate2D(img, xScale, yScale, CCWdeg, center, newhscale=[], newvscale=[], p
     newX = np.linspace(rotXmin, rotXmax, num=numX)
     newY = np.linspace(rotYmin, rotYmax, num=numY)
 
-    if not newhscale == []:
+    if not newhscale==[]:
         newX = np.linspace(newhscale[0], newhscale[1], num=newhscale[2])
 
-    if not newvscale == []:
+    if not newvscale==[]:
         newY = np.linspace(newvscale[0], newvscale[1], num=newvscale[2])
     
     newXX, newYY = np.meshgrid(newX, newY)
 
     # Interpolate
-    newImg = np.interpolate.griddata(points, values, (newXX, newYY), method='cubic')
+    newImg = interpolate.griddata(points, values, (newXX, newYY), method='cubic')
     
     if plotRot:
         fig, ax = plt.subplots(1,3)
@@ -1179,7 +1189,7 @@ def rotate3D(d, ax, CCWdeg, center, newhscale=[], newvscale=[], plotRot=False):
     plotRot:        Optional. Whether or not to compare the 'before' and 'after'
                     Only the first image 
     '''
-    if ax == 'z':
+    if ax=='z':
         newImg, newX, newY = _rotate2D(d.data[0], d.scale['x'], d.scale['y'], CCWdeg, center, 
                                        newhscale=newhscale, newvscale=newvscale, plotRot=plotRot)
         newStk = np.zeros((d.data.shape[0], newImg.shape[0], newImg.shape[1]))
@@ -1196,7 +1206,7 @@ def rotate3D(d, ax, CCWdeg, center, newhscale=[], newvscale=[], plotRot=False):
         d_rot.updateAx('x', newX, d.unit['x'])
         d_rot.updateAx('y', newY, d.unit['y'])
         d_rot.updateAx('z', d.scale['z'], d.unit['z'])
-    elif ax == 'y':
+    elif ax=='y':
         newImg, newX, newY = _rotate2D(d.data[:,0,:], d.scale['x'], d.scale['z'], CCWdeg, center, 
                                        newhscale=newhscale, newvscale=newvscale, plotRot=plotRot)
         newStk = np.zeros((newImg.shape[0], d.data.shape[1], newImg.shape[1]))
@@ -1213,7 +1223,7 @@ def rotate3D(d, ax, CCWdeg, center, newhscale=[], newvscale=[], plotRot=False):
         d_rot.updateAx('x', newX, d.unit['x'])
         d_rot.updateAx('y', d.scale['y'], d.unit['y'])
         d_rot.updateAx('z', newY, d.unit['z'])
-    elif ax == 'x':
+    elif ax=='x':
         newImg, newX, newY = _rotate2D(d.data[:,:,0], d.scale['y'], d.scale['z'], CCWdeg, center, 
                                        newhscale=newhscale, newvscale=newvscale, plotRot=plotRot)
         newStk = np.zeros((newImg.shape[0], newImg.shape[1], d.data.shape[2]))
@@ -1251,7 +1261,7 @@ def sym2D(d, nfold, center, newhscale, newvscale, plotSym=False):
     xScale = d.scale['x']
     yScale = d.scale['y']
     
-    if type(nfold) == int and nfold>1:
+    if type(nfold)==int and nfold>1:
         newImg, newX, newY = _rotate2D(img, xScale, yScale, 0., center, newhscale=newhscale, newvscale=newvscale, plotRot=False)
         symImg = newImg
 
