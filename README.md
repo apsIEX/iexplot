@@ -1,30 +1,20 @@
-Installing iex plot
-if you want to run in a new environment you can set it up by doing the following:
-	conda create --name iex_env python=3.7
+# IEXPLOT
+
+## Installing iex plot
+
+
+	conda create --name iex_env python=3.8 ipykernel jupyterlab
 	conda activate iex_env
-	python -m ipykernel install --user --name=iex_env
-
-Note: if you want to use jupyterlab you may need to install it 
-	#jupyter-lab
-		pip install jupyterlab
-
-install the latest version on GitHub
-	python -m pip install -e git+https://github.com/apsIEX/iexplot#egg=iexplot 
-
-Installing image tool 
-install the latest version on GitHub
-	python -m pip install -e git+https://github.com/kgord831/PyImageTool#egg=PyImageTool
-
-Running jupiter
-	cd path/to/your/working_directory (where you want to save the notebooks)
-	jupyter-lab 
-
-## Install
 
     git clone https://github.com/apsIEX/iexplot
     cd iexplot
     pip install .
 
+## Installing image tool 
+
+    git clone https://github.com/kgord831/PyImageTool
+    cd iexplot
+    pip install .
 
 ## Running your first example
 
