@@ -993,6 +993,9 @@ class IEXdata:
     def plotEDC(self,scanNum, EAnum=1,**kwargs):
         """
         simple plotting for EDC
+
+        EAnum = sweep number (default = 1)
+              = inf => will sum all spectra
         if
             dtype="EA"  => y=data.EA[scanNum]
             dtype="mdaEA" or "mdaAD"  => y=data.mda[scanNum]EA[EAnum]
@@ -1019,15 +1022,24 @@ class IEXdata:
         kwargs.setdefault("offset_x",0)
         kwargs.setdefault("scale_x",1)
         
-        x=0;y=0
+        x=0;y=0            
+        
         if self.dtype == "EA":
             d=self.EA[scanNum]
+            y=d.EDC.data
+            x=d.EDC.scale['x']
+
         elif self.dtype == "mdaEA" or "mdaAD":
-            d=self.mda[scanNum].EA[EAnum]
-            
-        y=d.EDC.data
-        x=d.EDC.scale['x']
-        
+            if EAnum == inf:
+                EAlist = list(self.mda[scanNum].EA.keys()) 
+            else:
+                EAlist = [EAnum]
+
+            for EAnum in EAlist:
+                d=self.mda[scanNum].EA[EAnum]
+                y=d.EDC.data
+                x=d.EDC.scale['x']
+ 
         BE=kwargs["BE"]
         wk=kwargs["wk"]
         if BE:
@@ -1047,7 +1059,7 @@ class IEXdata:
         if BE:
             plt.xlim(max(x),min(x))
     
-    def plotEA(self,scanNum,EAnum=1,Escale="KE",**imkwargs):
+    def plotEA(self,scanNum,EAnum=1,Escale="KE",transpose=False,**imkwargs):
         """
         simple plotting for EDC
         if
@@ -1076,6 +1088,8 @@ class IEXdata:
         imkwargs.setdefault("extent",[xscale[0],xscale[-1],yscale[0],yscale[-1]])
         plt.xlabel(xunit)
         plt.ylabel(yunit)
+        if transpose == True:
+            img = img.t
         plt.imshow(img,aspect='auto',**imkwargs)
       
     
