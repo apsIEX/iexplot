@@ -943,6 +943,31 @@ class IEXdata:
             cmap
         """
         niceplot(self.mda[scanNum].det[detNum], **plotkwargs)
+
+    def plot_mesh(self,scanNum,**kwargs):
+        """
+        kwargs:
+            det_list => list of detectors to plot 
+                    = [16,17] (default)
+            title_list => list of titles for each detector
+                    = ['TEY','EA'] (default)
+        
+        """
+        kwargs.setdefault('det_list',[16,17])
+        kwargs.setdefault('title_list',['TEY','EA'])
+        
+        plt.figure(figsize=(10,3))
+        n=len(kwargs['det_list'])
+        for i, det_num in enumerate(kwargs['det_list']):
+            plt.subplot(1,n,i+1)
+            plt.title(kwargs['title_list'][i])
+            self.plotmda(scanNum,kwargs['det_list'][i],**kwargs)
+            plt.colorbar()
+        
+        kwargs.pop('det_list') 
+        kwargs.pop('title_list')
+            
+        plt.show()
         
     def EAspectra(self,scanNum, EAnum=1, BE=False):
         """
