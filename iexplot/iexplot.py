@@ -26,7 +26,8 @@ from iexplot.pynData.nADtiff import nTiff
 from iexplot.pynData.pynData import niceplot  
 
 try:
-    from pyimagetool import ImageTool, RegularDataArray
+    from iexplot.pyimagetool import ImageTool, RegularDataArray
+    #from pyimagetool import ImageTool, RegularDataArray
 except:
     print("pyimagetool not imported")
 
