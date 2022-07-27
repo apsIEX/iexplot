@@ -1085,21 +1085,23 @@ class IEXdata:
         if BE:
             plt.xlim(max(x),min(x))
     
-    def plotEA(self,scanNum,EAnum=1,Escale="KE",transpose=False,**imkwargs):
+    def plotEA(self,scanNum,EAnum=1,Escale="KE",transpose=False,**kwargs):
         """
         simple plotting for EDC
         if
             dtype="EA"  => y=data.EA[scanNum]
             dtype="mdaEA" or "mdaAD"  => y=data.mda[scanNum]EA[EAnum]
+        kwargs: are pcolormesh kwargs e.g cmap, vmin, vmax
+        
         """  
-        
-        
+
+
         if self.dtype == "EA":
             EA=self.EA[EAnum]
 
         elif self.dtype == "mdaEA" or "mdaAD":
             EA=self.mda[scanNum].EA[EAnum]
-            
+
         #wk=0 if type(self.EA[EAnum].wk)==None else self.EA[EAnum].wk
         #hv=EA.hv           
         img=EA.data
@@ -1109,17 +1111,16 @@ class IEXdata:
         yscale=EA.scale['y']
         xunit=EA.unit['x']
         yunit=EA.unit['y']
-            
+
         if transpose == True:
-            img = img.T
-            plt.xlabel(xunit)
-            plt.ylabel(yunit)
-            imkwargs.setdefault("extent",[yscale[0],yscale[-1],xscale[0],xscale[-1]])
+            plt.pcolormesh(yscale, xscale, img.T, shading='auto')
+            plt.xlabel(yunit)
+            plt.ylabel(xunit)
         else:
-            imkwargs.setdefault("extent",[xscale[0],xscale[-1],yscale[0],yscale[-1]])
+            plt.pcolormesh(xscale, yscale, img, shading='auto')
             plt.xlabel(xunit)
             plt.ylabel(yunit)
-        plt.imshow(img,aspect='auto',**imkwargs)
+ 
       
     
 
