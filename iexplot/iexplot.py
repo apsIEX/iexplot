@@ -1115,7 +1115,7 @@ class IEXdata:
         plt.xlabel(xunit)
         plt.ylabel(yunit)
         if transpose == True:
-            img = img.t
+            img = img.T
         plt.imshow(img,aspect='auto',**imkwargs)
       
     
