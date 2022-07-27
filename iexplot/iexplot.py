@@ -1110,12 +1110,15 @@ class IEXdata:
         xunit=EA.unit['x']
         yunit=EA.unit['y']
             
-            
-        imkwargs.setdefault("extent",[xscale[0],xscale[-1],yscale[0],yscale[-1]])
-        plt.xlabel(xunit)
-        plt.ylabel(yunit)
         if transpose == True:
             img = img.T
+            plt.xlabel(xunit)
+            plt.ylabel(yunit)
+            imkwargs.setdefault("extent",[yscale[0],yscale[-1],xscale[0],xscale[-1]])
+        else:
+            imkwargs.setdefault("extent",[xscale[0],xscale[-1],yscale[0],yscale[-1]])
+            plt.xlabel(xunit)
+            plt.ylabel(yunit)
         plt.imshow(img,aspect='auto',**imkwargs)
       
     
