@@ -926,14 +926,6 @@ class IEXdata:
             y=y[:,kwargs['column']] 
             del kwargs['column']
         return x,y,kwargs
-    
-    
-
-
-        
-        
-        
-        
         
         
     def plotmda2D(self, scanNum, detNum, **plotkwargs):
@@ -968,6 +960,24 @@ class IEXdata:
         kwargs.pop('title_list')
             
         plt.show()
+
+    def plot_EAmesh_mda(self,scanNum,detNum,**kwargs):
+        """
+        plot the scalar values for an scanEAmesh 
+
+        can be used in subplots (i.e. no plt.show)
+        """
+        kwargs.setdefault('shading','auto')
+        MDAscan=self.mda[scanNum]     
+        xscale=MDAscan.posy[0].data[0,:]
+        xunit=MDAscan.posy[0].pv[1] if len(MDAscan.posy[0].pv[1])>0 else MDAscan.posy[0].pv[0] 
+        yscale=MDAscan.posz[0].data[:]
+        yunit=MDAscan.posz[0].pv[1] if len(MDAscan.posz[0].pv[1])>0 else MDAscan.posz[0].pv[0] 
+        img = MDAscan.det[detNum].data[:,:,0]
+        
+        plt.pcolormesh(xscale, yscale, img, **kwargs)
+        plt.xlabel(xunit)
+        plt.ylabel(yunit)
         
     def EAspectra(self,scanNum, EAnum=1, BE=False):
         """
@@ -1094,7 +1104,7 @@ class IEXdata:
         kwargs: are pcolormesh kwargs e.g cmap, vmin, vmax
         
         """  
-
+        kwargs.setdefault('shading','auto')
 
         if self.dtype == "EA":
             EA=self.EA[EAnum]
@@ -1113,11 +1123,11 @@ class IEXdata:
         yunit=EA.unit['y']
 
         if transpose == True:
-            plt.pcolormesh(yscale, xscale, img.T, shading='auto')
+            plt.pcolormesh(yscale, xscale, img.T, **kwargs)
             plt.xlabel(yunit)
             plt.ylabel(xunit)
         else:
-            plt.pcolormesh(xscale, yscale, img, shading='auto')
+            plt.pcolormesh(xscale, yscale, img, **kwargs)
             plt.xlabel(xunit)
             plt.ylabel(yunit)
  
@@ -1248,6 +1258,51 @@ class IEXdata:
                 ra=RegularDataArray(stack,axes=[Ascale,Escale,Mscale],dims=["angle","energy",Munit])
             return ra
 
+    def stack_EAmesh(self,scanNum,**kwargs):
+        """
+        return a 3D regular array with the EA scans stack
+        usage:
+            ra = data.stack_EAmesh(scanNum)
+            plot_ra(ra) => works in Jupyter or Terminal
+            it = ImageTool(ra); it.show() => Terminal only
+            
+        **kwargs:
+            subset=(start,stop,countby); default = (1,inf,1)
+            EDConly = True:  3D position dependent EDC
+                    = False (default): EA spectra stacked vs scanNum
+        """
+        kwargs.setdefault("subset",(1,inf,1))
+        kwargs.setdefault("EDConly",False)
+        kwargs.setdefault("debug",False)
+        kwargs.setdefault('shading','auto')
+        
+        ra=None
+        MDAscan=self.mda[scanNum]    
+        shortlist=_shortlist(*kwargs['subset'],llist=list(MDAscan.EA.keys()),**kwargs)
+        
+        first=shortlist[0]
+        xscale=MDAscan.posy[0].data[0,:]
+        xunit=MDAscan.posy[0].pv[1] if len(MDAscan.posy[0].pv[1])>0 else MDAscan.posy[0].pv[0] 
+        yscale=MDAscan.posz[0].data[:]
+        yunit=MDAscan.posz[0].pv[1] if len(MDAscan.posz[0].pv[1])>0 else MDAscan.posz[0].pv[0]    
+        Escale=MDAscan.EA[first].scale['x']
+        Eunit=MDAscan.EA[first].unit['x']
+        Ascale=MDAscan.EA[first].scale['y']
+        Aunit=MDAscan.EA[first].unit['y']
+            
+        if kwargs['EDConly']: #
+            stack=np.stack(tuple(MDAscan.EA[key].EDC.data for key in shortlist))
+            #stack = stack.reshape(xscale.shape[0],yscale.shape[0],Escale.shape[0])
+            #ra=RegularDataArray(stack,axes=[xscale,yscale,Escale],dims=[xunit,yunit,Eunit])
+            stack = stack.reshape(yscale.shape[0],xscale.shape[0],Escale.shape[0])
+            ra=RegularDataArray(stack,axes=[yscale,xscale,Escale],dims=[yunit,xunit,Eunit])
+        else:
+            Mscale = shortlist
+            Munit = 'scanNum'
+            stack=np.dstack(tuple(MDAscan.EA[key].data for key in shortlist))
+            ra=RegularDataArray(stack,axes=[Ascale,Escale,Mscale],dims=["angle","energy",Munit])
+        return ra
+    
  #########################################################################################################
     
     def save(self, fname, fdir=''):
@@ -1389,7 +1444,18 @@ def load_IEXnData(fpath):
     
     return mydata
 
+def nData2ra(d):
+    """
+    converts an nData object to a RegularArray which is used by pyImageTool an returns ra
+    d = nData object
 
+    """
+    img = d.data
+    scales = list(d.scale[key] for key in d.scale.keys())
+    units = list(d.unit[key] for key in d.unit.keys())
+    ra=RegularDataArray(img,axes=scales,dims=units)
+
+  
 def EAImageTool(mdaScanNum,**kwargs):
     """
     to be run in ipython not in jupyter (cause the kernal to crash)
