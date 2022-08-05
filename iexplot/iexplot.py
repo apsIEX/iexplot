@@ -3,15 +3,12 @@
 #if mda.py is in a location outside of the folder containing these files, you will need to %run first
 
 
-__version__= 1.0      #JLM 4/27/2021
+__version__= 1.5      #JLM 8/5/2022
 
 import os as os
 import re
-from time import sleep
-import numpy as np
 from numpy import inf
 import h5py
-import pandas as pd
 import matplotlib.pyplot as plt
 
 try:
@@ -23,13 +20,7 @@ from iexplot.pynData.nmda import nmda,nmda_h5Group_w,nmda_h5Group_r
 from iexplot.pynData.nEA import nEA
 from iexplot.pynData.pynData_ARPES import nARPES_h5Group_w, nARPES_h5Group_r
 from iexplot.pynData.nADtiff import nTiff   
-from iexplot.pynData.pynData import niceplot  
 
-try:
-    from iexplot.pyimagetool import ImageTool, RegularDataArray
-    #from pyimagetool import ImageTool, RegularDataArray
-except:
-    print("pyimagetool not imported")
 
 try:
     from IEX_beamline.beamline import BL_ioc
@@ -114,8 +105,7 @@ def _EAvariables(dtype):
     return EAvar
 
 
-###################################
-    
+###################################    
 def _mdaHeader_IEX(cls,headerList,**kwargs):
     """
     General IEX beamline information
@@ -171,7 +161,6 @@ def _mdaHeader_Kappa(cls,headerList):
     UBinfo={**{key:value[:3] for key, value in headerList.items() if '29idKappa:UB' in key}}
     setattr(cls, 'UB',UBinfo)
 
-
 def _mdaHeader_ARPES(cls,headerList):
     """
     ARPES specific header info
@@ -182,9 +171,7 @@ def _mdaHeader_ARPES(cls,headerList):
                }
     setattr(cls, 'sample',sampleInfo)
 
-
-
-###################################
+ #########################################################################################################
 def _shortlist(*nums,llist,**kwargs):
     """
     Making a shortlist based on *num
@@ -249,7 +236,8 @@ def _dirScanNumList(path,prefix,extension):
 
     return allscanNumList        
 
-###################################       
+#########################################################################################################
+#########################################################################################################
 class IEXdata:
     """"
     loads IEX (mda or EA) data and returns a dictionary containing pynData objects
@@ -367,9 +355,11 @@ class IEXdata:
             self.ext="mda"
         else:
             self.ext=self.dtype
-        return kwargs
+        
         if kwargs['debug']:
             print("\n_key2var kwargs:",kwargs)
+
+        return kwargs
         
     def _extractData(self,*scans,**kwargs):
         """
@@ -400,10 +390,8 @@ class IEXdata:
 
         if kwargs["debug"] == True:
             print("IEX_nData._extractData dtype: ", self.dtype)
-            
-        
-        
-        loadedList=[]
+         loadedList=[]
+
         ########################################################################
        #loading EA only
         if self.dtype == "EA" or self.dtype =="EA_nc":           
@@ -551,7 +539,10 @@ class IEXdata:
             headerList=mda.header.ScanRecord
             headerList.update(mda.header.all)
             _mdaHeader_IEX(mda.header,headerList)
-            self.mda.update({shortlist[i]:mda})
+            ### adding plotting
+            mda_plotting(mda)
+            ### updating data dictionary
+            self.mda.update({shortlist[i]:mda})   
         return shortlist
 
     def _eaIEXdata(self,obj,shortlist,**kwargs):
@@ -727,582 +718,9 @@ class IEXdata:
         for key in vars(self): 
             if key[0] != "_" and key not in ['mda','EA']: 
                 print(key+": "+str(vars(self)[key]))
-#########################################################################
-    def mdaPos(self,scanNum, posNum=0):
-        """
-        returns the array for a positioner
-                        
-        usage for 1D data:
-        x = mdaPos(305)
-        y = mdaDet(305,16)
-        
-        plt.plot(x,y)
-        """
-        return self.mda[scanNum].posx[posNum].data
+
+            
  
-    def mdaPos_label(self,scanNum, posNum=0):
-        """
-        returns the array for a positioner
-                        
-        usage for 1D data:
-        x = mdaPos(305)
-        xlabel = mdaPos_label(305)
-        
-        y = mdaDet(305,16)
-        ylabel = mdaDet_label(305,16)
-        
-        plt.plot(x,y)
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-        """
-
-        return self.mda[scanNum].posx[posNum].pv[1] if len(self.mda[scanNum].posx[posNum].pv[1])>1 else self.mda[scanNum].posx[posNum].pv[0]
-
-    def mdaDet(self,scanNum, detNum):
-        """
-        returns the array for a positioner and positioner pv/desc.
-                        
-        usage for 1D data:
-        x = mdaPos(305)
-        y = mdaDet(305,16)
-        
-        """
-        return self.mda[scanNum].det[detNum].data
-    
-    def mdaDet_label(self,scanNum, detNum):
-        """
-        returns the array for a positioner
-                        
-        usage for 1D data:
-        x = mdaPos(305)
-        xlabel = mdaPos_label(305)
-        
-        y = mdaDet(305,16)
-        ylabel = mdaDet_label(305,16)
-        
-        plt.plot(x,y)
-        plt.xlabel(xlabel)
-        plt.ylabel(ylabel)
-        """
-
-        return self.mda[scanNum].det[detNum].pv[1] if len(self.mda[scanNum].det[detNum].pv[1])>1 else self.mda[scanNum].det[detNum].pv[0]
-
-    def _plot1D(self,x,y,**kwargs):
-        """
-        x / y 1D numpy arrays 
-        **kwargs
-             Norm2One: True/False to normalize graph between zero and one
-             offset: y += offset 
-             scale: y *= scale
-             offset_x: x += offset_x 
-             scale_x: x *= scale_x
-        """
-        kwargs.setdefault('Norm2One',False)
-        kwargs.setdefault("offset",0)
-        kwargs.setdefault("scale",1)
-        kwargs.setdefault("offset_x",0)
-        kwargs.setdefault("scale_x",1)
-        
-        if kwargs['Norm2One']:
-            y=(y-min(y))/(max(y)-min(y))
-                
-        #offset and scaling
-        y=y*kwargs["scale"]+kwargs["offset"]
-        x=x*kwargs["scale_x"]+kwargs["offset_x"]
-            
-        #remove nonstandard kwargs
-        for key in ["Norm2One","offset","scale","offset_x","scale_x"]:
-            del kwargs[key]
-            
-        if 'xlabel' in kwargs:
-            plt.xlabel(kwargs['xlabel'])
-            del kwargs['xlabel']
-        if 'ylabel' in kwargs:
-            plt.ylabel(kwargs['ylabel'])
-            del kwargs['ylabel']
-            
-        plt.plot(x,y,**kwargs)
-        
-    
-    def plotmda(self,scanNum, detNum, posNum=0,**kwargs):
-        """
-        simple plot for an mda scans either 1D or a row/column of a 2D data set
-        detector vs positioner
-  
-        **kwargs
-             Norm2One: True/False to normalize spectra between zero and one (default => False)
-             offset: y += offset 
-             scale: y *= scale
-             offset_x: x += offset_x 
-             scale_x: x *= scale_x
-             
-             2D data: plots image by default
-                row = index for plotting a single row from a 2D data set
-                column = index for plotting a single row from a 2D data set
-             
-            and standard plt.plot **kwargs
-            e.g. label=str(scanNum), marker="o"
-        """
-        kwargs.setdefault("offset",0)
-        kwargs.setdefault("scale",1)
-        kwargs.setdefault("offset_x",0)
-        kwargs.setdefault("scale_x",1)
-        kwargs.setdefault('Norm2One',False)
-        
-        y=self.mdaDet(scanNum, detNum)
-        kwargs['ylabel']=self.mdaDet_label(scanNum, detNum)
-        
-        x=self.mdaPos(scanNum, posNum)
-        kwargs['xlabel']=self.mdaPos_label(scanNum, posNum)
-        if len(y.shape)==2:
-            if "row" not in kwargs and "column" not in kwargs:
-                if kwargs['Norm2One']:
-                    print('Norm2One not currently implemented in 2D data, adjust vmin,vmax')
-                    del kwargs['Norm2One']
-            self.plotmda2D(scanNum, detNum, **kwargs)
-                
-        else:
-            x,y,kwargs=self._reduce2d(x,y, **kwargs)
-            self._plot1D(x,y,**kwargs)
-    
-    def plotmda_detVdet(self,scanNum, y_detNum, x_detNum, **kwargs):
-        """
-        simple plotting for an mda scan
-        detector vs detector
-                
-        Norm2One: True/False to normalize spectra between zero and one
-
-        **kwargs
-             Norm2One: True/False to normalize spectra between zero and one (default => False)
-             offset: y += offset 
-             scale: y *= scale
-             offset_x: x += offset_x 
-             scale_x: x *= scale_x
-             
-             2D data: plots image by default
-                row = index for plotting a single row from a 2D data set
-                column = index for plotting a single row from a 2D data set
-             
-            and standard plt.plot **kwargs
-            e.g. label=str(scanNum), marker="o"
-        """
-        kwargs.setdefault("offset",0)
-        kwargs.setdefault("scale",1)
-        kwargs.setdefault("offset_x",0)
-        kwargs.setdefault("scale_x",1)
-        
-        y=self.mdaDet(scanNum, y_detNum)
-        kwargs['ylabel']=self.mdaDet_label(scanNum, y_detNum)
-        
-        x=self.mdaDet(scanNum, x_detNum)
-        kwargs['xlabel']=self.mdaDet_label(scanNum, x_detNum)
-        
-        if len(y.shape)==2:
-            if "row" not in kwargs and "column" not in kwargs:
-                if kwargs['Norm2One']:
-                    print('Norm2One not currently implemented in 2D data, adjust vmin,vmax')
-                    del kwargs['Norm2One']
-            self.plotmda2D(scanNum, y_detNum, **kwargs)
-                
-        else:     
-            x,y,kwargs=self._reduce2d(x,y, **kwargs)
-            self._plot1D(x,y,**kwargs)
-            
-            
-    def _reduce2d(self,x,y, **kwargs):
-        """
-        takes the 2D arrays, x and y and reduces them to 1D arrays removes column/row form kwargs
-        **kwargs:
-            column
-            row
-        """
-        if "row" in kwargs:
-            x=x[kwargs['row'],:]
-            y=y[kwargs['row'],:] 
-            del kwargs['row']
-                
-        if "column" in kwargs:
-            x=x[:,kwargs['column']]
-            y=y[:,kwargs['column']] 
-            del kwargs['column']
-        return x,y,kwargs
-        
-        
-    def plotmda2D(self, scanNum, detNum, **plotkwargs):
-        """
-        plots 2D mda data
-        **plotkwargs are the standard matplotlib argument
-            cmap
-        """
-        niceplot(self.mda[scanNum].det[detNum], **plotkwargs)
-
-    def plot_mesh(self,scanNum,**kwargs):
-        """
-        kwargs:
-            det_list => list of detectors to plot 
-                    = [16,17] (default)
-            title_list => list of titles for each detector
-                    = ['TEY','EA'] (default)
-        
-        """
-        kwargs.setdefault('det_list',[16,17])
-        kwargs.setdefault('title_list',['TEY','EA'])
-        
-        plt.figure(figsize=(10,3))
-        n=len(kwargs['det_list'])
-        for i, det_num in enumerate(kwargs['det_list']):
-            plt.subplot(1,n,i+1)
-            plt.title(kwargs['title_list'][i])
-            self.plotmda(scanNum,kwargs['det_list'][i],**kwargs)
-            plt.colorbar()
-        
-        kwargs.pop('det_list') 
-        kwargs.pop('title_list')
-            
-        plt.show()
-
-    def plot_EAmesh_mda(self,scanNum,detNum,**kwargs):
-        """
-        plot the scalar values for an scanEAmesh 
-
-        can be used in subplots (i.e. no plt.show)
-        """
-        kwargs.setdefault('shading','auto')
-        MDAscan=self.mda[scanNum]     
-        xscale=MDAscan.posy[0].data[0,:]
-        xunit=MDAscan.posy[0].pv[1] if len(MDAscan.posy[0].pv[1])>0 else MDAscan.posy[0].pv[0] 
-        yscale=MDAscan.posz[0].data[:]
-        yunit=MDAscan.posz[0].pv[1] if len(MDAscan.posz[0].pv[1])>0 else MDAscan.posz[0].pv[0] 
-        img = MDAscan.det[detNum].data[:,:,0]
-        
-        plt.pcolormesh(xscale, yscale, img, **kwargs)
-        plt.xlabel(xunit)
-        plt.ylabel(yunit)
-        
-    def EAspectra(self,scanNum, EAnum=1, BE=False):
-        """
-        returns the array for an EAspectra, and x and y scaling
-            
-        usage:
-            plt.imgshow(data.EAspectra))
-            
-        """
-        EA = self.mda[scanNum].EA[EAnum]
-        img = EA.data
-        x = EA.scale['x']
-        y = EA.scale['y']
-        
-        if BE:
-            hv=EA.hv
-            if wk == None:
-                if EA.wk == None:
-                    wk=0
-                else:
-                    wk=EA.wk
-            x=hv-wk-x
-            
-        return img, x,y
-        
-    def EAspectraEDC(self,scanNum, EAnum=1, BE=False):
-        """
-        returns x,y energy scaling, EDC spectra
-            
-        usage:
-            plt.plot(data.EAspectraEDC(151))
-            
-        """
-        EA = self.mda[scanNum].EA[EAnum]
-        x = EA.EDC.scale['x']
-        y = EA.EDC.data
-        
-        if BE:
-            hv=EA.hv
-            if wk == None:
-                if EA.wk == None:
-                    wk=0
-                else:
-                    wk=EA.wk
-            x=hv-wk-x
-        
-        return x,y
-        
-    def plotEDC(self,scanNum, EAnum=1,**kwargs):
-        """
-        simple plotting for EDC
-
-        EAnum = sweep number (default = 1)
-              = inf => will sum all spectra
-        if
-            dtype="EA"  => y=data.EA[scanNum]
-            dtype="mdaEA" or "mdaAD"  => y=data.mda[scanNum]EA[EAnum]
-        BE = False uses KE scale
-        BE = True use BE=hv-KE-wk
-        if wk=None uses metadata
-        
-        *kwargs are the matplot lib kwargs plus the following
-            BE: True/False for Binding Energy or Kinetic Energy scale (default = False (KE))
-            wk: None/value, if None uses the value from the metadata
-            ##### additional plotting
-            Norm2One: True/False to normalize spectra between zero and one
-            offset: y += offset 
-            scale: y *= scale
-            offset_x: x += offset_x 
-            scale_x: x *= scale_x
-        """
-        kwargs.setdefault("BE",False)
-        kwargs.setdefault("wk",None)
-        
-        kwargs.setdefault("Norm2One",False)
-        kwargs.setdefault("offset",0)
-        kwargs.setdefault("scale",1)
-        kwargs.setdefault("offset_x",0)
-        kwargs.setdefault("scale_x",1)
-        
-        x=0;y=0            
-        
-        if self.dtype == "EA":
-            d=self.EA[scanNum]
-            y=d.EDC.data
-            x=d.EDC.scale['x']
-
-        elif self.dtype == "mdaEA" or "mdaAD":
-            if EAnum == inf:
-                EAlist = list(self.mda[scanNum].EA.keys()) 
-            else:
-                EAlist = [EAnum]
-
-            for EAnum in EAlist:
-                d=self.mda[scanNum].EA[EAnum]
-                y=d.EDC.data
-                x=d.EDC.scale['x']
- 
-        BE=kwargs["BE"]
-        wk=kwargs["wk"]
-        if BE:
-            hv=d.hv
-            if wk == None:
-                if d.wk == None:
-                    wk=0
-                else:
-                    wk=d.wk
-            x=hv-wk-x
-        
-        for key in ["BE","wk"]:
-            del kwargs[key]
-        
-        self._plot1D(x,y,**kwargs)
-        
-        if BE:
-            plt.xlim(max(x),min(x))
-    
-    def plotEA(self,scanNum,EAnum=1,Escale="KE",transpose=False,**kwargs):
-        """
-        simple plotting for EDC
-        if
-            dtype="EA"  => y=data.EA[scanNum]
-            dtype="mdaEA" or "mdaAD"  => y=data.mda[scanNum]EA[EAnum]
-        kwargs: are pcolormesh kwargs e.g cmap, vmin, vmax
-        
-        """  
-        kwargs.setdefault('shading','auto')
-
-        if self.dtype == "EA":
-            EA=self.EA[EAnum]
-
-        elif self.dtype == "mdaEA" or "mdaAD":
-            EA=self.mda[scanNum].EA[EAnum]
-
-        #wk=0 if type(self.EA[EAnum].wk)==None else self.EA[EAnum].wk
-        #hv=EA.hv           
-        img=EA.data
-        xscale=EA.scale['x']
-        #if Escale=="BE":
-        #    xscale=hv-wk-xscale
-        yscale=EA.scale['y']
-        xunit=EA.unit['x']
-        yunit=EA.unit['y']
-
-        if transpose == True:
-            plt.pcolormesh(yscale, xscale, img.T, **kwargs)
-            plt.xlabel(yunit)
-            plt.ylabel(xunit)
-        else:
-            plt.pcolormesh(xscale, yscale, img, **kwargs)
-            plt.xlabel(xunit)
-            plt.ylabel(yunit)
- 
-      
-    
-
-    def stackmdaEA(self,mdaScanNum,**kwargs):
-        """
-        makes an ImageTool.RegularArray of EA files in a single mda scan
-        mdaScanNum = the scanNum corresponding to the mda scan
-        **kwargs:
-            subset=(start,stop,countby); default = (1,inf,1)
-            EDConly=False; default = False full image
-                   = True, EDCs are stacked
-        """
-        kwargs.setdefault("subset",(1,inf,1))
-        kwargs.setdefault("EDConly",False)
-        kwargs.setdefault("debug",False)
-              
-        ra=None
-        MDAscan=self.mda[mdaScanNum]
-        rank=MDAscan.header.all['rank']
-        shortlist=_shortlist(*kwargs['subset'],llist=list(MDAscan.EA.keys()),**kwargs)
-        first=shortlist[0]
-        Escale=MDAscan.EA[first].scale['x']
-        Eunit=MDAscan.EA[first].unit['x']
-        Ascale=MDAscan.EA[first].scale['y']
-        Aunit=MDAscan.EA[first].unit['y']
-        
-        if kwargs['EDConly']:
-            if rank ==1:
-                print("Don't know if ImageTool can deal with 1D data")
-            elif rank > 1:
-                ROstack=np.vstack(tuple(MDAscan.EA[key].EDC.data for key in shortlist)) 
-                stack=np.swapaxes(ROstack,1,0)
-                Mscale=MDAscan.posy[0].data[0:list(MDAscan.EA.keys())[-1]]
-                Munit=MDAscan.posy[0].pv[1]
-                if pd.Series(Mscale).is_unique:
-                    if pd.Series(Mscale).is_monotonic_decreasing:
-                        Mscale=np.flip(Mscale,0)
-                        stack=np.flip(stack,1)
-                else: 
-                    Mscale=np.arange(0,len(list(MDAscan.EA.keys())))
-                ra=RegularDataArray(stack,axes=[Escale,Mscale],dims=[Eunit,Munit])
-        else:
-            print(Aunit,Eunit)
-            if rank == 1:
-                stack=MDAscan.EA[shortlist[0]].data
-                ra=RegularDataArray(stack,axes=[Ascale,Escale],dims=[Aunit,Eunit])
-            elif rank > 1:
-                stack=np.dstack(tuple(MDAscan.EA[key].data for key in shortlist))   
-                Mscale=MDAscan.posy[0].data[0:list(MDAscan.EA.keys())[-1]]
-                Munit=MDAscan.posy[0].pv[1]
-
-                if pd.Series(Mscale).is_unique:
-                    if pd.Series(Mscale).is_monotonic_decreasing:
-                        Mscale=np.flip(Mscale,0)
-                        stack=np.flip(stack,2)
-                else: 
-                    Mscale=np.arange(0,len(list(MDAscan.EA.keys())))
-                ra=RegularDataArray(stack,axes=[Ascale,Escale,Mscale],dims=["angle","energy",Munit])
-        return ra 
-    
-    def stackmdaEA_multi(self,*mdaScanNum,**kwargs):
-            """
-            makes an ImageTool.RegularArray of multiple mdaEA scans
-            *mdaScanNum = first,last,countby or list
-            **kwargs:
-                EDConly = False (default); stack of full images
-                        = True; stack of EDCs 
-                EAnum = 1; which EA scan number to use 
-                stackScale = None (default); uses the mdaScanNums
-                           = (start, delta, units) to specifiy you own
-            """
-            kwargs.setdefault("EDConly",False)
-            kwargs.setdefault("EAnum",1)
-            kwargs.setdefault("stackScale",None)
-            kwargs.setdefault("debug",False)
-
-            ra=None
-            shortlist=_shortlist(*mdaScanNum,llist=list(self.mda.keys()),**kwargs)
-            first=shortlist[0]           
-            EAnum=kwargs["EAnum"]
-
-            Escale=self.mda[first].EA[kwargs['EAnum']].scale['x']
-            Eunit=self.mda[first].EA[kwargs['EAnum']].unit['x']
-            Ascale=self.mda[first].EA[kwargs['EAnum']].scale['y']
-            Aunit=self.mda[first].EA[kwargs['EAnum']].unit['y']
-            if kwargs['stackScale'] == None:
-                Mscale=np.array(shortlist) 
-                Munit="scanNum"
-            else:
-                Mscale=np.arange(kwargs['stackScale'][0],kwargs['stackScale'][0]+len(shortlist)*kwargs['stackScale'][1], kwargs['stackScale'][1])
-                Munit=kwargs['stackScale'][2]
-
-            if kwargs['EDConly']:       
-                ROstack=np.vstack(tuple(self.mda[key].EA[EAnum].EDC.data for key in shortlist)) 
-                stack=np.swapaxes(ROstack,1,0)
-
-
-                if pd.Series(Mscale).is_unique:
-                    if pd.Series(Mscale).is_monotonic_decreasing:
-                        Mscale=np.flip(Mscale,0)
-                        stack=np.flip(stack,1)
-                ra=RegularDataArray(stack,axes=[Escale,Mscale],dims=[Eunit,Munit])
-
-            else:
-                print(Aunit,Eunit)
-                if len(shortlist) == 1:
-                    self.mda[shortlist[0]].EA[EAnum].data
-                    ra=RegularDataArray(stack,axes=[Ascale,Escale],dims=[Aunit,Eunit])
-                elif len(shortlist):
-                    try:
-                        stack=np.dstack(tuple(self.mda[key].EA[EAnum].data for key in shortlist))   
-                    except:
-                        print(self.mda.keys())
-
-                    if pd.Series(Mscale).is_unique:
-                        if pd.Series(Mscale).is_monotonic_decreasing:
-                            Mscale=np.flip(Mscale,0)
-                            stack=np.flip(stack,2)
-                    else: 
-                        Mscale=np.arange(0,len(list(self.mda[shortlist[0]].EA.keys())))
-
-            if len(stack.shape) == 2:
-                ra=RegularDataArray(stack,axes=[Escale,Mscale],dims=["energy",Munit])
-            else:
-                ra=RegularDataArray(stack,axes=[Ascale,Escale,Mscale],dims=["angle","energy",Munit])
-            return ra
-
-    def stack_EAmesh(self,scanNum,**kwargs):
-        """
-        return a 3D regular array with the EA scans stack
-        usage:
-            ra = data.stack_EAmesh(scanNum)
-            plot_ra(ra) => works in Jupyter or Terminal
-            it = ImageTool(ra); it.show() => Terminal only
-            
-        **kwargs:
-            subset=(start,stop,countby); default = (1,inf,1)
-            EDConly = True:  3D position dependent EDC
-                    = False (default): EA spectra stacked vs scanNum
-        """
-        kwargs.setdefault("subset",(1,inf,1))
-        kwargs.setdefault("EDConly",False)
-        kwargs.setdefault("debug",False)
-        kwargs.setdefault('shading','auto')
-        
-        ra=None
-        MDAscan=self.mda[scanNum]    
-        shortlist=_shortlist(*kwargs['subset'],llist=list(MDAscan.EA.keys()),**kwargs)
-        
-        first=shortlist[0]
-        xscale=MDAscan.posy[0].data[0,:]
-        xunit=MDAscan.posy[0].pv[1] if len(MDAscan.posy[0].pv[1])>0 else MDAscan.posy[0].pv[0] 
-        yscale=MDAscan.posz[0].data[:]
-        yunit=MDAscan.posz[0].pv[1] if len(MDAscan.posz[0].pv[1])>0 else MDAscan.posz[0].pv[0]    
-        Escale=MDAscan.EA[first].scale['x']
-        Eunit=MDAscan.EA[first].unit['x']
-        Ascale=MDAscan.EA[first].scale['y']
-        Aunit=MDAscan.EA[first].unit['y']
-            
-        if kwargs['EDConly']: #
-            stack=np.stack(tuple(MDAscan.EA[key].EDC.data for key in shortlist))
-            #stack = stack.reshape(xscale.shape[0],yscale.shape[0],Escale.shape[0])
-            #ra=RegularDataArray(stack,axes=[xscale,yscale,Escale],dims=[xunit,yunit,Eunit])
-            stack = stack.reshape(yscale.shape[0],xscale.shape[0],Escale.shape[0])
-            ra=RegularDataArray(stack,axes=[yscale,xscale,Escale],dims=[yunit,xunit,Eunit])
-        else:
-            Mscale = shortlist
-            Munit = 'scanNum'
-            stack=np.dstack(tuple(MDAscan.EA[key].data for key in shortlist))
-            ra=RegularDataArray(stack,axes=[Ascale,Escale,Mscale],dims=["angle","energy",Munit])
-        return ra
-    
  #########################################################################################################
     
     def save(self, fname, fdir=''):
@@ -1444,33 +862,57 @@ def load_IEXnData(fpath):
     
     return mydata
 
-def nData2ra(d):
+ #########################################################################################################
+def _plot1D(x,y,**kwargs):
     """
-    converts an nData object to a RegularArray which is used by pyImageTool an returns ra
-    d = nData object
-
+    x / y 1D numpy arrays 
+    **kwargs
+            Norm2One: True/False to normalize graph between zero and one
+            offset: y += offset 
+            scale: y *= scale
+            offset_x: x += offset_x 
+            scale_x: x *= scale_x
     """
-    img = d.data
-    scales = list(d.scale[key] for key in d.scale.keys())
-    units = list(d.unit[key] for key in d.unit.keys())
-    ra=RegularDataArray(img,axes=scales,dims=units)
-
-  
-def EAImageTool(mdaScanNum,**kwargs):
-    """
-    to be run in ipython not in jupyter (cause the kernal to crash)
-    multi=False stacks EA files from a single mda scan
-    multi=True stacks EA files from multiple mda scans
-    **kwargs:
-        includes kwargs for loading data IEXdata
-            path,prefix,dtype...
-        include stackEA kwargs
-            subset,EDConly
-    """
-    global it
-
-    data=IEXdata(mdaScanNum, **kwargs)
-    ra=data.stackmdaEA(mdaScanNum,**kwargs)
+    kwargs.setdefault('Norm2One',False)
+    kwargs.setdefault("offset",0)
+    kwargs.setdefault("scale",1)
+    kwargs.setdefault("offset_x",0)
+    kwargs.setdefault("scale_x",1)
     
-    it=ImageTool(ra,'LayoutComplete')
-    it.show()
+    if kwargs['Norm2One']:
+        y=(y-min(y))/(max(y)-min(y))
+            
+    #offset and scaling
+    y=y*kwargs["scale"]+kwargs["offset"]
+    x=x*kwargs["scale_x"]+kwargs["offset_x"]
+        
+    #remove nonstandard kwargs
+    for key in ["Norm2One","offset","scale","offset_x","scale_x"]:
+        del kwargs[key]
+        
+    if 'xlabel' in kwargs:
+        plt.xlabel(kwargs['xlabel'])
+        del kwargs['xlabel']
+    if 'ylabel' in kwargs:
+        plt.ylabel(kwargs['ylabel'])
+        del kwargs['ylabel']
+        
+    plt.plot(x,y,**kwargs)
+
+def _reduce2d(x,y, **kwargs):
+    """
+    takes the 2D arrays, x and y and reduces them to 1D arrays removes column/row form kwargs
+    **kwargs:
+        column
+        row
+    """
+    if "row" in kwargs:
+        x=x[kwargs['row'],:]
+        y=y[kwargs['row'],:] 
+        del kwargs['row']
+            
+    if "column" in kwargs:
+        x=x[:,kwargs['column']]
+        y=y[:,kwargs['column']] 
+        del kwargs['column']
+    return x,y,kwargs
