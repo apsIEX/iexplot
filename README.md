@@ -11,11 +11,6 @@
     cd iexplot
     pip install .
 
-## Installing image tool 
-
-    git clone https://github.com/kgord831/PyImageTool
-    cd iexplot
-    pip install .
 
 ## Running your first example
 
