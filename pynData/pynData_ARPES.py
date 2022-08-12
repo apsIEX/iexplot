@@ -25,7 +25,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import ast
 
-from iexplot.pynData.pynData import nData, nData_h5Group_r, nData_h5Group_w
+from pynData.pynData import nData, nData_h5Group_r, nData_h5Group_w
 
 #==============================================================================
 # Global variables in science
@@ -38,12 +38,12 @@ hc_over_e = 12.3984193      # hc/e in keV⋅A
 hc_e = 1239.84193           # hc/e in eV*A
 
 ###############################################################################################
-     
 class nARPES(nData):
     def _nARPESattributes(self,metadata,**kwargs):
         """
         self is an pynData object and we will add the following attribute from the metadata dictionary
-            'KEscale':[],     # original KE scale
+            'KEscale':[],     # original kinetic scale
+            'BEscale':[],     # calculated binding energy scale from KEscale, hv and wk
             'angScale':[],    # original angle scale of detector
             'angOffset':0     # offset of orignal angular scaling, used for book keeping
             'slitDir':'V'     # slit direction, 'H' or 'V'
@@ -56,6 +56,7 @@ class nARPES(nData):
         """
         kwargs.setdefault("debug",False)
         self.KEscale=np.empty(1)
+        self.BEscale=np.empty(1)
         self.angScale=np.empty(1)
         self.angOffset=0
         self.slitDir='V'
@@ -74,25 +75,24 @@ class nARPES(nData):
             if key in metadata:
                 if metadata != None:
                     setattr(self, key, metadata[key])    
- 
 
+        self._BE_calc()
+ 
 
     #==============================================================================
     # converting between KE and BE scaling
     #==============================================================================
-    def scaleKE(self,ax='x'):
+    def scaleKE(self):
         """
         sets the scaling of the specificed axis to original KE scaling
         also sets the EDC scaling to the orginal KE scaling
         """
-        self.updateAx(ax,np.array(self.KEscale),"Kinetic Energy (eV)")
-        self.EDC.updateAx(ax,np.array(self.KEscale),"Kinetic Energy (eV)")
+        self.updateAx('x',np.array(self.KEscale),"Kinetic Energy (eV)")
+        self.EDC.updateAx('x',np.array(self.KEscale),"Kinetic Energy (eV)")
     
-    
-    def scaleBE(self,ax='x',wk=None, hv=None):
+    def _BE_calc(self,wk=None, hv=None):
         """
-        sets the scaling of the specificed axis to original BE scaling
-        also sets the EDC scaling to the orginal BE scaling
+        calculates the binding energy and updates self.BEscale
         where BE = hv - KE - wk (above EF BE is negative); KE is orginal KE scaling
             wk=None uses  .wk for the work function (wk ~ hv - KE_FermiLevel)
             hv=None uses  .hv for the photon energy
@@ -102,18 +102,34 @@ class nARPES(nData):
             wk=self.wk
         if hv is None:
             hv=self.hv
+
         KE=np.array(self.KEscale)
-        BE=hv-wk-KE
-        self.updateAx(ax,BE,"Binding Energy (eV)")
-        self.EDC.updateAx(ax,BE,"Binding Energy (eV)")
+        self.BEscale = hv-wk-KE
+
+    def scaleBE(self,wk=None, hv=None):
+        """
+        sets the scaling of the specificed axis to original BE scaling
+        also sets the EDC scaling to the orginal BE scaling
+        where BE = hv - KE - wk (above EF BE is negative); KE is orginal KE scaling
+            wk=None uses  .wk for the work function (wk ~ hv - KE_FermiLevel)
+            hv=None uses  .hv for the photon energy
+    
+        """
+        self._BE_calc()
+        BE = self.BEscale
+
+        self.updateAx('x',BE,"Binding Energy (eV)")
+        self.EDC.updateAx('x',BE,"Binding Energy (eV)")
     
     def set_wk(self,val):
         """
         updates the work function can be a single value or an array of the same length as KE
+        recalucates the binding energy
         """
         self.wk(val)
+        self._BE_calc()
     
-    def scaleAngle(self,ax='y',delta=0):
+    def scaleAngle(self,delta=0):
         """
         changest the angle scaling of the data and the MDC
         based on the orginal angle scale and angOffset
@@ -123,13 +139,12 @@ class nARPES(nData):
         """
         angScale=np.array(self.angScale)
         newScale= angScale + self.angOffset + delta
-        self.updateAx(ax,newScale,"Angle (deg)")
-        self.EDC.updateAx(ax,newScale,"Angle (deg)")
+        self.updateAx('y',newScale,"Angle (deg)")
+        self.MDC.updateAx('x',newScale,"Angle (deg)")
     
     #==============================================================================
     # converting to and from k-space
     #==============================================================================
-    
     def theta_to_k(KE, thetaX, thetaY, V0=10):
         '''
         thetaX = polar angle
@@ -145,36 +160,41 @@ class nARPES(nData):
         kz = c*np.sqrt(V0-KE*(np.sin(thetaX)+np.cos(thetaX)*np.cos(thetaY)+1))
     
         return kx, ky, kz
-    
-    
-    
-###############################################################################################
-
-def plotEDCs(*d,**kwargs):
-    '''
-    Simple plot for EDCs
-    *d, set of pynData_ARPES data
-    
-    kwargs:
-        Escale="KE" or "BE"; changes the energy scale using the hv and wk from the meta data
-        hv = val; if not specified uses the one from the meta data
-        wk = val; if not specified uses the one from the meta data
         
-    plt.legend() after script to show legend of scanNum
-    '''
+###############################################################################################
+def plotEDCs(*d,**kwargs):
+    """
+    Simple plot for EDCs 
+
+    *d  set of pynData_ARPES data
+    
+    uses the current scale['x'] for the energy axis
+        d.scaleKE() or d.scaleBE() to set
+
+    kwargs:
+        matplotlib.plot kwargs
+    """
     for di in list(d):
-        kwargs.setdefault('hv',None)
-        kwargs.setdefault('wk',None)
-        if "Escale" in kwargs:
-            if str(kwargs["Escale"]) == "KE":
-                di.setscaleKE(di)
-            elif str(kwargs["Escale"]) == "BE":
-                di.setscaleBE(di,hv=kwargs['hv'],wk=kwargs['wk'])
-                
-        plt.plot(di.EDC.scale['x'], di.EDC.data,label=di.extras['scanNum'])
+        plt.plot(di.EDC.scale['x'], di.EDC.data,)
         plt.xlabel(di.EDC.unit['x'])
     return
-###############################################################################################
+
+def plotMDCs(*d,**kwargs):
+    """
+    Simple plot for EDCs 
+
+    *d  set of pynData_ARPES data
+    
+    uses the current scale['x'] for the energy axis
+        d.scaleKE() or d.scaleBE() to set
+
+    kwargs:
+        matplotlib.plot kwargs
+    """
+    for di in list(d):
+        plt.plot(di.MDC.scale['x'], di.MDC.data,)
+        plt.xlabel(di.MDC.unit['x'])
+    return
         
 ##########################################
 # generalized code for saving and loading as part of a large hd5f -JM 4/27/21

@@ -66,6 +66,41 @@ def plot1D(x,y,**kwargs):
 
     plt.plot(x,y,**kwargs)
 
+def plot2D(img,scales,units,**kwargs):
+    """
+    img = 2D numpy array (y,x)
+    scales = [yscale,xscale]
+    units = [yunit,xunit]
+    **kwargs = pcolormesh keywords
+        kwargs.setdefault('shading','auto')
+    """
+    kwargs.setdefault('shading','auto')
+
+    yscale,xscale = scales
+    yunit,xunit = units
+
+    plt.pcolormesh(xscale, yscale, img, **kwargs)
+    plt.xlabel(xunit)
+    plt.ylabel(yunit)
+
+def reduce2d(x,y, **kwargs):
+    """
+    takes the 2D arrays, x and y and reduces them to 1D arrays removes column/row form kwargs
+    **kwargs:
+        column
+        row
+    """
+    if "row" in kwargs:
+        x=x[kwargs['row'],:]
+        y=y[kwargs['row'],:] 
+        del kwargs['row']
+            
+    if "column" in kwargs:
+        x=x[:,kwargs['column']]
+        y=y[:,kwargs['column']] 
+        del kwargs['column']
+    return x,y,kwargs
+
 def plot_dimage(dataArray,scaleArray,unitArray, **kwargs):
     """
     dataArray is a 3D np.array(data[y][x]) => images are row by column data

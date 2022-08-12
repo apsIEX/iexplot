@@ -1,7 +1,19 @@
-def mda_plotting(self,**kwargs):
-    setattr(self,'mdaPos',mdaPos(scanNum,posNum=0))
-#########################################################################
-    def mdaPos(self,scanNum, posNum=0):
+import numpy as np
+import matplotlib.pyplot as plt
+
+from pynData.plottingUtils import plot1D,plot2D,reduce2d
+
+class mdaplot:
+    """
+    adds mda plotting functions to IEXnData class
+    """
+
+    def __init__(self):
+        pass    
+
+    #########################################################################
+
+    def mdaPos(self,scanNum,posNum=1,ax='x'):
         """
         returns the array for a positioner
                         
@@ -11,9 +23,14 @@ def mda_plotting(self,**kwargs):
         
         plt.plot(x,y)
         """
-        return self.mda[scanNum].posx[posNum].data
+        if ax == 'x':
+            return self.mda[scanNum].posx[posNum].data
+        if ax == 'y':
+            return self.mda[scanNum].posy[posNum].data
+        if ax == 'z':
+            return self.mda[scanNum].posz[posNum].data
  
-    def mdaPos_label(self,scanNum, posNum=0):
+    def mdaPos_label(self,scanNum,posNum=1,ax='x'):
         """
         returns the array for a positioner
                         
@@ -28,8 +45,12 @@ def mda_plotting(self,**kwargs):
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         """
-
-        return self.mda[scanNum].posx[posNum].pv[1] if len(self.mda[scanNum].posx[posNum].pv[1])>1 else self.mda[scanNum].posx[posNum].pv[0]
+        if ax == 'x':
+            return self.mda[scanNum].posx[posNum].pv[1] if len(self.mda[scanNum].posx[posNum].pv[1])>1 else self.mda[scanNum].posx[posNum].pv[0]
+        elif ax == 'y':
+            return self.mda[scanNum].posy[posNum].pv[1] if len(self.mda[scanNum].posy[posNum].pv[1])>1 else self.mda[scanNum].posy[posNum].pv[0]
+        elif ax == 'z':
+            return self.mda[scanNum].posz[posNum].pv[1] if len(self.mda[scanNum].posz[posNum].pv[1])>1 else self.mda[scanNum].posz[posNum].pv[0]
 
     def mdaDet(self,scanNum, detNum):
         """
@@ -60,22 +81,32 @@ def mda_plotting(self,**kwargs):
 
         return self.mda[scanNum].det[detNum].pv[1] if len(self.mda[scanNum].det[detNum].pv[1])>1 else self.mda[scanNum].det[detNum].pv[0]
 
-    
-        
-    
-    def plotmda(self,scanNum, detNum, posNum=0,**kwargs):
+     
+    def plotmda(self,scanNum,detNum,**kwargs):
         """
         simple plot for an mda scans either 1D or a row/column of a 2D data set
-        detector vs positioner
-  
+          
         **kwargs
-             Norm2One: True/False to normalize spectra between zero and one (default => False)
-             offset: y += offset 
-             scale: y *= scale
-             offset_x: x += offset_x 
-             scale_x: x *= scale_x
-             
-             2D data: plots image by default
+           data kwargs:
+                1D: detector vs x-positioner (num = 1; default)
+                    posx_Num => to plot verses a different x-positioner number
+                    y_detNum => to plot verses a detector
+
+                2D: detector vs positioner1 for both x and y (default)
+                    posx_Num => to plot verses a different x-positioner number
+                    posy_Num => to plot verses a different y-positioner number
+                    x_detNum => x-scale is a detector
+                    y_detNum => y-scale is a detector
+    
+
+            plotting kwargs:
+                Norm2One: True/False to normalize spectra between zero and one (default => False)
+                offset: y += offset 
+                scale: y *= scale
+                offset_x: x += offset_x 
+                scale_x: x *= scale_x
+                
+            for 2D data: plots image by default
                 row = index for plotting a single row from a 2D data set
                 column = index for plotting a single row from a 2D data set
              
@@ -88,84 +119,124 @@ def mda_plotting(self,**kwargs):
         kwargs.setdefault("scale_x",1)
         kwargs.setdefault('Norm2One',False)
         
-        y=self.mdaDet(scanNum, detNum)
-        kwargs['ylabel']=self.mdaDet_label(scanNum, detNum)
-        
-        x=self.mdaPos(scanNum, posNum)
-        kwargs['xlabel']=self.mdaPos_label(scanNum, posNum)
-        if len(y.shape)==2:
+        d = self.mdaDet(scanNum, detNum)
+      
+        #2D data
+        if len(d.shape)==2:
+            #image
             if "row" not in kwargs and "column" not in kwargs:
                 if kwargs['Norm2One']:
                     print('Norm2One not currently implemented in 2D data, adjust vmin,vmax')
                     del kwargs['Norm2One']
-            self.plotmda2D(scanNum, detNum, **kwargs)
-                
+                self.plotmda2D(scanNum, detNum, **kwargs)        
+        #1D data
         else:
-            x,y,kwargs=self._reduce2d(x,y, **kwargs)
-            self._plot1D(x,y,**kwargs)
-    
-    def plotmda_detVdet(self,scanNum, y_detNum, x_detNum, **kwargs):
-        """
-        simple plotting for an mda scan
-        detector vs detector
-                
-        Norm2One: True/False to normalize spectra between zero and one
+           self.plotmda1D(scanNum, detNum, **kwargs)
+     
 
-        **kwargs
-             Norm2One: True/False to normalize spectra between zero and one (default => False)
-             offset: y += offset 
-             scale: y *= scale
-             offset_x: x += offset_x 
-             scale_x: x *= scale_x
-             
-             2D data: plots image by default
-                row = index for plotting a single row from a 2D data set
-                column = index for plotting a single row from a 2D data set
-             
-            and standard plt.plot **kwargs
-            e.g. label=str(scanNum), marker="o"
+    def plotmda1D(self,scanNum, detNum, **kwargs):
         """
-        kwargs.setdefault("offset",0)
-        kwargs.setdefault("scale",1)
-        kwargs.setdefault("offset_x",0)
-        kwargs.setdefault("scale_x",1)
+        plots 1D mda data
+        detNum = detector number for the image data
         
-        y=self.mdaDet(scanNum, y_detNum)
-        kwargs['ylabel']=self.mdaDet_label(scanNum, y_detNum)
-        
-        x=self.mdaDet(scanNum, x_detNum)
-        kwargs['xlabel']=self.mdaDet_label(scanNum, x_detNum)
-        
-        if len(y.shape)==2:
-            if "row" not in kwargs and "column" not in kwargs:
-                if kwargs['Norm2One']:
-                    print('Norm2One not currently implemented in 2D data, adjust vmin,vmax')
-                    del kwargs['Norm2One']
-            self.plotmda2D(scanNum, y_detNum, **kwargs)
-                
-        else:     
-            x,y,kwargs=self._reduce2d(x,y, **kwargs)
-            self._plot1D(x,y,**kwargs)
-            
-    def plotmda2D(self, scanNum, detNum, **plotkwargs):
+        **kwargs: 
+            posx_Num => to plot verses a different x-positioner number
+            x_detNum => x-scale is a detector
+
+            row => for the nth row of a 2D array
+            column => or the nth column of a 2D array
+        """ 
+        #x-axis
+        if 'x_detNum' in kwargs:
+            x = self.mdaDet(scanNum,detNum=kwargs['x_detNum'],ax='x')
+            xunit = self.mdaDet_label(scanNum,detNum=kwargs['x_detNum'],ax='x')
+            del kwargs['x_detNum']
+        elif 'posx_Num' in kwargs:
+            x = self.mdaPos(scanNum,posNum=kwargs['posx_Num'],ax='x')
+            xunit = self.mdaPos_label(scanNum,posNum=kwargs['posx_Num'],ax='x')
+            del kwargs['posx_Num']
+        else:
+            x = self.mdaPos(scanNum,posNum=1,ax='x')
+            xunit = self.mdaPos_label(scanNum,posNum=1,ax='x')
+
+        #data
+        y = self.mdaDet(scanNum,detNum,ax='x')
+
+        if len(y.shape)>1:
+            if 'row' in kwargs or 'column' in kwargs:
+                x,y,kwargs = reduce2d(x,y, **kwargs)
+                plot1D(x,y,**kwargs)
+                plt.xlabel(xunit)
+            else:
+                print('data is not 1D')
+
+
+    def plotmda2D(self, scanNum, detNum, **kwargs):
         """
         plots 2D mda data
-        **plotkwargs are the standard matplotlib argument
-            cmap
+        detNum = detector number for the image data
+        
+        **kwargs: 
+            posx_Num => to plot verses a different x-positioner number
+            posy_Num => to plot verses a different y-positioner number
+            x_detNum => x-scale is a detector
+            y_detNum => y-scale is a detector     
         """
-        niceplot(self.mda[scanNum].det[detNum], **plotkwargs)
+        img = self.mdaDet(scanNum, detNum)
+        
+        #x-scaling
+        if 'x_detNum' in kwargs:
+            xscale = self.mdaDet(scanNum,detNum=kwargs['x_detNum'],ax='x')
+            xunit = self.mdaDet_label(scanNum,detNum=kwargs['x_detNum'],ax='x')
+            del kwargs['x_detNum']
+        elif 'posx_Num' in kwargs:
+            xscale = self.mdaPos(scanNum,posNum=kwargs['posx_Num'],ax='x')
+            xunit = self.mdaPos_label(scanNum,posNum=kwargs['posx_Num'],ax='x')
+            del kwargs['posx_Num']
+        else:
+            xscale = self.mdaPos(scanNum,posNum=1,ax='x')
+            xunit = self.mdaPos_label(scanNum,posNum=1,ax='x')
+        
+        #y-scaling
+        if 'y_detNum' in kwargs:
+            yscale = self.mdaDet(scanNum,detNum=kwargs['y_detNum'],ax='y')
+            yunit = self.mdaDet_label(scanNum,detNum=kwargs['y_detNum'],ax='y')
+            del kwargs['y_detNum']
+        elif 'posy_Num' in kwargs:
+            yscale = self.mdaPos(scanNum,posNum=kwargs['posy_Num'],ax='y')
+            yunit = self.mdaPos_label(scanNum,posNum=kwargs['posy_Num'],ax='y')
+            del kwargs['posy_Num']
+        else:
+            yscale = self.mdaPos(scanNum,posNum=1,ax='y')
+            yunit = self.mdaPos_label(scanNum,posNum=1,ax='y')
+       
+        scales = [yscale,xscale]
+        units = [yunit,xunit]    
+        plot2D(img,scales,units,**kwargs)
+        
 
     def plot_mesh(self,scanNum,**kwargs):
         """
         kwargs:
             det_list => list of detectors to plot 
-                    = [16,17] (default)
             title_list => list of titles for each detector
-                    = ['TEY','EA'] (default)
-        
+            
+            defaults:
+            if prefix = 'ARPES_'
+                    det_list = [16,17] 
+                    title_list = ['TEY','EA'] 
+
+            if prefix = 'Kappa_'
+                    det_list = [31,34] 
+                    title_list = ['TEY','D4'] 
         """
-        kwargs.setdefault('det_list',[16,17])
-        kwargs.setdefault('title_list',['TEY','EA'])
+        if self.prefix == 'ARPES_':
+            kwargs.setdefault('det_list',[16,17])
+            kwargs.setdefault('title_list',['TEY','EA'])
+        
+        if self.prefix == 'Kappa_':
+            kwargs.setdefault('det_list',[31,34])
+            kwargs.setdefault('title_list',['TEY','D4'])
         
         plt.figure(figsize=(10,3))
         n=len(kwargs['det_list'])
@@ -180,20 +251,4 @@ def mda_plotting(self,**kwargs):
             
         plt.show()
 
-    def plot_EAmesh_mda(self,scanNum,detNum,**kwargs):
-        """
-        plot the scalar values for an scanEAmesh 
-
-        can be used in subplots (i.e. no plt.show)
-        """
-        kwargs.setdefault('shading','auto')
-        MDAscan=self.mda[scanNum]     
-        xscale=MDAscan.posy[0].data[0,:]
-        xunit=MDAscan.posy[0].pv[1] if len(MDAscan.posy[0].pv[1])>0 else MDAscan.posy[0].pv[0] 
-        yscale=MDAscan.posz[0].data[:]
-        yunit=MDAscan.posz[0].pv[1] if len(MDAscan.posz[0].pv[1])>0 else MDAscan.posz[0].pv[0] 
-        img = MDAscan.det[detNum].data[:,:,0]
-        
-        plt.pcolormesh(xscale, yscale, img, **kwargs)
-        plt.xlabel(xunit)
-        plt.ylabel(yunit)
+    

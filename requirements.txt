@@ -6,8 +6,9 @@ numpy
 netCDF4
 tifffile
 xarray
-#PyQt5
-#PyQt5-sip
-#pyqtgraph
 
-#pyimagetool
+#pyimagetool requirements
+PyQt5
+PyQt5-sip
+pyqtgraph
+

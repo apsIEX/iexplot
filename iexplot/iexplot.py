@@ -9,12 +9,6 @@ import os as os
 import re
 from numpy import inf
 import h5py
-import matplotlib.pyplot as plt
-
-try:
-    import netCDF4 as nc
-except:
-    print("netCDF4 and/or tifffile are not part of the environment")
     
 from iexplot.pynData.nmda import nmda,nmda_h5Group_w,nmda_h5Group_r
 from iexplot.pynData.nEA import nEA
@@ -390,7 +384,7 @@ class IEXdata:
 
         if kwargs["debug"] == True:
             print("IEX_nData._extractData dtype: ", self.dtype)
-         loadedList=[]
+        loadedList=[]
 
         ########################################################################
        #loading EA only
@@ -862,57 +856,3 @@ def load_IEXnData(fpath):
     
     return mydata
 
- #########################################################################################################
-def _plot1D(x,y,**kwargs):
-    """
-    x / y 1D numpy arrays 
-    **kwargs
-            Norm2One: True/False to normalize graph between zero and one
-            offset: y += offset 
-            scale: y *= scale
-            offset_x: x += offset_x 
-            scale_x: x *= scale_x
-    """
-    kwargs.setdefault('Norm2One',False)
-    kwargs.setdefault("offset",0)
-    kwargs.setdefault("scale",1)
-    kwargs.setdefault("offset_x",0)
-    kwargs.setdefault("scale_x",1)
-    
-    if kwargs['Norm2One']:
-        y=(y-min(y))/(max(y)-min(y))
-            
-    #offset and scaling
-    y=y*kwargs["scale"]+kwargs["offset"]
-    x=x*kwargs["scale_x"]+kwargs["offset_x"]
-        
-    #remove nonstandard kwargs
-    for key in ["Norm2One","offset","scale","offset_x","scale_x"]:
-        del kwargs[key]
-        
-    if 'xlabel' in kwargs:
-        plt.xlabel(kwargs['xlabel'])
-        del kwargs['xlabel']
-    if 'ylabel' in kwargs:
-        plt.ylabel(kwargs['ylabel'])
-        del kwargs['ylabel']
-        
-    plt.plot(x,y,**kwargs)
-
-def _reduce2d(x,y, **kwargs):
-    """
-    takes the 2D arrays, x and y and reduces them to 1D arrays removes column/row form kwargs
-    **kwargs:
-        column
-        row
-    """
-    if "row" in kwargs:
-        x=x[kwargs['row'],:]
-        y=y[kwargs['row'],:] 
-        del kwargs['row']
-            
-    if "column" in kwargs:
-        x=x[:,kwargs['column']]
-        y=y[:,kwargs['column']] 
-        del kwargs['column']
-    return x,y,kwargs
