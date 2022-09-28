@@ -25,8 +25,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import ast
 
-from pynData.pynData import nData, nData_h5Group_r, nData_h5Group_w
-
+from iexplot.pynData.pynData import nData, nData_h5Group_r, nData_h5Group_w
+from iexplot.pynData.plottingUtils import *
 #==============================================================================
 # Global variables in science
 #==============================================================================
@@ -104,7 +104,11 @@ class nARPES(nData):
             hv=self.hv
 
         KE=np.array(self.KEscale)
-        self.BEscale = hv-wk-KE
+        try:
+            self.BEscale = hv-wk-KE
+        except:
+            print('BEscale not calculated')
+            print(hv,wk)
 
     def scaleBE(self,wk=None, hv=None):
         """
@@ -175,8 +179,10 @@ def plotEDCs(*d,**kwargs):
         matplotlib.plot kwargs
     """
     for di in list(d):
-        plt.plot(di.EDC.scale['x'], di.EDC.data,)
-        plt.xlabel(di.EDC.unit['x'])
+        x = di.EDC.scale['x']
+        y = di.EDC.data
+        kwargs.update({'xlabel':di.EDC.unit['x']})
+        plot_1D(x,y,**kwargs)
     return
 
 def plotMDCs(*d,**kwargs):
@@ -192,8 +198,10 @@ def plotMDCs(*d,**kwargs):
         matplotlib.plot kwargs
     """
     for di in list(d):
-        plt.plot(di.MDC.scale['x'], di.MDC.data,)
-        plt.xlabel(di.MDC.unit['x'])
+        x = di.MDC.scale['x']
+        y = di.MDC.data
+        kwargs.update({'xlabel':di.MDC.unit['x']})
+        plot_1D(x,y,**kwargs)
     return
         
 ##########################################

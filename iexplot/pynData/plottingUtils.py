@@ -5,7 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from math import *
 
-def plot1D(x,y,**kwargs):
+def plot_1D(x,y,**kwargs):
     """
     x / y 1D numpy arrays 
     **kwargs
@@ -66,7 +66,7 @@ def plot1D(x,y,**kwargs):
 
     plt.plot(x,y,**kwargs)
 
-def plot2D(img,scales,units,**kwargs):
+def plot_2D(img,scales,units,**kwargs):
     """
     img = 2D numpy array (y,x)
     scales = [yscale,xscale]

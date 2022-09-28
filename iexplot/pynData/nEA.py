@@ -319,7 +319,7 @@ class nEA(nARPES):
                      "passEnergy":'PassEnergy',
                      "frames":'ExpFrames',
                      "sweeps":'Sweeps',
-                     "wk":"ScientaWorkFunction",
+                     "wk":"WorkFunction",
                     }
         PVs.update(AnalyzerPVs)
         if kwargs["debug"]:

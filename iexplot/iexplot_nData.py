@@ -9,20 +9,20 @@ import os as os
 import re
 from numpy import inf
 import h5py
-    
+
+from iexplot.iexplot_mda import *
+from iexplot.iexplot_EA import *
+
 from iexplot.pynData.nmda import nmda,nmda_h5Group_w,nmda_h5Group_r
 from iexplot.pynData.nEA import nEA
 from iexplot.pynData.pynData_ARPES import nARPES_h5Group_w, nARPES_h5Group_r
 from iexplot.pynData.nADtiff import nTiff   
 
-
 try:
-    from IEX_beamline.beamline import BL_ioc
-    from IEX_beamline.scanRecord import saveData_get_all 
-    from IEX_beamline.AD_utilites import AD_CurrentDirectory, AD_prefix
-    from IEX_beamline.EA import EA
+    from iexcode.instruments.scanRecord import mda_filepath, mda_prefix
+    from iexcode.instruments.electron_analyzer import EA_filepath, EA_prefix
 except:
-    print("ScanFunctions_IEX and ScanFunctions_EA are not loaded: you will need to specify path and prefix when calling IEXdata")
+    print("iexcode is not loaded: you will need to specify path and prefix when calling IEXdata")
 
 
 ###################################
@@ -38,17 +38,16 @@ def CurrentDirectory(dtype):
     """
     if "mda" in dtype:
         try:
-            ioc_pv = BL_ioc()
-            path=saveData_get_all(ioc_pv)['filepath']
+            path = mda_filepath()
         except:
             path=input("mda filepath needs to be specified")
         return path
 
     elif "EA" in dtype:
         try:
-            path=AD_CurrentDirectory(EA._savePlugin)
+            path = EA_filepath()
         except:
-            path=input("EA filepath needs to be specified")
+            path = input("EA filepath needs to be specified")
         return path
     
         
@@ -56,16 +55,15 @@ def CurrentPrefix(dtype):
     #if dtype == "mda" or dtype == "mdaEA":
     if "mda" in dtype:
         try:
-            ioc_pv = BL_ioc()
-            prefix = saveData_get_all(ioc_pv)['baseName']
+            prefix = mda_prefix()
         except:
             prefix = input("please specify the prefix")
         
     elif "EA" in dtype:
         try:
-            prefix=AD_prefix(EA._savePlugin)+"_"
+            prefix = EA_prefix()
         except:
-            prefix="prefix_"
+            prefix = input("please specify the prefix")
     return prefix
 
 ###################################
@@ -232,7 +230,7 @@ def _dirScanNumList(path,prefix,extension):
 
 #########################################################################################################
 #########################################################################################################
-class IEXdata:
+class IEXdata(PlotMDA, PlotEA):
     """"
     loads IEX (mda or EA) data and returns a dictionary containing pynData objects
         in Igor speak this is your experiment and the pynData objects are the waves
@@ -296,7 +294,7 @@ class IEXdata:
         kwargs.setdefault('debug',False)
         kwargs.setdefault("nzeros",4)
         kwargs.setdefault("subset",(1,inf,1))
-        
+
         if kwargs["debug"]:
             print("IEX_nData.__init__")
 
@@ -311,7 +309,7 @@ class IEXdata:
             print("kwargs:",kwargs)
             for key in vars(self):
                 print(key,getattr(self,key))
-   
+        
         if scans:
             kwargs.update(self._key2var(**kwargs))
             self._extractData(*scans, **kwargs)
@@ -498,6 +496,12 @@ class IEXdata:
                 
         if kwargs["q"] == False:
             print("Loaded "+self.dtype+" scanNums: "+str(loadedList))
+
+        #add plotting 
+        #mdaplot(self)
+        #if 'EA' in AD_dtype:
+        #    EAplot(self)
+
         return self
     
     def _mdaIEXdata(self,shortlist,**kwargs):
@@ -533,8 +537,6 @@ class IEXdata:
             headerList=mda.header.ScanRecord
             headerList.update(mda.header.all)
             _mdaHeader_IEX(mda.header,headerList)
-            ### adding plotting
-            mda_plotting(mda)
             ### updating data dictionary
             self.mda.update({shortlist[i]:mda})   
         return shortlist
@@ -713,10 +715,12 @@ class IEXdata:
             if key[0] != "_" and key not in ['mda','EA']: 
                 print(key+": "+str(vars(self)[key]))
 
-            
  
- #########################################################################################################
     
+            
+ #########################################################################################################
+ ##save and loading
+ #########################################################################################################
     def save(self, fname, fdir=''):
         """
         saves the IEXdata dictionary for later reloading
@@ -791,24 +795,24 @@ class IEXdata:
 
                 
                 
-def remove(cls,*scans):
-    """
-    *scans =>
-        scanNum: for a single scan
-        inf: for all scans in directory
-        first,last: for all files between and including first and last; last can be inf
-        first,last,countby: to load a subset
-        [scanNum1,scanNum2]: to load a subset of scans
-    Usage:
-        remove(mydata.mda,[234,235,299])
-    """
-    fullList=list(cls.keys())
-    shortlist=_shortlist(*scans,llist=fullList)
+    def remove_mda(self,*scans):
+        """
+        *scans =>
+            scanNum: for a single scan
+            inf: for all scans in directory
+            first,last: for all files between and including first and last; last can be inf
+            first,last,countby: to load a subset
+            [scanNum1,scanNum2]: to load a subset of scans
+        Usage:
+            remove(mydata.mda,[234,235,299])
+        """
+        fullList=list(self.keys())
+        shortlist=_shortlist(*scans,llist=fullList)
 
-    for key in shortlist:
-        del cls[key]
-    print("removed scans: "+str(shortlist) )
-    return
+        for key in shortlist:
+            del self[key]
+        print("removed scans: "+str(shortlist) )
+        return
 
 
 def h5info(f):
@@ -856,3 +860,4 @@ def load_IEXnData(fpath):
     
     return mydata
 
+ 

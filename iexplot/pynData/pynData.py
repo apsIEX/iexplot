@@ -382,26 +382,26 @@ def nAppend(data1,data2,ax):
 	else:
 	## Making stack1 a volume
 		if len(np.shape(data1.data)) <3:
-			if args['ax'] is 'z':
+			if args['ax'] == 'z':
 				vol1=data1.data[np.newaxis,:,:]
-			if args['ax']  is 'y':
+			if args['ax']  == 'y':
 				vol1=data1.data[:,np.newaxis,:]
-			if args['ax']  is 'z':
+			if args['ax']  == 'z':
 				vol1=data1.data[:,:,np.newaxis]
 		else:
 			vol1=data1.data
 	## Making stack2 a volume
 		if len(np.shape(data2.data)) <3:
-			if args['ax']  is 'z':
+			if args['ax']  == 'z':
 				vol2=data2.data[np.newaxis,:,:]
-			if args['ax']  is 'y':
+			if args['ax']  == 'y':
 				vol2=data2.data[:,np.newaxis,:]
-			if args['ax']  is 'z':
+			if args['ax']  == 'z':
 				vol2=data2.data[:,:,np.newaxis]
 		else:
 			vol2=data2.data
 	## Stacking vol2 ontop of vol1
-		if args['ax']  is 'x':
+		if args['ax']  == 'x':
 			if (np.shape(vol1)[1]==np.shape(vol2)[1]) and (np.shape(vol1)[2]==np.shape(vol2)[2]):
 				vol1=np.dstack((vol1,vol2))
 				xscale=np.append(data1.scale['x'],data2.scale['x'])
@@ -409,7 +409,7 @@ def nAppend(data1,data2,ax):
 				zscale=data1.scale['z']
 			else:
 				print("Data sets must be the same size in y and z")
-		if args['ax']  is 'y':
+		if args['ax']  == 'y':
 			if (np.shape(vol1)[0]==np.shape(vol2)[0]) and (np.shape(vol1)[2]==np.shape(vol2)[2]):
 				vol1=np.hstack((vol1,vol2))
 				xscale=data1.scale['x']
@@ -417,7 +417,7 @@ def nAppend(data1,data2,ax):
 				zscale=data1.scale['z']
 			else:
 				print("Data sets must be the same size in x and z")
-		if args['ax']  is 'z':
+		if args['ax']  == 'z':
 			if (np.shape(vol1)[0]==np.shape(vol2)[0]) and (np.shape(vol1)[1]==np.shape(vol2)[1]):
 				vol1=np.vstack((vol1,vol2))
 				xscale=data1.scale['x']
@@ -426,7 +426,7 @@ def nAppend(data1,data2,ax):
 			else:
 				print("Data sets must be the same size in x and y")
 		nVol=nData(vol1)
-		if args['scale'] is 'data': 
+		if args['scale'] == 'data': 
 			nVol.updateAx('x',xscale,data1.unit['x'])
 			nVol.updateAx('y',yscale,data1.unit['y'])
 			nVol.updateAx('z',zscale,data1.unit['z'])

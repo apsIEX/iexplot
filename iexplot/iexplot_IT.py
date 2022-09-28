@@ -1,4 +1,6 @@
-        
+from iexplot.iexplot_nData import IEXdata
+from iexplot.pyimagetool import ImageTool, RegularDataArray
+
 def nData2ra(d):
     """
     converts an nData object to a RegularArray which is used by pyImageTool an returns ra
@@ -12,7 +14,7 @@ def nData2ra(d):
     ra=RegularDataArray(img,axes=scales.reverse(),dims=units.reverse())
     return ra
 
-def EAImageTool(mdaScanNum,**kwargs):
+def IT_mdaEA(mdaScanNum,**kwargs):
     """
     to be run in ipython not in jupyter (cause the kernal to crash)
     multi=False stacks EA files from a single mda scan
@@ -23,10 +25,11 @@ def EAImageTool(mdaScanNum,**kwargs):
         include stackEA kwargs
             subset,EDConly
     """
-    global it
-
     data=IEXdata(mdaScanNum, **kwargs)
-    ra=data.stackmdaEA(mdaScanNum,**kwargs)
+    ra=data.stack_mdaEA(mdaScanNum,**kwargs)
     
     it=ImageTool(ra,'LayoutComplete')
     it.show()
+
+    return it
+

@@ -1,21 +1,17 @@
 import matplotlib.pyplot as plt
-import numpy as np
 
-from iexplot.iexplot import _shortlist
-from pynData.plottingUtils import plot1D,plot2D
-from pynData.pynData import nstack
-from pynData.pynData_ARPES import *
+from iexplot.iexplot_nData import _shortlist 
+from iexplot.pynData.plottingUtils import *
+from iexplot.pynData.pynData import nstack
+from iexplot.pynData.pynData_ARPES import *
 
-
-class EAplot:
+class PlotEA:
     """
     adds EA plotting functions to IEXnData class
     """
     def __init__(self):
         pass
 
-    #########################################################################
-    
     def EAspectra(self,scanNum, EAnum=1, BE=False):
         """
         returns the array for an EAspectra, and x and y scaling    
@@ -43,7 +39,7 @@ class EAplot:
         return img,xscale,yscale,xunit,yunit
         
         
-    def EAspectraEDC(self,scanNum, EAnum=1, BE=False):
+    def EAspectraEDC(self,scanNum,EAnum=1,BE=False):
         """
         returns x,y energy scaling, EDC spectra
             
@@ -65,14 +61,14 @@ class EAplot:
             x = EA.KEscale
             xlabel = 'Kinetic Energy (eV)'
 
-        return x,y
+        return x,y,xlabel
         
     def plotEDC(self,scanNum,EAnum=1,BE=False,**kwargs):
         """
         simple plotting for EDC
 
         EAnum = sweep number (default = 1)
-              = inf => will sum all spectra
+                = inf => will sum all spectra
         if
             dtype="EA"  => y=data.EA[scanNum]
             dtype="mdaEA" or "mdaAD"  => y=data.mda[scanNum]EA[EAnum]
@@ -81,18 +77,12 @@ class EAplot:
         if wk=None uses metadata
         
         *kwargs are the matplot lib kwargs plus the following
-            wk: None/value, if None uses the value from the metadata
-            
-            ##### additional plotting + matplotlib kwargs
             Norm2One: True/False to normalize spectra between zero and one
             offset: y += offset 
             scale: y *= scale
             offset_x: x += offset_x 
             scale_x: x *= scale_x
         """
-
-        kwargs.setdefault("wk",None)
-    
         kwargs.setdefault("Norm2One",False)
         kwargs.setdefault("offset",0)
         kwargs.setdefault("scale",1)
@@ -100,17 +90,13 @@ class EAplot:
         kwargs.setdefault("scale_x",1)
         
         x=0;y=0            
-        x,y,xlabel = self.EAspectraEDC(scanNum,EAnum,BE,**kwargs)
-        
-        
-        for key in ["wk"]:
-            del kwargs[key]
-        
-        plot1D(x,y,xlabel=xlabel,**kwargs)
+        x,y,xlabel = self.EAspectraEDC(scanNum,EAnum=EAnum,BE=BE)
+                
+        plot_1D(x,y,xlabel=xlabel,**kwargs)
         
         if BE:
             plt.xlim(max(x),min(x))
-    
+
     def plotEA(self,scanNum,EAnum=1,BE=True,transpose=False,**kwargs):
         """
         simple plotting for EDC
@@ -126,16 +112,16 @@ class EAplot:
         img,xscale,yscale,xunit,yunit = self.EAspectra(scanNum, EAnum, BE)
 
         if transpose == True:
-            plot2D(img.T,[xscale,yscale],[xunit,yunit])
+            plot_2D(img.T,[xscale,yscale],[xunit,yunit])
 
         else:
-            plot2D(img,[yscale,xscale],[yunit,xunit])
+            plot_2D(img,[yscale,xscale],[yunit,xunit])
             
-    def stackEA(self,*args,**kwargs):
+    def stack_mdaEA(self,*args,**kwargs):
         """
         creates a FermiMap volume
         *args = scanNum if volume is a single Fermi map scan
-              = scanNum, start, stop, countby for series of scans
+                = scanNum, start, stop, countby for series of scans
 
         **kwargs:      
             EAnum = (start,stop,countby) => to plot a subset of scans
@@ -157,5 +143,3 @@ class EAplot:
                     nData_list.append(self.mda[scanNum].EA[EAnum])
                 
         nstack(nData_list,stack_scale,stack_unit=stack_unit, **kwargs)
-
-    

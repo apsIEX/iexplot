@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt 
 
 from pynData import *
-from pynData.plottingUtils import plot1D,plot2D
+from .plottingUtils import plot_1D,plot_2D
 #==============================================================================
 # Utils for plotting and slicing
 #==============================================================================
@@ -22,13 +22,13 @@ def niceplot(*ds):
                 else:
                     x = d.scale['x']
                     y = d.data
-                    plot1D(x,y,xlabel=d.unit['x'],ylabel=d.unit['y'])
+                    plot_1D(x,y,xlabel=d.unit['x'],ylabel=d.unit['y'])
                     
             elif dim==2:
                 img = d.data
                 scales = [d.scale['y'],d.scale['x']]
                 units = [d.unit['y'],d.unit['x']]
-                plot2D(img,scales,units)
+                plot_2D(img,scales,units)
             elif dim>2:
                 print('Warning: niceplot can only plot 1d and 2d data.')
     except:
@@ -65,7 +65,7 @@ def niceplot_avg(d,ax='y',Cen=np.nan,WidthPix=np.nan):
         print('only works for 2D data')
 
 
-def plot2D(d, xCen=np.nan, xWidthPix=0, yCen=np.nan, yWidthPix=0, vmin=np.nan, vmax=np.nan):
+def plot2D_old(d, xCen=np.nan, xWidthPix=0, yCen=np.nan, yWidthPix=0, vmin=np.nan, vmax=np.nan):
 	'''
 	d:          nData instance with xScale: dim1 and yScale: dim0
 	xCen: vertical cursor x position
