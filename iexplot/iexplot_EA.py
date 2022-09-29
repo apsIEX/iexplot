@@ -148,6 +148,8 @@ class PlotEA:
         kwargs.setdefault('array_output',True)
 
         dataArray,scaleArray,unitArray = self.stack_mdaEA(*args,**kwargs)
+        kwargs.pop('array_output')
+        
         plot_dstack(dataArray,scaleArray,unitArray,**kwargs)
 
     def stack_mdaEA(self,*args,**kwargs):
