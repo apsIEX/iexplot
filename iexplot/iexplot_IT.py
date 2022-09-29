@@ -32,4 +32,3 @@ def IT_mdaEA(mdaScanNum,**kwargs):
     it.show()
 
     return it
-

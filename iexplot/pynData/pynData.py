@@ -300,18 +300,24 @@ def nData_h5Group_r(h):
 #==============================================================================
 def nstack(nData_list,stack_scale=None,stack_unit="", **kwargs):
     """
+    returns a stack of nData objects 
     nData_list = list of nData objects, where the first element is the base object 
     stack_scale = np.array for scaling (does not need to be monotonic)
                 = None => index
    
     **kwargs
+        extras: standard nData extras dictionary
+        array_output = True => (dataArray,scaleArray,unitArray) 
+                     = False (defaulg) => return nData
     """
     kwargs.setdefault('debug',True)
+    kwargs.setdefault('extras',{})
+    kwargs.setdefault('array_output',False)
 
-    if stack_scale == None:
+    if type(stack_scale) == None:
         stack_scale = np.arange(1,len(nData_list)+1)
-    
-    #stacking the data
+
+        #stacking the data
     for i,d in enumerate(nData_list):
         rank = len(d.data.shape)
         if i==0:
@@ -338,22 +344,32 @@ def nstack(nData_list,stack_scale=None,stack_unit="", **kwargs):
         else:
             if rank == 1: #stacking along y
                 stack=np.vstack((stack,d.data))
-                yscale = yscale.append(yscale,stack_scale[i],axis=0)
-                zscale = None
-                #stack.shape = (y,x)
+                
+
             else: #stacking along z
                 stack=np.dstack((stack,d.data))
-                zscale = zscale.append(zscale,stack_scale[i],axis=2)
-                #stack.shape = (y,x,z)
-    
-    #converting back to nData object
-    stack = nData(stack)
-    stack.updateAx('x', xscale, xunit)
-    stack.updateAx('y', yscale, yunit)
-    if zscale != None:
-        stack.updateAx('z', zscale, zunit)
-    stack.extras['stack']=''
-    return stack
+                zscale=stack_scale
+                zunit = stack_unit
+
+
+    if kwargs['array_output']:
+        scaleArray = [xscale,yscale,zscale]
+        unitArray = [xunit,yunit,zunit]
+        return stack,scaleArray[:len(stack.shape)],unitArray[:len(stack.shape)]
+
+    else:
+        d = nData(stack)
+        if rank == 1:
+            d.updateAx('x', xscale, xunit)
+            d.updateAx('y', yscale, yunit)
+        else:
+                d.updateAx('x', zscale, 'zunit')
+                d.updateAx('z', yscale, 'yunit')
+                d.updateAx('y', xscale, 'xunit')
+        d = nData(stack)
+        d.extras['stack']=kwargs['extras']
+        return d
+        
     
 
 def nAppend(data1,data2,ax):

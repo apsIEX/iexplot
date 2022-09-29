@@ -1,9 +1,11 @@
-"""
-useful plotting routines
-"""
+
 import numpy as np
 import matplotlib.pyplot as plt
 from math import *
+
+"""
+useful plotting routines
+"""
 
 def plot_1D(x,y,**kwargs):
     """

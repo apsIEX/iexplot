@@ -21,11 +21,17 @@ class PlotEA:
         """
         if self.dtype == "EA":
             EA=self.EA[scanNum]
+            img = EA.data
+
 
         elif self.dtype == "mdaEA" or "mdaAD":
-            EA = self.mda[scanNum].EA[EAnum]
+            if EAnum == inf:
+                EA = self.mda[scanNum].EA[1]
+                img = np.nansum(tuple(self.mda[scanNum].EA[EAnum].data for EAnum in self.mda[scanNum].EA.keys()),axis=0)
+            else:
+                EA = self.mda[scanNum].EA[EAnum]
+                img = EA.data
 
-        img = EA.data
         yscale = EA.scale['y']
         yunit = EA.unit['y']
         
@@ -67,18 +73,16 @@ class PlotEA:
 
         return x,y,xlabel
         
-    def plotEDC(self,scanNum,EAnum=1,BE=False,**kwargs):
+    def plotEDC(self,scanNum,EAnum=inf,BE=False,**kwargs):
         """
         simple plotting for EDC
 
-        EAnum = sweep number (default = 1)
+        EAnum = scan/sweep number 
                 = inf => will sum all spectra
-        if
-            dtype="EA"  => y=data.EA[scanNum]
-            dtype="mdaEA" or "mdaAD"  => y=data.mda[scanNum]EA[EAnum]
-        BE = False uses KE scale
-        BE = True use BE=hv-KE-wk
-        if wk=None uses metadata
+
+        BE = False; Kinetic Energy scaling
+        BE = True; Binding Energy scaling
+           where BE = hv-KE-wk (wk=None uses workfunction defined in the metadata)
         
         *kwargs are the matplot lib kwargs plus the following
             Norm2One: True/False to normalize spectra between zero and one
@@ -101,13 +105,20 @@ class PlotEA:
         if BE:
             plt.xlim(max(x),min(x))
 
-    def plotEA(self,scanNum,EAnum=inf,BE=True,transpose=False,**kwargs):
+    def plotEA(self,scanNum,EAnum=inf,BE=False,transpose=False,**kwargs):
         """
-        simple plotting for EDC
-        if
-            dtype="EA"  => y=data.EA[scanNum]
-            dtype="mdaEA" or "mdaAD"  => y=data.mda[scanNum]EA[EAnum]
-        
+        simple plotting for EA spectra
+
+        EAnum = scan/sweep number 
+                = inf => will sum all spectra
+
+        BE = False; Kinetic Energy scaling
+        BE = True; Binding Energy scaling
+           where BE = hv-KE-wk (wk=None uses workfunction defined in the metadata)
+            
+        transpose = False => energy is x-axis
+                    = True => energy is y-axis
+
         ** kwargs: are matplotlib kwargs like pcolormesh, cmap, vmin, vmax
         
         """  
@@ -116,19 +127,35 @@ class PlotEA:
         img,xscale,yscale,xunit,yunit = self.EAspectra(scanNum, EAnum, BE)
 
         if transpose == True:
-            plot_2D(img.T,[xscale,yscale],[xunit,yunit])
+            plot_2D(img.T,[xscale,yscale],[xunit,yunit],**kwargs)
             if BE == True:
                 plt.ylim(max(xscale),min(xscale))
         else:
-            plot_2D(img,[yscale,xscale],[yunit,xunit])
+            plot_2D(img,[yscale,xscale],[yunit,xunit],**kwargs)
             if BE == True:
                 plt.xlim(max(xscale),min(xscale))
+
+    def plot_stack_mdaEA(*args,**kwargs):
+        """
+        *args = scanNum if volume is a single Fermi map scan
+                = scanNum, start, stop, countby for series of mda scans
+
+        **kwargs:      
+            EAnum = (start,stop,countby) => to plot a subset of scans
+            EDConly = False (default) to stack the full image
+                    = True to stack just the 1D EDCs
+        """
+        kwargs.setdefault('output','ra')
         
+        d = self.stack_mdaEA(*args,**kwargs)
+
     def stack_mdaEA(self,*args,**kwargs):
         """
-        creates a FermiMap volume
+        creates a volume of stacked spectra/or EDCs based on kwargs
+        Note: does not currently account for scaling (dumb stacking)
+
         *args = scanNum if volume is a single Fermi map scan
-                = scanNum, start, stop, countby for series of scans
+                = scanNum, start, stop, countby for series of mda scans
 
         **kwargs:      
             EAnum = (start,stop,countby) => to plot a subset of scans
@@ -139,14 +166,16 @@ class PlotEA:
 
         scanNumlist=_shortlist(*args,llist=list(self.mda.keys()),**kwargs)
         nData_list = []
-        stack_scale = []
+        stack_scale=np.empty((0))
         for scanNum in scanNumlist:
-            stack_scale.append(self.mda[scanNum].posy[1])
-            stack_unit =self.mda[scanNum].posy[1]
+            stack_scale = np.concatenate((stack_scale,self.mda[scanNum].posy[0].data))
+            stack_unit =self.mda[scanNum].posy[0].pv[1]
             for EAnum in self.mda[scanNum].EA.keys():
                 if kwargs['EDConly']:
                     nData_list.append(self.mda[scanNum].EA[EAnum].EDC)
                 else:
                     nData_list.append(self.mda[scanNum].EA[EAnum])
-                
-        nstack(nData_list,stack_scale,stack_unit=stack_unit, **kwargs)
+                    
+        extras={'stack':scanNumlist}
+        d = nstack(nData_list,stack_scale,stack_unit=stack_unit, )
+        return d

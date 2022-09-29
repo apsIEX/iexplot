@@ -1,3 +1,6 @@
+
+import matplotlib.pyplot as plt
+
 from iexplot.iexplot_utilities import _shortlist
 from iexplot.pynData.plottingUtils import *
 from iexplot.pynData.pynData import nstack
@@ -167,27 +170,26 @@ class PlotMDA:
         """ 
         #x-axis
         if 'x_detNum' in kwargs:
-            x = self.mdaDet(scanNum,detNum=kwargs['x_detNum'],ax='x')
-            xunit = self.mdaDet_label(scanNum,detNum=kwargs['x_detNum'],ax='x')
+            x = self.mdaDet(scanNum,detNum=kwargs['x_detNum'])
+            xunit = self.mdaDet_label(scanNum,detNum=kwargs['x_detNum'])
             del kwargs['x_detNum']
         elif 'posx_Num' in kwargs:
             x = self.mdaPos(scanNum,posNum=kwargs['posx_Num'],ax='x')
             xunit = self.mdaPos_label(scanNum,posNum=kwargs['posx_Num'],ax='x')
             del kwargs['posx_Num']
         else:
-            x = self.mdaPos(scanNum,posNum=1,ax='x')
-            xunit = self.mdaPos_label(scanNum,posNum=1,ax='x')
+            x = self.mdaPos(scanNum,posNum=0,ax='x')
+            xunit = self.mdaPos_label(scanNum,posNum=0,ax='x')
 
         #data
-        y = self.mdaDet(scanNum,detNum,ax='x')
+        y = self.mdaDet(scanNum,detNum)
 
         if len(y.shape)>1:
             if 'row' in kwargs or 'column' in kwargs:
                 x,y,kwargs = reduce2d(x,y, **kwargs)
-                plot_1D(x,y,**kwargs)
-                plt.xlabel(xunit)
-            else:
-                print('data is not 1D')
+
+        plot_1D(x,y,**kwargs)
+        plt.xlabel(xunit)
 
 
     def plotmda2D(self, scanNum, detNum, **kwargs):
@@ -234,7 +236,7 @@ class PlotMDA:
         plot_2D(img,scales,units,**kwargs)
         
 
-    def plot_mesh(self,scanNum,**kwargs):
+    def plot_sample_map(self,scanNum,**kwargs):
         """
         kwargs:
             det_list => list of detectors to plot 
@@ -257,17 +259,17 @@ class PlotMDA:
             kwargs.setdefault('det_list',[31,34])
             kwargs.setdefault('title_list',['TEY','D4'])
         
-        plt.figure(figsize=(10,3))
-        n=len(kwargs['det_list'])
-        for i, det_num in enumerate(kwargs['det_list']):
+        det_list = kwargs['det_list']
+        kwargs.pop('det_list')
+        title_list = kwargs['title_list']
+        kwargs.pop('title_list')
+
+        n=len('det_list')
+        for i, det_num in enumerate(det_list):
             plt.subplot(1,n,i+1)
-            plt.title(kwargs['title_list'][i])
-            self.plotmda(scanNum,kwargs['det_list'][i],**kwargs)
+            plt.title(title_list[i])
+            self.plotmda(scanNum,det_list[i],**kwargs)
             plt.colorbar()
         
-        kwargs.pop('det_list') 
-        kwargs.pop('title_list')
-            
-        plt.show()
 
     
