@@ -1,4 +1,4 @@
-from iexplot.iexplot import _shortlist, IEXdata 
+from iexplot.iexplot_utilities import _shortlist
 from iexplot.pynData.plottingUtils import *
 from iexplot.pynData.pynData import nstack
 
@@ -9,16 +9,26 @@ class PlotMDA:
     def __init__(self):
         pass
     
-    def mdaPos(self,scanNum,posNum=1,ax='x'):
+    def mdaPos(self,scanNum,**kwargs):
         """
         returns the array for a positioner
-                        
+
+        **kwargs
+            posNum=1 (default)
+            ax='x' (default)
+
         usage for 1D data:
         x = mdaPos(305)
         y = mdaDet(305,16)
         
         plt.plot(x,y)
         """
+        kwargs.setdefault('posNum',0)
+        kwargs.setdefault('ax','x')
+
+        posNum = kwargs['posNum']
+        ax = kwargs['ax']
+
         if ax == 'x':
             return self.mda[scanNum].posx[posNum].data
         if ax == 'y':
@@ -26,10 +36,14 @@ class PlotMDA:
         if ax == 'z':
             return self.mda[scanNum].posz[posNum].data
 
-    def mdaPos_label(self,scanNum,posNum=1,ax='x'):
+    def mdaPos_label(self,scanNum,**kwargs):
         """
         returns the array for a positioner
-                        
+
+        **kwargs
+            posNum=1 (default)
+            ax='x' (default)   
+
         usage for 1D data:
         x = mdaPos(305)
         xlabel = mdaPos_label(305)
@@ -41,6 +55,12 @@ class PlotMDA:
         plt.xlabel(xlabel)
         plt.ylabel(ylabel)
         """
+        kwargs.setdefault('posNum',0)
+        kwargs.setdefault('ax','x')
+
+        posNum = kwargs['posNum']
+        ax = kwargs['ax']
+        
         if ax == 'x':
             return self.mda[scanNum].posx[posNum].pv[1] if len(self.mda[scanNum].posx[posNum].pv[1])>1 else self.mda[scanNum].posx[posNum].pv[0]
         elif ax == 'y':
@@ -124,6 +144,9 @@ class PlotMDA:
                 if kwargs['Norm2One']:
                     print('Norm2One not currently implemented in 2D data, adjust vmin,vmax')
                     del kwargs['Norm2One']
+                #remove any keys not associated with pcolormesh    
+                for key in ['offset','scale','offset_x','scale_x','Norm2One']:
+                    kwargs.pop(key)
                 self.plotmda2D(scanNum, detNum, **kwargs)        
         #1D data
         else:
@@ -190,8 +213,8 @@ class PlotMDA:
             xunit = self.mdaPos_label(scanNum,posNum=kwargs['posx_Num'],ax='x')
             del kwargs['posx_Num']
         else:
-            xscale = self.mdaPos(scanNum,posNum=1,ax='x')
-            xunit = self.mdaPos_label(scanNum,posNum=1,ax='x')
+            xscale = self.mdaPos(scanNum,posNum=0,ax='x')
+            xunit = self.mdaPos_label(scanNum,posNum=0,ax='x')
         
         #y-scaling
         if 'y_detNum' in kwargs:
@@ -203,8 +226,8 @@ class PlotMDA:
             yunit = self.mdaPos_label(scanNum,posNum=kwargs['posy_Num'],ax='y')
             del kwargs['posy_Num']
         else:
-            yscale = self.mdaPos(scanNum,posNum=1,ax='y')
-            yunit = self.mdaPos_label(scanNum,posNum=1,ax='y')
+            yscale = self.mdaPos(scanNum,posNum=0,ax='y')
+            yunit = self.mdaPos_label(scanNum,posNum=0,ax='y')
         
         scales = [yscale,xscale]
         units = [yunit,xunit]    

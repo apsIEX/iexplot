@@ -10,6 +10,7 @@ import re
 from numpy import inf
 import h5py
 
+from iexplot.iexplot_utilities import _shortlist 
 from iexplot.iexplot_mda import *
 from iexplot.iexplot_EA import *
 
@@ -164,49 +165,7 @@ def _mdaHeader_ARPES(cls,headerList):
     setattr(cls, 'sample',sampleInfo)
 
  #########################################################################################################
-def _shortlist(*nums,llist,**kwargs):
-    """
-    Making a shortlist based on *num
-    *num =>
-        nums: for a single scan
-        inf: for all num in longlist
-        first,last: for all numbers between and including first and last; last can be inf
-        first,last,countby: to load a subset
-        [num1,num2]: to load a subset of scans
-    kwargs:
-        debug=False
-    """
-    kwargs.setdefault("debug",False)
-    
-    if kwargs['debug']:
-        print("nums: ",nums)
-        print("llist",llist)
-    llist.sort()
-    if type(nums[0]) is list:
-        shortlist=nums[0]
-    else:
-        if len(nums)==1:
-            if nums[0] != inf:
-                first,last,countby=nums[0],nums[0],1
-            else:
-                first,last,countby=llist[0],llist[-1],1
-        elif len(nums)==2:
-            first,last=nums
-            countby=1
-        elif len(nums)==3:
-            first,last,countby=nums
-        if last == inf:
-            last=llist[-1]
-        #print(first,last,countby)
-        shortlist=[]
 
-        for n in range(first,last+countby,countby): 
-            if n in llist:
-                shortlist.append(n)
-    if kwargs["debug"]:
-        print("shortlist: ",shortlist)
-    return shortlist
-    
 def _dirScanNumList(path,prefix,extension):
     """
     returns a list of scanNumbers for all files with prefix and extension in path

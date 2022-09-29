@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-from iexplot.iexplot_nData import _shortlist 
+from iexplot.iexplot_utilities import _shortlist 
 from iexplot.pynData.plottingUtils import *
 from iexplot.pynData.pynData import nstack
 from iexplot.pynData.pynData_ARPES import *
@@ -48,12 +48,16 @@ class PlotEA:
         """
         if self.dtype == "EA":
             EA=self.EA[scanNum]
+            y = EA.EDC.data
 
         elif self.dtype == "mdaEA" or "mdaAD":
-            EA = self.mda[scanNum].EA[EAnum]
+            if EAnum == inf:
+                EA = self.mda[scanNum].EA[1]
+                y = np.nansum(tuple(self.mda[scanNum].EA[EAnum].EDC.data for EAnum in self.mda[scanNum].EA.keys()),axis=0)
+            else:
+                EA = self.mda[scanNum].EA[EAnum]
+                y = EA.EDC.data
 
-        y = EA.EDC.data
-        
         if BE:
             x = EA.BEscale
             xlabel = 'Binding Energy (eV)'
@@ -97,7 +101,7 @@ class PlotEA:
         if BE:
             plt.xlim(max(x),min(x))
 
-    def plotEA(self,scanNum,EAnum=1,BE=True,transpose=False,**kwargs):
+    def plotEA(self,scanNum,EAnum=inf,BE=True,transpose=False,**kwargs):
         """
         simple plotting for EDC
         if
@@ -113,10 +117,13 @@ class PlotEA:
 
         if transpose == True:
             plot_2D(img.T,[xscale,yscale],[xunit,yunit])
-
+            if BE == True:
+                plt.ylim(max(xscale),min(xscale))
         else:
             plot_2D(img,[yscale,xscale],[yunit,xunit])
-            
+            if BE == True:
+                plt.xlim(max(xscale),min(xscale))
+        
     def stack_mdaEA(self,*args,**kwargs):
         """
         creates a FermiMap volume
