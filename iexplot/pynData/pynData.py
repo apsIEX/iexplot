@@ -243,7 +243,7 @@ def load_nData(fname, fdir=''):
         d.updateAx(ax, np.array(h['scale/'+ax]), h['unit'].attrs[ax])
     
     for key in h['extras'].keys():
-        updateExtrasByKey(self,key,h['extras'].attrs[key])
+        d.updateExtrasByKey(key,h['extras'].attrs[key])
     
     d.info()
     h.close()
@@ -353,8 +353,8 @@ def nstack(nData_list,stack_scale=None,stack_unit="", **kwargs):
 
 
     if kwargs['array_output']:
-        scaleArray = [xscale,yscale,zscale]
-        unitArray = [xunit,yunit,zunit]
+        scaleArray = [yscale,xscale,zscale]
+        unitArray = [yunit,xunit,zunit]
         return stack,scaleArray[:len(stack.shape)],unitArray[:len(stack.shape)]
 
     else:
@@ -371,83 +371,78 @@ def nstack(nData_list,stack_scale=None,stack_unit="", **kwargs):
         return d
         
     
-
-def nAppend(data1,data2,ax):
-	"""
-	appends  pynData data sets along ax axis
+def nAppend(data1,data2,**kwargs):
+    """
+    appends  pynData data sets along ax axis
         2D(x,y)
         3D(x,y,z)
-    
 
-	sets the scaling --- still need to work on
-	nVol.extra['Append']=data1,data2
-		kwargs:
-			ax = 'x'|'y'|'z', axis to which to append, (default: ax='z')
-			scale = 'data'|'point', sets the scaling base of the data or point number (default:data)
-			extra = 1|2|None, copies the meta data from (data1),(data2),None (default:1)
-	"""
-	### defaults
-	args={
-		'ax':'z',
-		'scale':'data'
-	}
-	args.update(kwargs) 
-	
-	if (len(np.shape(data1.data)) <2 ) or (len(np.shape(data2.data)) <2 ):
-		print("Append only works for 2D or 3D datasets")
-	else:
-	## Making stack1 a volume
-		if len(np.shape(data1.data)) <3:
-			if args['ax'] == 'z':
-				vol1=data1.data[np.newaxis,:,:]
-			if args['ax']  == 'y':
-				vol1=data1.data[:,np.newaxis,:]
-			if args['ax']  == 'z':
-				vol1=data1.data[:,:,np.newaxis]
-		else:
-			vol1=data1.data
-	## Making stack2 a volume
-		if len(np.shape(data2.data)) <3:
-			if args['ax']  == 'z':
-				vol2=data2.data[np.newaxis,:,:]
-			if args['ax']  == 'y':
-				vol2=data2.data[:,np.newaxis,:]
-			if args['ax']  == 'z':
-				vol2=data2.data[:,:,np.newaxis]
-		else:
-			vol2=data2.data
-	## Stacking vol2 ontop of vol1
-		if args['ax']  == 'x':
-			if (np.shape(vol1)[1]==np.shape(vol2)[1]) and (np.shape(vol1)[2]==np.shape(vol2)[2]):
-				vol1=np.dstack((vol1,vol2))
-				xscale=np.append(data1.scale['x'],data2.scale['x'])
-				yscale=data1.scale['y']
-				zscale=data1.scale['z']
-			else:
-				print("Data sets must be the same size in y and z")
-		if args['ax']  == 'y':
-			if (np.shape(vol1)[0]==np.shape(vol2)[0]) and (np.shape(vol1)[2]==np.shape(vol2)[2]):
-				vol1=np.hstack((vol1,vol2))
-				xscale=data1.scale['x']
-				yscale=np.append(data1.scale['y'],data2.scale['y'])
-				zscale=data1.scale['z']
-			else:
-				print("Data sets must be the same size in x and z")
-		if args['ax']  == 'z':
-			if (np.shape(vol1)[0]==np.shape(vol2)[0]) and (np.shape(vol1)[1]==np.shape(vol2)[1]):
-				vol1=np.vstack((vol1,vol2))
-				xscale=data1.scale['x']
-				yscale=data1.scale['y']
-				zscale=np.append(data1.scale['z'],data2.scale['z'])
-			else:
-				print("Data sets must be the same size in x and y")
-		nVol=nData(vol1)
-		if args['scale'] == 'data': 
-			nVol.updateAx('x',xscale,data1.unit['x'])
-			nVol.updateAx('y',yscale,data1.unit['y'])
-			nVol.updateAx('z',zscale,data1.unit['z'])
-		nVol.extras.update({'nDataAppend',['data1','data2']})
-		return nVol
+
+    sets the scaling --- still need to work on
+    nVol.extra['Append']=data1,data2
+        kwargs:
+            ax = 'x'|'y'|'z', axis to which to append, (default: ax='z')
+            scale = 'data'|'point', sets the scaling base of the data or point number (default:data)
+            extra = 1|2|None, copies the meta data from (data1),(data2),None (default:1)
+    """
+    kwargs.setdefault('ax','z')
+    kwargs.setdefault('scale','data')
+
+    if (len(np.shape(data1.data)) <2 ) or (len(np.shape(data2.data)) <2 ):
+        print("Append only works for 2D or 3D datasets")
+    else:
+    ## Making stack1 a volume
+        if len(np.shape(data1.data)) <3:
+            if kwargs['ax'] == 'z':
+                vol1=data1.data[np.newaxis,:,:]
+            if kwargs['ax']  == 'y':
+                vol1=data1.data[:,np.newaxis,:]
+            if kwargs['ax']  == 'z':
+                vol1=data1.data[:,:,np.newaxis]
+        else:
+            vol1=data1.data
+    ## Making stack2 a volume
+        if len(np.shape(data2.data)) <3:
+            if kwargs['ax']  == 'z':
+                vol2=data2.data[np.newaxis,:,:]
+            if kwargs['ax']  == 'y':
+                vol2=data2.data[:,np.newaxis,:]
+            if kwargs['ax']  == 'z':
+                vol2=data2.data[:,:,np.newaxis]
+        else:
+            vol2=data2.data
+    ## Stacking vol2 ontop of vol1
+        if kwargs['ax']  == 'x':
+            if (np.shape(vol1)[1]==np.shape(vol2)[1]) and (np.shape(vol1)[2]==np.shape(vol2)[2]):
+                vol1=np.dstack((vol1,vol2))
+                xscale=np.append(data1.scale['x'],data2.scale['x'])
+                yscale=data1.scale['y']
+                zscale=data1.scale['z']
+            else:
+                print("Data sets must be the same size in y and z")
+        if kwargs['ax']  == 'y':
+            if (np.shape(vol1)[0]==np.shape(vol2)[0]) and (np.shape(vol1)[2]==np.shape(vol2)[2]):
+                vol1=np.hstack((vol1,vol2))
+                xscale=data1.scale['x']
+                yscale=np.append(data1.scale['y'],data2.scale['y'])
+                zscale=data1.scale['z']
+            else:
+                print("Data sets must be the same size in x and z")
+        if kwargs['ax']  == 'z':
+            if (np.shape(vol1)[0]==np.shape(vol2)[0]) and (np.shape(vol1)[1]==np.shape(vol2)[1]):
+                vol1=np.vstack((vol1,vol2))
+                xscale=data1.scale['x']
+                yscale=data1.scale['y']
+                zscale=np.append(data1.scale['z'],data2.scale['z'])
+            else:
+                print("Data sets must be the same size in x and y")
+        nVol=nData(vol1)
+        if kwargs['scale'] == 'data': 
+            nVol.updateAx('x',xscale,data1.unit['x'])
+            nVol.updateAx('y',yscale,data1.unit['y'])
+            nVol.updateAx('z',zscale,data1.unit['z'])
+        nVol.extras.update({'nDataAppend',['data1','data2']})
+        return nVol
 	
 
 

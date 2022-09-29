@@ -135,7 +135,7 @@ class PlotEA:
             if BE == True:
                 plt.xlim(max(xscale),min(xscale))
 
-    def plot_stack_mdaEA(*args,**kwargs):
+    def plot_stack_mdaEA(self,*args,**kwargs):
         """
         *args = scanNum if volume is a single Fermi map scan
                 = scanNum, start, stop, countby for series of mda scans
@@ -145,9 +145,10 @@ class PlotEA:
             EDConly = False (default) to stack the full image
                     = True to stack just the 1D EDCs
         """
-        kwargs.setdefault('output','ra')
-        
-        d = self.stack_mdaEA(*args,**kwargs)
+        kwargs.setdefault('array_output',True)
+
+        dataArray,scaleArray,unitArray = self.stack_mdaEA(*args,**kwargs)
+        plot_dstack(dataArray,scaleArray,unitArray,**kwargs)
 
     def stack_mdaEA(self,*args,**kwargs):
         """
@@ -161,8 +162,11 @@ class PlotEA:
             EAnum = (start,stop,countby) => to plot a subset of scans
             EDConly = False (default) to stack the full image
                     = True to stack just the 1D EDCs
+            
         """
         kwargs.setdefault('EDConly',False)
+        kwargs.setdefault('debug',False)
+        kwargs.setdefault('array_output',True)
 
         scanNumlist=_shortlist(*args,llist=list(self.mda.keys()),**kwargs)
         nData_list = []
@@ -177,5 +181,11 @@ class PlotEA:
                     nData_list.append(self.mda[scanNum].EA[EAnum])
                     
         extras={'stack':scanNumlist}
-        d = nstack(nData_list,stack_scale,stack_unit=stack_unit, )
+
+        if kwargs['debug']:
+            return nData_list,stack_scale,stack_unit
+        
+        kwargs.update({'extras':extras})
+
+        (d) = nstack(nData_list,stack_scale,stack_unit,**kwargs)
         return d
