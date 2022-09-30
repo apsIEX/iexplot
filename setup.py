@@ -20,6 +20,6 @@ setup(
     install_requires=install_requires,
     scripts=[],
     dependency_links=[],
-    package_data={'': []}
+    package_data={'examples': ['examples/*']}
 
 )
