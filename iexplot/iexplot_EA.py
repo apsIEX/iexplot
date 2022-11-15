@@ -184,10 +184,14 @@ class PlotEA:
                     
         extras={'stack':scanNumlist}
 
+
         if kwargs['debug']:
             return nData_list,stack_scale,stack_unit
         
         kwargs.update({'extras':extras})
 
-        (d) = nstack(nData_list,stack_scale,stack_unit,**kwargs)
-        return d
+        dataArray,scaleArray,unitArray = nstack(nData_list,stack_scale,stack_unit,**kwargs)
+        stack_len = scaleArray[2].shape[0]
+        dataArray = dataArray[:,:,:stack_len]
+
+        return (dataArray,scaleArray,unitArray)
