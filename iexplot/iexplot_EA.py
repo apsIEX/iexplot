@@ -170,17 +170,29 @@ class PlotEA:
         kwargs.setdefault('debug',False)
         kwargs.setdefault('array_output',True)
 
+        if kwargs['debug']:
+            print(args)
+            print(len(args))
+
         scanNumlist=_shortlist(*args,llist=list(self.mda.keys()),**kwargs)
         nData_list = []
         stack_scale=np.empty((0))
         for scanNum in scanNumlist:
-            stack_scale = np.concatenate((stack_scale,self.mda[scanNum].posy[0].data))
-            stack_unit =self.mda[scanNum].posy[0].pv[1]
-            for EAnum in self.mda[scanNum].EA.keys():
-                if kwargs['EDConly']:
-                    nData_list.append(self.mda[scanNum].EA[EAnum].EDC)
+            try:
+                if len(args)==1:
+                    stack_scale = np.concatenate((stack_scale,self.mda[scanNum].posy[0].data))
+                    stack_unit =self.mda[scanNum].posy[0].pv[1]
                 else:
-                    nData_list.append(self.mda[scanNum].EA[EAnum])
+                    stack_scale = np.append(stack_scale,scanNum)
+                    stack_unit='scanNum'
+                
+                for EAnum in self.mda[scanNum].EA.keys():
+                    if kwargs['EDConly']:
+                        nData_list.append(self.mda[scanNum].EA[EAnum].EDC)
+                    else:
+                        nData_list.append(self.mda[scanNum].EA[EAnum])
+            except:
+                print('no EA data for ', scanNum)
                     
         extras={'stack':scanNumlist}
 
