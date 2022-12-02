@@ -15,11 +15,11 @@ setup(
     url='https://github.com/apsiex/iexplot',
     maintainer='Jessica McChesney',
     maintainer_email='jmcchesn@anl.gov',
-    version='1.1.0',
+    version='1.2.0',
     packages=find_packages(),
     install_requires=install_requires,
     scripts=[],
     dependency_links=[],
-    package_data={'': []}
+    package_data={'examples': ['examples/*']}
 
 )
