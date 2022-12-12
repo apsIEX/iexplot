@@ -1,5 +1,37 @@
 from numpy import inf
 
+def _make_num_list(*nums):
+    """
+    Making a shortlist based on *num
+    *num =>
+        nums: for a single scan
+        first,last: for all numbers between and including first and last; last can be inf
+        first,last,countby: to load a subset
+        [num1,num2]: to load a subset does not need to be consecutive  
+    """
+    num_list=[]
+    if len(nums) == 1:
+        if type(nums[0]) == int:
+            num_list = [nums[0]]
+        elif type(nums[0]) == list:
+            num_list = nums[0]
+        else:
+            print(nums,'not a valid argument, see doc string')    
+            return None
+    elif len(nums) >= 2:
+        if len(nums) == 2:
+            first,last,countby = nums,1
+        if len(nums) == 3:
+            first,last,countby = nums
+        else:
+            print(nums,'not a valid argument, see doc string') 
+            return None
+        for n in range(int(first),int(last+countby),int(countby)):
+            num_list.append(n)
+    else:
+        print(nums,'not a valid argument, see doc string') 
+        return None
+    return num_list
 
 def _shortlist(*nums,llist,**kwargs):
     """
@@ -19,27 +51,18 @@ def _shortlist(*nums,llist,**kwargs):
         print("nums: ",nums)
         print("llist",llist)
     llist.sort()
-    if type(nums[0]) is list:
-        shortlist=nums[0]
-    else:
-        if len(nums)==1:
-            if nums[0] != inf:
-                first,last,countby=nums[0],nums[0],1
-            else:
-                first,last,countby=llist[0],llist[-1],1
-        elif len(nums)==2:
-            first,last=nums
-            countby=1
-        elif len(nums)==3:
-            first,last,countby=nums
-        if last == inf:
-            last=llist[-1]
-        #print(first,last,countby)
-        shortlist=[]
-
-        for n in range(first,last+countby,countby): 
-            if n in llist:
-                shortlist.append(n)
+    #dealing with inf
+    last = llist[-1]
+    if inf in nums:
+        numslist = list(nums)
+        numslist[numslist.index(inf)] = last
+        nums = tuple(numslist)
+    #creating number list
+    num_list = _make_num_list(*nums)
+    shortlist = []
+    for n in num_list: 
+        if n in llist:
+            shortlist.append(n)
     if kwargs["debug"]:
         print("shortlist: ",shortlist)
     return shortlist

@@ -31,7 +31,7 @@
 # import all plotting packages
 import matplotlib.pyplot as plt
 from matplotlib import colors, cm
-plt.ion()
+
 
 # importing system packages
 import os

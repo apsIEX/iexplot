@@ -7,7 +7,11 @@ __version__= 1.0      #JLM 4/27/2021
 import re
 import numpy as np
 import h5py
-import netCDF4 as nc
+try:
+    import netCDF4 as nc
+except:
+    msg = "netCDF4 is not installed try installing by hand \nhttps://github.com/Unidata/netcdf4-python\r"
+    print(msg)
 
 from iexplot.pynData.pynData import nData
 from iexplot.pynData.pynData_ARPES import nARPES

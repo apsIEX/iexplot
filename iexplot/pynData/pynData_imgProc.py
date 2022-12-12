@@ -1,5 +1,5 @@
 import numpy as np
-from pynData import *
+from iexplot.pynData import *
 #==============================================================================
 # Utils for cropping, rotating and symmetrization
 #==============================================================================
