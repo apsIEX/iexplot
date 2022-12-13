@@ -25,14 +25,16 @@ class nEA_IEXheader:
 
         pvInfo=self._IEXpvs(metadata)
 
-        BeamlineInfo = ["hv","grating","ID","polarization","grating","exitSlit","ringCurrent"]
-        self.BeamlineInfo={key: pvInfo[key] for key in BeamlineInfo}
+        beamline = ["hv","grating","ID","polarization","grating","exitSlit","ringCurrent"]
+        self.beamline={key: pvInfo[key] for key in beamline}
 
-        sampleInfo = ["x","y","z","theta","chi","phi","TA","TB","TEY","TEY2"]
-        self.sampleInfo={key: pvInfo[key] for key in sampleInfo}
+        sample = ["x","y","z","theta","chi","phi","TA","TB","TEY","TEY2"]
+        self.sample={key: pvInfo[key] for key in sample}
 
         HVscanInfo=['ENERGY:bins','NumBins','SweepBinSize','SweepSteps','ROI:height','ROI:width','sweepStartEnergy',"sweepStepEnergy","sweepStopEnergy"]
         self.HVscanInfo={key: pvInfo[key] for key in HVscanInfo}
+
+        self.EAsettings = pvInfo['spectraInfo']
         
 
     def _IEXpvs(self,metadata):
@@ -229,17 +231,15 @@ class nEA(nARPES):
         
         setattr(EA,"scanNum",scanNum)
         setattr(EA,"header",nEA_IEXheader(headerAll))
-        #setattr(EA.header,"spectraInfo",EA.spectraInfo)
-        
-        #setting nARPES attributes (motor stuff is set in IEXndata)           
+            
         nARPES_metadata={
             "KEscale":EA.scale['x'],
             "angScale":EA.scale['y'],
             'angOffset':0,
             "slitDir":"V",
-            'thetaX': EA.header.sampleInfo["theta"],
-            'thetaY': EA.header.sampleInfo["chi"],
-            "hv":EA.header.BeamlineInfo["hv"],
+            'thetaX': EA.header.sample["theta"],
+            'thetaY': EA.header.sample["chi"],
+            "hv":EA.header.beamline["hv"],
             "wk":metadata["wk"],
             "EDC":EDC,
             "MDC":MDC,
