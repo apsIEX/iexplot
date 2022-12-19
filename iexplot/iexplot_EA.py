@@ -1,6 +1,6 @@
 import matplotlib.pyplot as plt
 
-from iexplot.iexplot_utilities import _shortlist 
+from iexplot.iexplot_utilities import _shortlist, _make_num_list 
 from iexplot.pynData.plottingUtils import *
 from iexplot.pynData.pynData import nstack
 from iexplot.pynData.pynData_ARPES import *

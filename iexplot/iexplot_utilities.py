@@ -9,6 +9,7 @@ def _make_num_list(*nums):
         first,last,countby: to load a subset
         [num1,num2]: to load a subset does not need to be consecutive  
     """
+
     num_list=[]
     if len(nums) == 1:
         if type(nums[0]) == int:
@@ -20,8 +21,9 @@ def _make_num_list(*nums):
             return None
     elif len(nums) >= 2:
         if len(nums) == 2:
-            first,last,countby = nums,1
-        if len(nums) == 3:
+            first,last = nums
+            countby = 1
+        elif len(nums) == 3:
             first,last,countby = nums
         else:
             print(nums,'not a valid argument, see doc string') 

@@ -34,7 +34,7 @@ class nEA_IEXheader:
         HVscanInfo=['ENERGY:bins','NumBins','SweepBinSize','SweepSteps','ROI:height','ROI:width','sweepStartEnergy',"sweepStepEnergy","sweepStopEnergy"]
         self.HVscanInfo={key: pvInfo[key] for key in HVscanInfo}
 
-        self.EAsettings = pvInfo['spectraInfo']
+        self.EAsettings = None
         
 
     def _IEXpvs(self,metadata):
@@ -246,12 +246,13 @@ class nEA(nARPES):
             "spectraInfo":metadata["spectraInfo"]
 
         }
-        EA._nARPESattributes(nARPES_metadata)        
+        EA._nARPESattributes(nARPES_metadata)  
+        setattr(EA.header,"EAsettings",metadata["spectraInfo"])      
         
         return EA
     
     def _ncPVs_EA(self,d,**kwargs):
-        """ 
+        """ s
         gets the meta data associated with a given hdf5 file, d
         """
         kwargs.setdefault("debug",False)
