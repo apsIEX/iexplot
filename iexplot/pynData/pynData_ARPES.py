@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 import ast
 
 from iexplot.pynData.pynData import nData, nData_h5Group_r, nData_h5Group_w
-from iexplot.pynData.plottingUtils import *
+from iexplot.utilities import *
 #==============================================================================
 # Global variables in science
 #==============================================================================
