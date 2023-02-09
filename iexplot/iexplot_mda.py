@@ -2,7 +2,7 @@
 import matplotlib.pyplot as plt
 
 from iexplot.utilities import _shortlist
-from iexplot.pynData.plottingUtils import *
+from iexplot.plotting import *
 from iexplot.pynData.pynData import nstack
 
 class PlotMDA:
