@@ -378,11 +378,11 @@ class IEXdata(PlotMDA, PlotEA):
                     ADext=_EAvariables(AD_dtype)["EA_dtype"]  
                     ADpath=os.path.join(userpath,ADext,'')
                     
-                elif self.prefix.lower() == "Kappa_".lower():
-                    #MPA tif files
-                    AD_dtype="mpa"
-                    ADext="tif"
-                    ADpath=os.path.join(userpath,AD_dtype,'')
+                # elif self.prefix.lower() == "Kappa_".lower():
+                #     #MPA tif files
+                #     AD_dtype="mpa"
+                #     ADext="tif"
+                #     ADpath=os.path.join(userpath,AD_dtype,'')
                 else:
                     print("no AD associated with this IOC")
                 
