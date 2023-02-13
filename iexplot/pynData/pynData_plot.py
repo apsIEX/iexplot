@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt 
 
 from iexplot.pynData.pynData import *
-from iexplot.pynData.plottingUtils import plot_1D,plot_2D
+from iexplot.plotting import plot_1D,plot_2D
 #==============================================================================
 # Utils for plotting and slicing
 #==============================================================================

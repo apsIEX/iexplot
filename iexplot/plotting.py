@@ -493,3 +493,30 @@ def plot_ra(ra,**kwargs):
     elif len(ra.data.data.shape)==3:
         plot_dstack(dataArray,scaleArray,unitArray, **kwargs)
 
+def colormap_colors(i,size,cmap_name,**kwargs):
+    """
+    Used to get a color from a color map, return color for 
+    i: the index of the color
+    size: how many gradations
+    cmap_name: python color map  'rainbow','rainbow-r','turbo','coolwarm','tab20b',Blues' 
+        For list see: https://matplotlib.org/stable/tutorials/colors/colormaps.html
+        Note: plt.cm.cmap_name will show color map
+    **kwargs:
+        gamma: gamma for non linear colormaps
+
+    Usage: 
+        detNum = 33
+        scanList = list(range(250,261,1))
+        for scanNum in scanList:
+            plot_mda(scanNum,detNum,color=colormap_colors(i,len(scanList),'coolwarm'))
+    """
+    if hasattr(plt.cm,cmap_name):
+        cm = getattr(plt.cm,cmap_name)
+        if 'gamma' in kwargs:
+            colors = cm(np.linspace(0,1,n)**kwargs['gamma'])
+        else:
+            colors = cm(np.linspace(0,1,n))
+        return colors[i]
+    else:
+        print('\n Not a valid color map, see https://matplotlib.org/stable/tutorials/colors/colormaps.html')
+        return None

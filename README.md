@@ -5,7 +5,12 @@
 	conda activate iex_env
 	ipython kernel install --user --name=iex_env
 	
-## Installing iex plot
+## Installing iexplot 
+### directly from git
+
+	install git+https://github.com/apsIEX/iexplot.git
+
+### so that you can edit and submit changes to the repo
 	git clone https://github.com/apsIEX/iexplot
 	cd iexplot
 	pip install .

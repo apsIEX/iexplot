@@ -10,7 +10,7 @@ import re
 from numpy import inf
 import h5py
 
-from iexplot.iexplot_utilities import _shortlist 
+from iexplot.utilities import _shortlist 
 from iexplot.iexplot_mda import *
 from iexplot.iexplot_EA import *
 
