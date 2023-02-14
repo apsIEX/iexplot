@@ -54,7 +54,7 @@ def fit_gaussian(x,y,**kwargs):
     x0 = x_fit[np.where(y_fit==A)[0][0]]       #first point where y == max value
     x1 = x_fit[find_closest(y_fit,A/2)[0]] #x point where half intensity
     sigma = abs(x1-x0)/2
-    bkgd = np.mean(x_fit)
+    bkgd = np.mean(y_fit)
     coefs_0 = [A, x0, sigma, bkgd] if 'coefs_0' not in kwargs else kwargs['coefs_0']
 
     coefs, covar = curve_fit(_gaussian, x, y, coefs_0)
@@ -115,7 +115,7 @@ def fit_lorentzian(x,y,**kwargs):
     x0 = x_fit[np.where(y_fit==A)[0][0]]      #first point where y == max value
     x1 = x_fit[find_closest(y_fit,A/2)[0]] #x point where half intensity
     sigma = abs(x1-x0)/2
-    bkgd = np.mean(x_fit)
+    bkgd = np.mean(y_fit)
     coefs_0 = [A, x0, sigma, bkgd] if 'coefs_0' not in kwargs else kwargs['coefs_0']
 
 

@@ -18,6 +18,7 @@ except:
     print('netCDF4 not loaded')
 
 ##### APS / 29ID-IEX:
+from iexplot.fitting import fit_gaussian, fit_lorentzian,fit_box,fit_step,fit_poly
 from iexplot.mda import readMDA,scanDim
 try:
     import iexcode.instruments.cfg as iex
@@ -572,20 +573,20 @@ def fit_mda(scanNum,detNum,fit_type,**kwargs):
         plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
 
     if fit_type == 'gauss':
-        x_fit,y_fit,coefs,covar,fit_vals = iexplot.fitting.fit_gaussian(x,y,**kwargs)
+        x_fit,y_fit,coefs,covar,fit_vals = fit_gaussian(x,y,**kwargs)
         
     elif fit_type == 'lorz':
-        x_fit,y_fit,coefs,covar,fit_vals = iexplot.fitting.fit_lorentzian(x,y,**kwargs)
+        x_fit,y_fit,coefs,covar,fit_vals = fit_lorentzian(x,y,**kwargs)
 
     elif fit_type == 'erf':
-        x_fit,y_fit,coefs,covar,fit_vals = iexplot.fitting.fit_step(x,y,**kwargs)
+        x_fit,y_fit,coefs,covar,fit_vals = fit_step(x,y,**kwargs)
 
     
     elif fit_type == 'box':
-        x_fit,y_fit,coefs,covar,fit_vals = iexplot.fitting.fit_box(x,y,**kwargs)
+        x_fit,y_fit,coefs,covar,fit_vals = fit_box(x,y,**kwargs)
 
     elif fit_type == 'poly':
-        x_fit,y_fit,coefs,covar,fit_vals = iexplot.fitting.fit_poly(x,y,**kwargs)
+        x_fit,y_fit,coefs,covar,fit_vals = fit_poly(x,y,**kwargs)
 
     else:
         print('not a valid fit function')
@@ -1433,7 +1434,7 @@ def EA_metadata(ScanNum,FilePath=None,Prefix=None):
 
 
 def Get_EDCmax(ScanNum,EnergyAxis='KE',FilePath=None,Prefix=None):
-    x,y=EA_Spectrum(ScanNum, EnergyAxis,FilePath,Prefix)
+    x,y=EA_EDC(ScanNum, EnergyAxis,FilePath,Prefix)
     maxY= max(y)
     maxX=round(x[np.where(y == max(y))][0],3)
     return maxX,maxY  # energy position, intensity of the peak
@@ -1449,7 +1450,7 @@ def EDC_Series(first,last,countby, EnergyAxis='BE',title="",norm=None,FilePath=N
     fig = plt.figure(figsize=(6,6))
     a1 = fig.add_axes([0,0,1,1])
     for ScanNum in range(first,last+countby,countby):
-        x,y=EA_Spectrum(ScanNum, EnergyAxis,FilePath,Prefix)
+        x,y=EA_EDC(ScanNum, EnergyAxis,FilePath,Prefix)
         if norm is not None: maxvalue=max(y)
         else: maxvalue=1
         plt.plot(x,y/maxvalue,label='#'+str(ScanNum))
@@ -1498,7 +1499,7 @@ def plot_nc(*ScanNum,**kwgraph):
         last=ScanNum[1]
         countby=ScanNum[2]
     for n in range(first,last+countby,countby):
-        x,intensity=EA_Spectrum(n,EnergyAxis,FilePath,Prefix)
+        x,intensity=EA_EDC(n,EnergyAxis,FilePath,Prefix)
         x,y,img =EA_spectra(n,EnergyAxis,FilePath,Prefix)
         if n == first:
             Spectra=intensity
