@@ -144,13 +144,27 @@ class PlotEA:
             EAnum = (start,stop,countby) => to plot a subset of scans
             EDConly = False (default) to stack the full image
                     = True to stack just the 1D EDCs
-        """
+            
+            **kwargs for plotting: 
+                dim3 = third axis for plotting (default: 'z')
+                dim2 = second axis for plotting (default: 'y') => vertical in main image
+                xCen = cursor x value (default: np.nan => puts in the middle)
+                xWidthPix = number of pixels to bin in x
+                yCen = cursor y value (default: np.nan => puts in the middle)
+                yWidthPix = number of pixels to bin in y
+                zCen = cursor y value (default: np.nan => puts in the middle)
+                zWidthPix = number of pixels to bin in y
+                cmap = colormap ('BuPu'=default)
+      
+
+    """
         kwargs.setdefault('array_output',True)
 
         dataArray,scaleArray,unitArray = self.stack_mdaEA(*args,**kwargs)
         kwargs.pop('array_output')
-        
-        plot_dstack(dataArray,scaleArray,unitArray,**kwargs)
+        if 'EAnum' in kwargs:
+            kwargs.pop('EAnum')
+        plot_dstack(np.array(dataArray),np.array(scaleArray),unitArray,**kwargs)
 
     def stack_mdaEA(self,*args,**kwargs):
         """
@@ -185,12 +199,15 @@ class PlotEA:
                 else:
                     stack_scale = np.append(stack_scale,scanNum)
                     stack_unit='scanNum'
-                
+                if kwargs['debug']:
+                    print(stack_scale)
+                    print(stack_unit)
                 for EAnum in self.mda[scanNum].EA.keys():
                     if kwargs['EDConly']:
                         nData_list.append(self.mda[scanNum].EA[EAnum].EDC)
                     else:
                         nData_list.append(self.mda[scanNum].EA[EAnum])
+        
             except:
                 print('no EA data for ', scanNum)
                     

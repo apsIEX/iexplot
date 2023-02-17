@@ -12,3 +12,5 @@ PyQt5
 PyQt5-sip
 pyqtgraph
 
+#package_data={'': ['PHI_XPS/*.tiff','orangebook_BE.csv']}
+#package_data={'': ['pyimagetool/cmaps/*']}
