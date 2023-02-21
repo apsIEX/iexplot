@@ -57,7 +57,7 @@ def fit_gaussian(x,y,**kwargs):
     bkgd = np.mean(y_fit)
     coefs_0 = [A, x0, sigma, bkgd] if 'coefs_0' not in kwargs else kwargs['coefs_0']
 
-    coefs, covar = curve_fit(_gaussian, x, y, coefs_0)
+    coefs, covar = curve_fit(_gaussian, x_fit, y_fit, coefs_0)
     y_fit= _gaussian(x_fit, *coefs)
     fit_vals = {
         'Amp':coefs[0],
@@ -119,7 +119,7 @@ def fit_lorentzian(x,y,**kwargs):
     coefs_0 = [A, x0, sigma, bkgd] if 'coefs_0' not in kwargs else kwargs['coefs_0']
 
 
-    coefs, covar = curve_fit(_lorentzian, x, y, coefs_0)
+    coefs, covar = curve_fit(_lorentzian, x_fit, y_fit, coefs_0)
     y_fit= _lorentzian(x_fit, *coefs)
     fit_vals = {
         'Amp':coefs[0],
@@ -178,7 +178,7 @@ def fit_step(x,y,**kwargs):
 
     coefs_0 = [A, x0, width, bkgd] if 'coefs_0' not in kwargs else kwargs['coefs_0']
 
-    coefs, covar = curve_fit(_step, x, y, coefs_0)
+    coefs, covar = curve_fit(_step, x_fit, y_fit, coefs_0)
     y_fit= _step(x_fit, *coefs)
     fit_vals={
         'height':coefs[0],
@@ -238,7 +238,7 @@ def fit_box(x,y,**kwargs):
 
     coefs_0 = [A, x0, sigma, bkgd] if 'coefs_0' not in kwargs else kwargs['coefs_0']
 
-    coefs, covar = curve_fit(_box, x, y, coefs_0)
+    coefs, covar = curve_fit(_box, x_fit, y_fit, coefs_0)
     y_fit= _box(x_fit, *coefs)
     fit_vals={
         'height':coefs[0],
