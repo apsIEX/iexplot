@@ -529,6 +529,7 @@ def plot_mda_lists(*ScanDet,**kwArg):
 ###############################################################################################
 def fit_mda(scanNum,detNum,fit_type,**kwargs):
     """
+    fits an mda scan and returns center value
     fit_type = 'gauss','lorz','erf','poly','box'
     
 
