@@ -73,7 +73,7 @@ class PlotEA:
 
         return x,y,xlabel
         
-    def plotEDC(self,scanNum,EAnum=inf,BE=False,**kwargs):
+    def plotEDC(self,scanNum,EAnum=1,BE=False,**kwargs):
         """
         simple plotting for EDC
 
@@ -105,7 +105,7 @@ class PlotEA:
         if BE:
             plt.xlim(max(x),min(x))
 
-    def plotEA(self,scanNum,EAnum=inf,BE=False,transpose=False,**kwargs):
+    def plotEA(self,scanNum,EAnum=1,BE=False,transpose=False,**kwargs):
         """
         simple plotting for EA spectra
 
