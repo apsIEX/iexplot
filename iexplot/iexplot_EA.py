@@ -225,15 +225,15 @@ class PlotEA:
 
         return (dataArray,scaleArray,unitArray)
 
-    def header_sample(self,scanNum,EAnum=1,**kwargs):
+    def EAheader_sample(self,scanNum,EAnum=1,**kwargs):
         d = self.mda[scanNum].EA[EAnum].header.sample
         return d
 
-    def header_HVscanInfo(self,scanNum,EAnum=1,**kwargs):
+    def EAheader_HVscanInfo(self,scanNum,EAnum=1,**kwargs):
         d = self.mda[scanNum].EA[EAnum].header.HVscanInfo
         return d
 
-    def header_HVscanInfo(self,scanNum,EAnum=1,**kwargs):
+    def EAheader_HVscanInfo(self,scanNum,EAnum=1,**kwargs):
         d = self.mda[scanNum].EA[EAnum].header.HVscanInfo
         return d
 

@@ -267,7 +267,7 @@ class PlotMDA:
 
         title_list = kwargs['title_list']
         kwargs.pop('title_list')
-        
+
         kwargs.setdefault('aspect_ratio',1)
         aspect_ratio = kwargs['aspect_ratio']
         kwargs.pop('aspect_ratio')
@@ -288,3 +288,10 @@ class PlotMDA:
         
 
     
+    def header(self,scanNum):
+        """
+        returns a dictionary with all the adder info from the mda scan
+    
+        """
+        d = self.mda[scanNum].header.data.mda[19].header.ScanRecord
+        return d
