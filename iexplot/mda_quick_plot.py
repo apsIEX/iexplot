@@ -38,12 +38,21 @@ def plot_image(fpath,h=20,v=10,**kwargs):
           = '/home/beams/29IDUSER/Documents/User_Folders/UserName/TifFile.tif'
     
     ** kwargs are imshow kwargs:
+        as
         cmap = colormap; examples => 'gray','BuPu','Inferno'
         vmin,vmax, adjust max and min of colormap
-    """
+    """   
     
     image = mpimg.imread(fpath)
-    plt.figure(figsize=(h,v))
+    
+    if 'aspect_ratio' in kwargs:
+        aspect_ratio = kwargs['aspect_ratio']
+        kwargs.pop('aspect_ratio')
+        fig = plt.figure()
+        ax = fig.add_subplot(1,1,1)
+        ax.set_aspect(aspect_ratio)
+    else:
+        fig = plt.figure(figsize=(h,v))
     plt.imshow(image,**kwargs)
     plt.axis('off')
     plt.show()
