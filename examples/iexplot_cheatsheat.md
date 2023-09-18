@@ -65,8 +65,7 @@ Detector data
 
 Metadata / header
 
-    header = data.mda[scanNum].header.all
-    header = data.mda_header(scanNum) #coming soon
+    data.header(scanNum)
     
 ## **EA scans**
 ---
@@ -88,5 +87,7 @@ EDCs (angle-integrated spectra)
     x,y,x_label = data.EAspectraEDC(scanNum)
     
 Metadata / header
-
-    header = coming soon
+    data.EAheader_all(scanNum,EAnum)
+    data.EAheader_sample(scanNum,EAnum)
+    data.EAheader_HVscanInfo(scanNum,EAnum)
+    data.EAheader_beamline(scanNum,EAnum)

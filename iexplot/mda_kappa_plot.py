@@ -35,22 +35,22 @@ def kappa_detNum(det_name,norm2mesh=False):
     return det_dict[key]
 
 
-def fit_d4(scanNum=last_mda()): 
+def fit_d4(scanNum=last_mda(),detNum=34): 
     """
     fits a gauss to last scan for d4 
     """   
-    d4=fit_mda(scanNum,34,0.1,'gauss',title='mda_'+str(scanNum).zfill(4))  
+    d4=fit_mda(scanNum,detNum,'gauss',title='mda_'+str(scanNum).zfill(4))  
     return round(d4,3)
 
-def fit_d3(scanNum=last_mda()):
-    d3=fit_mda(scanNum,33,3,'gauss',title='mda_'+str(scanNum).zfill(4))  
+def fit_d3(scanNum=last_mda(),detNum=33):
+    d3=fit_mda(scanNum,detNum,'gauss',title='mda_'+str(scanNum).zfill(4))  
     return round(d3,3)
 
-def fit_z(n=last_mda(),d=33):
-    z=fit_mda(n,d,500,'erf',title='mda_'+str(n).zfill(4))  
+def fit_z(scanNum=last_mda(),detNum=33):
+    z=fit_mda(scanNum,detNum,'erf',title='mda_'+str(scanNum).zfill(4))  
     return round(z,0)
     
-def plotd():
+def plot_last():
     """
     plots last scan in kappa for detector
     needs work, 

@@ -224,3 +224,23 @@ class PlotEA:
         dataArray = dataArray[:,:,:stack_len]
 
         return (dataArray,scaleArray,unitArray)
+
+    def EAheader_sample(self,scanNum,EAnum=1,**kwargs):
+        d = self.mda[scanNum].EA[EAnum].header.sample
+        return d
+
+    def EAheader_HVscanInfo(self,scanNum,EAnum=1,**kwargs):
+        d = self.mda[scanNum].EA[EAnum].header.HVscanInfo
+        return d
+
+    def EAheader_HVscanInfo(self,scanNum,EAnum=1,**kwargs):
+        d = self.mda[scanNum].EA[EAnum].header.HVscanInfo
+        return d
+
+    def header_beamline(self,scanNum,EAnum=1,**kwargs):
+        d = self.mda[scanNum].EA[EAnum].header.beamline
+        return d
+
+    def header_all(self,scanNum,EAnum=1,**kwargs):
+        d = self.mda[scanNum].EA[EAnum].header.all
+        return d    

@@ -6,6 +6,7 @@ numpy
 netCDF4
 tifffile
 xarray
+opencv-python
 
 #pyimagetool requirements
 PyQt5
