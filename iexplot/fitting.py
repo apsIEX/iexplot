@@ -9,9 +9,35 @@ import matplotlib.pyplot as plt
 from iexplot.plotting import plot_1D
 from iexplot.plotting import find_closest   #index, value
 
+def _xrange(x,y,xrange=[np.inf,np.inf]):
+    """
+    xrange = [first_x_val, last_x_val]
+    return x_sub and y_sub over a range defined xrange so that x_sub is increasing
+    """
+    if xrange[0] == np.inf:
+        x_first = x[0]
+    else: 
+        x_first = xrange[0]
+
+    if xrange[1] == np.inf:
+        x_last = x[-1]
+    else: 
+        x_last = xrange[1]
 
 
-def _gaussian(x,*coefs):
+    first_index, first_value = find_closest(x,x_first)
+    last_index, last_falue   = find_closest(x,x_last)
+
+    if first_index < last_index:
+        x_sub = x[first_index:last_index]
+        y_sub = y[first_index:last_index]
+    else:
+        x_sub = x[last_index:first_index]
+        y_sub = y[last_index:first_index]
+        
+    return x_sub, y_sub
+
+def gaussian(x,*coefs):
     """
     Function for a guassian
     coefs = [A,x0,sigma,bkgd]
@@ -38,16 +64,10 @@ def fit_gaussian(x,y,**kwargs):
 
     """
     kwargs.setdefault('plot',True)
-    
+    kwargs.setdefault('xrange',[np.inf,np.inf])
+
     #subrange
-    if 'xrange' in kwargs:
-        first_index, first_value = find_closest(x,kwargs['xrange'][0])
-        last_index, last_falue   = find_closest(x,kwargs['xrange'][1])
-        x_fit = x[first_index:last_index]
-        y_fit = y[first_index:last_index]
-    else:
-        x_fit = x
-        y_fit = y
+    x_fit, y_fit = _xrange(x,y,kwargs['xrange'])
     
     #initial guess using subranges if not specified in kwargs
     A = np.max(y_fit)
@@ -57,8 +77,8 @@ def fit_gaussian(x,y,**kwargs):
     bkgd = np.mean(y_fit)
     coefs_0 = [A, x0, sigma, bkgd] if 'coefs_0' not in kwargs else kwargs['coefs_0']
 
-    coefs, covar = curve_fit(_gaussian, x_fit, y_fit, coefs_0)
-    y_fit= _gaussian(x_fit, *coefs)
+    coefs, covar = curve_fit(gaussian, x_fit, y_fit, coefs_0)
+    y_fit= gaussian(x_fit, *coefs)
     fit_vals = {
         'Amp':coefs[0],
         'center':coefs[1],
@@ -132,6 +152,7 @@ def fit_lorentzian(x,y,**kwargs):
 
     return  x_fit,y_fit,coefs,covar,fit_vals
 
+
 def _step(x,*coefs):
     """
     Function for a step/error
@@ -170,7 +191,7 @@ def fit_step(x,y,**kwargs):
         y_fit = y
     
     #initial guess using subranges if not specified in kwargs
-    A = np.mean(np.sign(np.array(y_fit)))*(np.max(y_fit)-np.min(y_fit))/2 #step hight
+    A = np.mean(np.sign(np.array(y_fit)))*(np.max(y_fit)-np.min(y_fit))/2 #step height
     x0 = x_fit[find_closest(y_fit,np.mean(y_fit))[0]] #x point where mean intensity
     x1 = x_fit[find_closest(y_fit,1.25*np.mean(y_fit))[0]] #x point where 1.25 mean intensity
     width = abs(x1-x0)

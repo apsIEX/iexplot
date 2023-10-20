@@ -250,7 +250,7 @@ def plot_dimage(dataArray,scaleArray,unitArray, **kwargs):
     plt.show()
     return {'images':(image),'profiles':(profileH,profileV),'scales':scales}
 
-def plot_dstack(dataArray,scaleArray,unitArray, **kwargs):
+def plot_3D(dataArray,scaleArray,unitArray, **kwargs):
     """
     dataArray is a 3D np.array(data[y][x][z]) => images are row by column data, which are then stacked (np.dstack)
     scaleArray = (scaleY,scaleX,scaleZ) 
@@ -481,7 +481,7 @@ def plot_dstack(dataArray,scaleArray,unitArray, **kwargs):
         ax6.xaxis.tick_top()
         ax6.set_xlabel(units[2]) 
 
-    return {'images':(image,imageH,imageV),'profiles':(profileH,profileV,profileD),'scales':scales}
+    #return {'images':(image,imageH,imageV),'profiles':(profileH,profileV,profileD),'scales':scales}
 
 def plot_ra(ra,**kwargs):
     dataArray=ra.data.data
@@ -491,7 +491,7 @@ def plot_ra(ra,**kwargs):
     if len(ra.data.data.shape)==2:
         plot_dimage(dataArray,scaleArray,unitArray, **kwargs)
     elif len(ra.data.data.shape)==3:
-        plot_dstack(dataArray,scaleArray,unitArray, **kwargs)
+        plot_3D(dataArray,scaleArray,unitArray, **kwargs)
 
 def colormap_colors(i,size,cmap_name,**kwargs):
     """
@@ -513,10 +513,12 @@ def colormap_colors(i,size,cmap_name,**kwargs):
     if hasattr(plt.cm,cmap_name):
         cm = getattr(plt.cm,cmap_name)
         if 'gamma' in kwargs:
-            colors = cm(np.linspace(0,1,n)**kwargs['gamma'])
+            colors = cm(np.linspace(0,1,size)**kwargs['gamma'])
         else:
-            colors = cm(np.linspace(0,1,n))
+            colors = cm(np.linspace(0,1,size))
         return colors[i]
     else:
         print('\n Not a valid color map, see https://matplotlib.org/stable/tutorials/colors/colormaps.html')
         return None
+    
+

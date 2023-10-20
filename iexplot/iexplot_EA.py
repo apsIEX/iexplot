@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 
+import numpy as np
 from iexplot.utilities import _shortlist, _make_num_list 
-from iexplot.plotting import *
+from iexplot.plotting import plot_1D, plot_2D, plot_3D
 from iexplot.pynData.pynData import nstack
-from iexplot.pynData.pynData_ARPES import *
 
 class PlotEA:
     """
@@ -25,7 +25,7 @@ class PlotEA:
 
 
         elif self.dtype == "mdaEA" or "mdaAD":
-            if EAnum == inf:
+            if EAnum == np.inf:
                 EA = self.mda[scanNum].EA[1]
                 img = np.nansum(tuple(self.mda[scanNum].EA[EAnum].data for EAnum in self.mda[scanNum].EA.keys()),axis=0)
             else:
@@ -57,7 +57,7 @@ class PlotEA:
             y = EA.EDC.data
 
         elif self.dtype == "mdaEA" or "mdaAD":
-            if EAnum == inf:
+            if EAnum == np.inf:
                 EA = self.mda[scanNum].EA[1]
                 y = np.nansum(tuple(self.mda[scanNum].EA[EAnum].EDC.data for EAnum in self.mda[scanNum].EA.keys()),axis=0)
             else:
@@ -164,7 +164,7 @@ class PlotEA:
         kwargs.pop('array_output')
         if 'EAnum' in kwargs:
             kwargs.pop('EAnum')
-        plot_dstack(np.array(dataArray),np.array(scaleArray),unitArray,**kwargs)
+        plot_3D(np.array(dataArray),np.array(scaleArray),unitArray,**kwargs)
 
     def stack_mdaEA(self,*args,**kwargs):
         """
@@ -204,10 +204,15 @@ class PlotEA:
                     print(stack_unit)
                 for EAnum in self.mda[scanNum].EA.keys():
                     if kwargs['EDConly']:
+                        if kwargs['debug']:
+                            #print('EDConly')
+                            pass
                         nData_list.append(self.mda[scanNum].EA[EAnum].EDC)
                     else:
                         nData_list.append(self.mda[scanNum].EA[EAnum])
-        
+
+                #Truncating stack_scale for number of images        
+                stack_scale = stack_scale[0:len(nData_list)]
             except:
                 print('no EA data for ', scanNum)
                     
@@ -219,8 +224,9 @@ class PlotEA:
         
         kwargs.update({'extras':extras})
 
-        dataArray,scaleArray,unitArray = nstack(nData_list,stack_scale,stack_unit,**kwargs)
-        stack_len = scaleArray[2].shape[0]
-        dataArray = dataArray[:,:,:stack_len]
+        #Stacking data
+        d = nstack(nData_list,stack_scale,stack_unit,**kwargs)
+        
+        
 
-        return (dataArray,scaleArray,unitArray)
+        return d

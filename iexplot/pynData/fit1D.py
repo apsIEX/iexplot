@@ -34,7 +34,8 @@ from scipy import io, signal, interpolate, ndimage
 # tiff packages
 import tifffile
 
-from lmfit import Minimizer, Parameters, report_fit
+#from lmfit import Minimizer, Parameters, report_fit
+import lmfit
 
 
 #==============================================================================
@@ -276,7 +277,7 @@ def guess_FermiLinearBG(x, y):
     Slope = (C2-C1)/(E2-E1)
     Intercept = E2-(C2-BG)/Slope
     
-    params = Parameters()
+    params = lmfit.Parameters()
     params.add('Ef', value=Ef)
     params.add('T', value=30., min=2.)
     params.add('Slope', value=Slope)
