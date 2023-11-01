@@ -297,8 +297,8 @@ def kmapping_stack(EA_list, E_unit='BE',**kwargs):
     EA = EA_list[0]
     
     #energy BE/KE
-    BE_min = KE_to_BE(np.min(EA.KEscale),EA.hv,EA.wk)
-    BE_max = max(KE_to_BE(KE_max,EA.hv,EA.wk),KE_to_BE(KE_max,EA.hv,EA.wk))
+    BE_min = KE_to_BE(np.max(EA.KEscale),EA.hv,EA.wk)
+    BE_max = min(KE_to_BE(KE_min,EA.hv,EA.wk),KE_to_BE(KE_min,EA.hv,EA.wk))
     if E_unit == 'KE':
         E_new = np.arange(KE_min,KE_max,abs(BE_min-BE_max))
     if E_unit == 'BE':
@@ -339,13 +339,14 @@ def kmapping_stack(EA_list, E_unit='BE',**kwargs):
         elif EA.slitDir == 'V':
             img_x = kmapping_energy_scale(EA,E_unit='BE',KE_offset=KE_offset)
             img_y = k_new
+
             
         #now we need to interp image into 3D array
         #print('img:',img.shape,img_y.shape, img_x.shape)
         #print('data_new:',data_new.shape,data_yy.shape,data_xx.shape)
 
         img_xx,img_yy = np.meshgrid(img_x,img_y)
-        data_new[:,:,n] = interpolate.griddata((np.ravel(img_xx),np.ravel(img_yy)),np.ravel(img),(data_xx,data_yy),fill_value=np.nan,rescale=True)
+        data_new[:,:,n] = interpolate.griddata((np.ravel(img_xx),np.ravel(img_yy)),np.ravel(img),(data_xx,data_yy),fill_value=np.nan,rescale=True,method='nearest')
             
     return data_new, E_new, k_new
         
