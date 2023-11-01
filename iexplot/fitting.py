@@ -119,16 +119,10 @@ def fit_lorentzian(x,y,**kwargs):
 
     """
     kwargs.setdefault('plot',True)
-    
+    kwargs.setdefault('xrange',[np.inf,np.inf])
+
     #subrange
-    if 'xrange' in kwargs:
-        first_index, first_value = find_closest(x,kwargs['xrange'][0])
-        last_index, last_falue   = find_closest(x,kwargs['xrange'][1])
-        x_fit = x[first_index:last_index]
-        y_fit = y[first_index:last_index]
-    else:
-        x_fit = x
-        y_fit = y
+    x_fit, y_fit = _xrange(x,y,kwargs['xrange'])
     
     #initial guess using subranges if not specified in kwargs
     A = np.max(y_fit)
@@ -179,16 +173,10 @@ def fit_step(x,y,**kwargs):
 
     """
     kwargs.setdefault('plot',True)
-    
+    kwargs.setdefault('xrange',[np.inf,np.inf])
+
     #subrange
-    if 'xrange' in kwargs:
-        first_index, first_value = find_closest(x,kwargs['xrange'][0])
-        last_index, last_falue   = find_closest(x,kwargs['xrange'][1])
-        x_fit = x[first_index:last_index]
-        y_fit = y[first_index:last_index]
-    else:
-        x_fit = x
-        y_fit = y
+    x_fit, y_fit = _xrange(x,y,kwargs['xrange'])
     
     #initial guess using subranges if not specified in kwargs
     A = np.mean(np.sign(np.array(y_fit)))*(np.max(y_fit)-np.min(y_fit))/2 #step height
@@ -239,16 +227,10 @@ def fit_box(x,y,**kwargs):
 
     """
     kwargs.setdefault('plot',True)
-    
+    kwargs.setdefault('xrange',[np.inf,np.inf])
+
     #subrange
-    if 'xrange' in kwargs:
-        first_index, first_value = find_closest(x,kwargs['xrange'][0])
-        last_index, last_falue   = find_closest(x,kwargs['xrange'][1])
-        x_fit = x[first_index:last_index]
-        y_fit = y[first_index:last_index]
-    else:
-        x_fit = x
-        y_fit = y
+    x_fit, y_fit = _xrange(x,y,kwargs['xrange'])
     
     #initial guess using subranges if not specified in kwargs
     A = np.mean(np.sign(np.array(y_fit)))*(np.max(y_fit)-np.min(y_fit))/2 #step hight
@@ -289,16 +271,10 @@ def fit_poly(x,y,rank=3,**kwargs):
 
     """
     kwargs.setdefault('plot',True)
-    
+    kwargs.setdefault('xrange',[np.inf,np.inf])
+
     #subrange
-    if 'xrange' in kwargs:
-        first_index, first_value = find_closest(x,kwargs['xrange'][0])
-        last_index, last_falue   = find_closest(x,kwargs['xrange'][1])
-        x_fit = x[first_index:last_index]
-        y_fit = y[first_index:last_index]
-    else:
-        x_fit = x
-        y_fit = y
+    x_fit, y_fit = _xrange(x,y,kwargs['xrange'])
     
     coefs = poly.polyfit(x, y, rank)
     y_fit = poly.polyval(x_fit, coefs)

@@ -21,10 +21,7 @@
 #==============================================================================
 # imports
 #==============================================================================
-import math
 import numpy as np
-import matplotlib.pyplot as plt
-import ast
 from scipy import interpolate
 
 
@@ -371,9 +368,9 @@ def nARPES_h5Group_w(nd,parent,name):
     
     for attr in ['hv','wk','thetaX','thetaY','KEscale','angScale','angOffset']:
         if type(getattr(nd,attr)) == type(None):
-            g.create_dataset(attr, data=np.array([]) , dtype='f')
+            g.require_dataset(attr, data=np.array([]) , dtype='f',shape=np.array([]))
         else:
-            g.create_dataset(attr, data=np.array(getattr(nd,attr)) , dtype='f')
+            g.require_dataset(attr, data=np.array(getattr(nd,attr)) , dtype='f',shape = np.array(getattr(nd,attr)).shape)
     for attr in ['slitDir']:
         g.attrs[attr]=str(getattr(nd,attr))
     return g
@@ -395,5 +392,5 @@ def nARPES_h5Group_r(h):
         setattr(d,attr,h[attr])
     for attr in ['slitDir','fpath']:
         if attr in h.attrs:
-            setattr(d,attr,ast.literal_eval(h.attrs[attr]))
+            setattr(d,attr,(h.attrs[attr]))
     return d   

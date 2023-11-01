@@ -772,17 +772,8 @@ class IEXdata(PlotMDA, PlotEA, IEX_IT):
         gmda=h5.create_group('mda')
         for scanNum in self.mda:
             nd=self.mda[scanNum]
-            name='mda_'+str(scanNum)
+            name=str(scanNum)
             nmda_h5Group_w(nd,gmda,name)
-
-
-            
-        #EA
-        gEA=h5.create_group('EA')
-        for scanNum in self.EA:
-            nd=self.EA[scanNum]
-            name="EA_"+str(scanNum)
-            nARPES_h5Group_w(nd,gEA,name)
 
 
         h5.close()
@@ -837,22 +828,12 @@ def load_IEXnData(fpath):
     gmda=h5['mda']
     mdaLoaded=[]
     for scan in gmda.keys():
-        scanNum=int(scan.split("_")[-1])
+        scanNum=int(scan)
         mydata.mda[scanNum]=nmda_h5Group_r(gmda[scan])
         mdaLoaded.append(scanNum)  
     print("mda scans: "+str(mdaLoaded))
         
-    #EA
-    gEA=h5['EA']
-    EAloaded=[]
-    for scan in gEA.keys():
-        scanNum=int(scan.split("_")[-1])
-        mydata.EA[scanNum]=nARPES_h5Group_r(gEA[scan])
-        EAloaded.append(scanNum)
-        
-    print("EA scans: "+str(EAloaded))
-    h5.close()
-    
+
     return mydata
 
  

@@ -268,18 +268,18 @@ def nData_h5Group_w(nd,parent,name):
         group named: extra
             attrs[key]                   
     """
-    g=parent.create_group(name)
-    g.create_dataset('data', data=nd.data, dtype='f')
+    g=parent.require_group(name)
+    g.require_dataset('data', data=nd.data, dtype='f',shape=nd.data.shape)
 
-    scale = g.create_group('scale')
+    scale = g.require_group('scale')
     for ax in nd.scale.keys():
-        scale.create_dataset(ax, data=nd.scale[ax], dtype='f')
+        scale.require_dataset(ax, data=nd.scale[ax], dtype='f', shape=nd.scale[ax].shape)
 
-    unit = g.create_group('unit')
+    unit = g.require_group('unit')
     for ax in nd.unit.keys():
         unit.attrs[ax] = nd.unit[ax]
 
-    extras = g.create_group('extras')
+    extras = g.require_group('extras')
     for key in nd.extras.keys():
         extras.attrs[key] = nd.extras[key]   
     

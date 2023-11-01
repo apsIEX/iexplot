@@ -316,6 +316,16 @@ def nmda_h5Group_w(nmda,parent,name):
                 g=nData_h5Group_w(nd,gpos,name)
                 g.attrs['pv']=str(nd.pv)
 
+    #EA
+    gEA = gmda.create_group('EA')
+    for EANum in nmda.EA:
+        nd = nmda.EA[EANum]
+        name="EA_"+str(EANum)
+        g = nData_h5Group_w(nd,gEA,name)
+        #g.attrs['pv']=str(nd.pv)
+
+    
+
 def nmda_h5Group_r(h):
     """
     """
@@ -355,6 +365,16 @@ def nmda_h5Group_r(h):
                 nd=nData_h5Group_r(h["pos"+axis][posn])
                 pdict[posNum]=nd
             setattr(d,"pos"+axis,pdict)
+
+
+    #EA
+    EAdict={}
+    EAAll={}
+    for EA in h['EA']:
+        EANum=int(EA.split("_")[-1])
+        nd=nData_h5Group_r(h['EA'][EA])
+        EAdict[EANum]=nd
+    setattr(d,'EA',EAdict)
 
     return d
         
