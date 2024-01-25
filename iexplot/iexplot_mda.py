@@ -238,10 +238,12 @@ class PlotMDA:
 
     def plot_sample_map(self,scanNum,**kwargs):
         """
+        plots the relavent detectors for a sample map with an aspect ration of 1
         kwargs:
             det_list => list of detectors to plot 
             title_list => list of titles for each detector
-            
+            figsize => figure size; use to make figure bigger so scales don't overlap (H,V)
+                        
             defaults:
             if prefix = 'ARPES_'
                     det_list = [16,17] 
@@ -254,6 +256,7 @@ class PlotMDA:
         if self.prefix == 'ARPES_':
             kwargs.setdefault('det_list',[16,17])
             kwargs.setdefault('title_list',['TEY','EA'])
+            
         
         if self.prefix == 'Kappa_':
             kwargs.setdefault('det_list',[31,34])
@@ -261,15 +264,34 @@ class PlotMDA:
         
         det_list = kwargs['det_list']
         kwargs.pop('det_list')
+
         title_list = kwargs['title_list']
         kwargs.pop('title_list')
 
+        kwargs.setdefault('aspect_ratio',1)
+        aspect_ratio = kwargs['aspect_ratio']
+        kwargs.pop('aspect_ratio')
+
         n=len('det_list')
+        if 'figsize' in kwargs:
+            fig = plt.figure(figsize=kwargs['figsize'])
+            kwargs.pop('figsize')
+        else:
+            fig = plt.figure()
+
         for i, det_num in enumerate(det_list):
-            plt.subplot(1,n,i+1)
-            plt.title(title_list[i])
+            ax = fig.add_subplot(1,n,i+1)
+            ax.set_title(title_list[i])
+            ax.set_aspect(aspect_ratio)
             self.plotmda(scanNum,det_list[i],**kwargs)
             plt.colorbar()
         
 
     
+    def header(self,scanNum):
+        """
+        returns a dictionary with all the adder info from the mda scan
+    
+        """
+        d = self.mda[scanNum].header.data.mda[19].header.ScanRecord
+        return d

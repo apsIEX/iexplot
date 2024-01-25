@@ -34,7 +34,7 @@ class nEA_IEXheader:
         HVscanInfo=['ENERGY:bins','NumBins','SweepBinSize','SweepSteps','ROI:height','ROI:width','sweepStartEnergy',"sweepStepEnergy","sweepStopEnergy"]
         self.HVscanInfo={key: pvInfo[key] for key in HVscanInfo}
 
-        self.EAsettings = None
+        self.HVscanInfo = None
         
 
     def _IEXpvs(self,metadata):

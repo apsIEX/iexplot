@@ -4,6 +4,7 @@ import numpy as np
 from iexplot.utilities import _shortlist, _make_num_list 
 from iexplot.plotting import plot_1D, plot_2D, plot_3D
 from iexplot.pynData.pynData import nstack
+from iexplot.pynData.pynData_ARPES import kmapping_energy_scale
 
 class PlotEA:
     """
@@ -166,67 +167,141 @@ class PlotEA:
             kwargs.pop('EAnum')
         plot_3D(np.array(dataArray),np.array(scaleArray),unitArray,**kwargs)
 
-    def stack_mdaEA(self,*args,**kwargs):
-        """
-        creates a volume of stacked spectra/or EDCs based on kwargs
-        Note: does not currently account for scaling (dumb stacking)
 
-        *args = scanNum if volume is a single Fermi map scan
-                = scanNum, start, stop, countby for series of mda scans
-
-        **kwargs:      
-            EAnum = (start,stop,countby) => to plot a subset of scans
-            EDConly = False (default) to stack the full image
-                    = True to stack just the 1D EDCs
+    def make_EA_list(self, *nums, **kwargs):
+            """
+            creates an EA_list from list of scans
             
-        """
-        kwargs.setdefault('EDConly',False)
-        kwargs.setdefault('debug',False)
-        kwargs.setdefault('array_output',True)
-
-        if kwargs['debug']:
-            print(args)
-            print(len(args))
-
-        scanNumlist=_shortlist(*args,llist=list(self.mda.keys()),**kwargs)
-        nData_list = []
-        stack_scale=np.empty((0))
-        for scanNum in scanNumlist:
-            try:
-                if len(args)==1:
+            nums = list of mda scans to be plotted 
+            
+            **kwargs:      
+                    EAnum = (start,stop,countby) => to plot a subset of EA scans
+                    EDConly = False (default) to stack the full image
+                            = True to stack just the 1D EDCs
+                
+            """
+            kwargs.setdefault('EDConly',False)
+            kwargs.setdefault('debug',False) 
+            
+            scanNumlist = _make_num_list(*nums)
+            EA_list = []
+            stack_scale=np.empty((0))
+            
+            for scanNum in scanNumlist:
+                if kwargs['debug']:
+                    print('scanNumlist: ',scanNumlist)
+                if len(scanNumlist)==1:
                     stack_scale = np.concatenate((stack_scale,self.mda[scanNum].posy[0].data))
                     stack_unit =self.mda[scanNum].posy[0].pv[1]
                 else:
                     stack_scale = np.append(stack_scale,scanNum)
                     stack_unit='scanNum'
+
                 if kwargs['debug']:
-                    print(stack_scale)
-                    print(stack_unit)
-                for EAnum in self.mda[scanNum].EA.keys():
+                    print('stack_scale: ',stack_scale)
+                    print('stack_unit',stack_unit)
+
+
+                #creating list of all EA numbers
+                ll = list(self.mda[scanNum].EA.keys())
+                
+                #creating shortlist of selected EAnum
+                if 'EAnum' in kwargs:
+                    EAlist = _shortlist(kwargs['EAnum'],llist = ll,**kwargs)  
+                else:
+                    EAlist = ll
+                
+                if kwargs['debug']:
+                    print('EAlist: ',EAlist)
+
+                #populating EA_list with EA/EDC scans
+                for EAnum in EAlist:
                     if kwargs['EDConly']:
                         if kwargs['debug']:
                             #print('EDConly')
                             pass
-                        nData_list.append(self.mda[scanNum].EA[EAnum].EDC)
+                        EA_list.append(self.mda[scanNum].EA[EAnum].EDC)
                     else:
-                        nData_list.append(self.mda[scanNum].EA[EAnum])
+                        EA_list.append(self.mda[scanNum].EA[EAnum])
 
                 #Truncating stack_scale for number of images        
-                stack_scale = stack_scale[0:len(nData_list)]
-            except:
-                print('no EA data for ', scanNum)
+                stack_scale = stack_scale[0:len(EA_list)]    
                     
-        extras={'stack':scanNumlist}
+            return EA_list, stack_scale
+    
+def stack_mdaEA(*scanNum,E_unit='BE',**kwargs):
+        """
+        creates a volume of stacked spectra/or EDCs based on kwargs
+        Note: does not currently account for scaling (dumb stacking)
 
+        *scanNum = scanNum if volume is a single Fermi map scan
+                = mda => start, stop, countby for series of mda scans
+                only debugs for a stack of mda scans...need to try a fermi map AJE
+
+        E_unit = 'BE' or 'KE'
+
+        **kwargs:      
+            EAnum = (start,stop,countby) => to plot a subset of scans (only EAnum = 1 by default)
+            EDConly = False (default) to stack the full image
+                    = True to stack just the 1D EDCs
+            
+                EAnum = (start,stop,countby) => to plot a subset of EA scans
+                            = True to stack just the 1D EDCs
+                    
+            E_offset = offset value for each scan based on curve fitting in E_units
+            E_offset type = np array if an offset is applied, float if no offset is applied
+            
+        """
+        EA_list,stack_scale = _make_num_list(*scanNum,**kwargs)
+        _stack_mdaEA_from_list(EA_list,stack_scale, E_unit,**kwargs)
+
+def _stack_mdaEA_from_list(EA_list,stack_scale, E_unit,**kwargs):
+        """
+        creates a volume of stacked spectra/or EDCs based on kwargs
+        Note: does not currently account for scaling (dumb stacking)
+
+        E_unit = 'KE' or 'BE'
+
+        **kwargs:      
+            EAnum = (start,stop,countby) => to plot a subset of scans
+            EDConly = False (default) to stack the full image
+                    = True to stack just the 1D EDCs
+                    
+            E_offset = offset value for each scan based on curve fitting
+            E_offset type = np array if an offset is applied, float if no offset is applied
+            
+        """
+        kwargs.setdefault('E_offset',0.0)
+        kwargs.setdefault('debug',False)
+        kwargs.setdefault('array_output',True)
+        
+        EA = EA_list[0]
+        
+        for n,EA in enumerate(EA_list):
+            if n == 0: 
+                KE_min = np.min(EA.KEscale)
+                KE_max = np.max(EA.KEscale)
+            _KE_min = np.min(EA.KEscale)
+            _KE_max = np.max(EA.KEscale)
+            KE_min = min(KE_min, _KE_min)
+            KE_max = max(KE_max, _KE_max)
+               
+        
+            
+        #BE/KE conversion
+        for i,EAnum in enumerate(EA_list):
+            if type(kwargs['E_offset']) == float:
+                E_offset = kwargs['E_offset']
+            else:
+                E_offset = kwargs['E_offset'][i]
+            E_scale = kmapping_energy_scale(EAnum, E_unit, E_offset = E_offset) 
+            EA_list[i].scale['x'] = E_scale
 
         if kwargs['debug']:
-            return nData_list,stack_scale,stack_unit
-        
-        kwargs.update({'extras':extras})
-
+            print(type(E_offset))  
+            print(E_offset)
+            
         #Stacking data
-        d = nstack(nData_list,stack_scale,stack_unit,**kwargs)
+        d = nstack(EA_list, stack_scale, **kwargs)
         
-        
-
-        return d
+        return d    
