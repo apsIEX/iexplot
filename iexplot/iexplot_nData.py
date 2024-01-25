@@ -777,7 +777,7 @@ class IEXdata(PlotMDA, PlotEA, IEX_IT):
 
 
         h5.close()
-        return
+        return 
 
                 
                 

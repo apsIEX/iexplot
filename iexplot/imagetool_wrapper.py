@@ -1,8 +1,13 @@
 import numpy as np
 import re
 from time import sleep
+from lmfit import Parameters
 import pyimagetool as it
 from iexplot.plotting import plot_1D, plot_2D, plot_dimage
+from iexplot.pynData.pynData_ARPES import kmapping_stack
+from iexplot.utilities import _shortlist
+from iexplot.fitting import fit_voigt, fit_step, find_EF_offset
+from iexplot.iexplot_EA import PlotEA, _stack_mdaEA_from_list
 
 class IEX_IT:
     instances = {}
@@ -68,7 +73,10 @@ class IEX_IT:
 
         return name
 
-
+    #universal IT plotting functions
+    
+    
+    
 
     def it_mda(self, scanNum, detNum):
         """
@@ -95,22 +103,86 @@ class IEX_IT:
         tool.setWindowTitle(name)
         tool.show()
 
-
-    def it_stack_mdaEA(self, scanNum, **kwargs):
-        """
-        plot 3D mda EA data in imagetool
-        """
-
-        d = self.stack_mdaEA(scanNum,**kwargs)
+    
+    def it_pynData(self, d):
         ra = pynData_to_ra(d)
-
         tool = it.imagetool(ra)
         name = self._append_instance(tool)
         tool.setWindowTitle(name)
         tool.show()
+
+
+    def it_mdaEA(self, *scanNums, **kwargs):
+        """
+        stack and plot 3D mda EA data in imagetool
         
+        self = IEXdata object
+        
+        *scanNums = scanNum if volume is a single Fermi map scan
+            = start, stop, countby for series of mda scans    
+            
+        
+        kwargs:
+            E_unit = KE or BE
+            ang_offset = angle offset
+            y_scale = k or angle
+            EAnum = (start,stop,countby) => to plot a subset of EA scans
+            EDConly = False (default) to stack the full image
+                    = True to stack just the 1D EDCs
+            find_E_offset   = False (default), does not offset data
+                            = True, will apply offset
+            fit_type = fitting function used to calculate offset, 'step' or 'Voigt'
+            fit_xrange = subrange to apply fitting function over
+        
+        
+        """
+        kwargs.setdefault('E_unit','KE')
+        kwargs.setdefault('find_E_offset',False)
+        kwargs.setdefault('offset_type','step')
+        kwargs.setdefault('ang_offset',0.0)
+        kwargs.setdefault('kmap',False)
+        kwargs.setdefault('array_output', False)
+        kwargs.setdefault('EAnum',1)
+        kwargs.setdefault('EDConly', False)
+        kwargs.setdefault('fit_xrange', [-np.inf,np.inf])
+
+        scanNumlist=_shortlist(*scanNums,llist=list(self.mda.keys()),**kwargs)
+        
+
+        EA_list, stack_scale = PlotEA.make_EA_list(self, scanNumlist, EAnum = kwargs['EAnum'], EDConly = kwargs['EDConly'])
+        
+        if kwargs['find_E_offset']:
+            E_offset = find_EF_offset(EA_list, E_unit = kwargs['E_unit'], fit_type = kwargs['fit_type'], xrange = kwargs['fit_xrange'])
+        else: 
+            E_offset = 0.0
+
+            
+        hv_list = []
+        for EA in EA_list:
+            hv_list.append(EA.hv)
+        hv_array = np.array(hv_list)
+        
+        #adjusting angle scaling
+        for EA in EA_list:
+            EA.scaleAngle(kwargs['ang_offset'])
+        
+        if len(EA_list) == 1:
+            d = EA_list[0]
+        else:
+            if kwargs['kmap'] == True:
+                d = kmapping_stack(EA_list, E_unit = kwargs['E_unit'], KE_offset = -E_offset)
+            else:
+                d = _stack_mdaEA_from_list(EA_list,stack_scale, E_unit = kwargs['E_unit'], KE_offset = -E_offset)
+        
+        if kwargs['array_output'] == True:
+            return d
+        else:
+            self.it_pynData(self,d)
     
-    def it_export(self, it_num, img_prof, output):
+    
+    
+
+    def it_export(self, it_num, img_prof, output,**kwargs):
         """
         extract data from an individual plot in imagetool
 
@@ -123,7 +195,10 @@ class IEX_IT:
         output = how image data will be returned
         output type = string (see output_list for options)
         """
-        axis_dict = {'prof_h':['x','Intensity',1], 'prof_v':['y','Intensity',0], 'prof_d':['z','Intensity',2], 'img_main':['xy',0,1], 'img_v':['zy',0,2], 'img_h':['xz',2,1]}
+
+        kwargs.setdefault('cmap','viridis')
+
+        axis_dict = {'prof_h':['x','Intensity',1], 'prof_v':['y','Intensity',0], 'prof_d':['z','Intensity',2], 'img_main':['xy',0,1], 'img_v':['zy',2,1], 'img_h':['xz',0,2]}
         output_list = ('data','plot','profile_plot')
         d = self.IT_instances()
         tool = d['tool_'+str(it_num)]
@@ -132,15 +207,16 @@ class IEX_IT:
         img = tool.get(it_img_name)
         if output in output_list:
             if output == 'data':
-                return img  #add properties and axes here
+                cursor_info = IEX_IT.get_it_properties(tool)
+                return img, cursor_info  #add properties and axes here
             if output == 'plot':
                 if 'img' in img_prof:
-                    plot_2D(img.data.T,img.axes[::-1],(tool.data.dims[dim_y],tool.data.dims[dim_x]))
+                    plot_2D(img.data.T,img.axes[::-1],(tool.data.dims[dim_x],tool.data.dims[dim_y]),cmap = kwargs['cmap'])
                 elif 'prof' in img_prof:
                     plot_1D(img[0],img[1],xlabel=tool.data.dims[dim_x],ylabel = dim_y)
             if output == 'profile_plot':
                 if 'img' in img_prof: 
-                    plot_dimage(img.data.T,img.axes[::-1],(tool.data.dims[dim_y],tool.data.dims[dim_x]))
+                    plot_dimage(img.data.T,img.axes[::-1],(tool.data.dims[dim_x],tool.data.dims[dim_y]),cmap = kwargs['cmap'])
                 elif 'prof' in img_prof:
                     print('Error: cannot output a plot with profile for a profile')
         else:
@@ -163,6 +239,9 @@ class IEX_IT:
             
         dictionary['axes']=val
         return dictionary
+    
+
+    
 
 def pynData_to_ra(d):
     """
@@ -193,13 +272,3 @@ def pynData_to_ra(d):
     ra = it.RegularDataArray(dataArray, delta = delta, coord_min = coord_min, dims = unitArray)
 
     return ra
-
-
-'''
-check to make sure functions work with mda files
-control cursors from command line
-interpolate scales
-
-it_export
-plot_3D
-'''

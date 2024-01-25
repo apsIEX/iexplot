@@ -195,7 +195,7 @@ class nData:
         h = h5py.File(fpath, 'w')
         
         h.create_dataset('data', data=self.data, dtype='f')
-        
+        '''
         scale = h.create_group('scale')
         for ax in self.scale.keys():
             scale.create_dataset(ax, data=self.scale[ax], dtype='f')
@@ -207,9 +207,53 @@ class nData:
         extras = h.create_group('extras')
         for key in self.extras.keys():
             extras.attrs[key] = self.extras[key]
-        
+        '''
+
+        for group in self:
+            group = h.create_group('group')
+            if group == 'scale':
+                for ax in self.group.keys():
+                    group.create_dataset(ax, data=self.scale[ax], dtype='f')
+            elif group == 'unit':
+                for ax in self.group.keys():
+                    group.attrs[ax] = self.unit[ax]
+            else:
+                for key in self.group.keys():
+                    group.attrs[key] = self.group[key]
+
+
+
+
         h.close()
         return
+
+    def save1(self, fname, fdir=''):
+        if fdir=='':
+            fdir = os.getcwd()
+            
+        fpath = os.path.join(fdir, fname+'.h5')
+        
+        if os.path.exists(fpath):
+            print('Warning: Overwriting file {}.h5'.format(fname))
+        h = h5py.File(fpath, 'w')
+        
+        h.create_dataset('data', data=self.data, dtype='f')
+        
+        for group in self:
+            group = h.create_group('group')
+            if group == 'scale':
+                for ax in self.scale.keys():
+                    scale.create_dataset(ax, data=self.scale[ax], dtype='f')
+            elif group == 'unit':
+                for ax in self.unit.keys():
+                    unit.attrs[ax] = self.unit[ax]
+            else:
+                for key in self.group.keys():
+                    group.attrs[key] = self.group[key]
+
+        h.close()
+        return
+
 
 
 #==============================================================================

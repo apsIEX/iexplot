@@ -5,6 +5,7 @@ from numpy import log as ln
 from scipy.optimize import curve_fit
 from scipy.special import erfc
 import matplotlib.pyplot as plt
+import lmfit
 
 from iexplot.plotting import plot_1D
 from iexplot.plotting import find_closest   #index, value
@@ -26,7 +27,7 @@ def _xrange(x,y,xrange=[np.inf,np.inf]):
 
 
     first_index, first_value = find_closest(x,x_first)
-    last_index, last_falue   = find_closest(x,x_last)
+    last_index, last_value   = find_closest(x,x_last)
 
     if first_index < last_index:
         x_sub = x[first_index:last_index]
@@ -200,6 +201,24 @@ def fit_step(x,y,**kwargs):
 
     return  x_fit,y_fit,coefs,covar,fit_vals
 
+
+def fit_voigt(x,y,**kwargs):
+    kwargs.setdefault('plot',True)
+    kwargs.setdefault('xrange',[np.inf,np.inf])
+    
+    #subrange
+    x, y = _xrange(x,y,kwargs['xrange'])    
+    
+    model = lmfit.models.VoigtModel()
+    params = model.guess(y,x=x)
+    
+    y_fit = model.fit(y,params, x=x)
+    
+    if kwargs['plot']:
+        _plot_fit(x,y,x,y_fit.best_fit,**kwargs)
+    
+    return y_fit
+
 def _box(x, *p):
     """
     Function for a box (double step)
@@ -316,3 +335,34 @@ def _plot_fit(x,y,x_fit,y_fit,fit_vals={},**kwargs):
     plt.legend()
     plt.show()
 
+def find_EF_offset(EA_list, E_unit,fit_type,xrange, plot = False):
+        '''
+        finds and applies the Fermi level offset for each scan in EA_list
+        
+        EA_list = list of EA scans 
+        E_unit = KE or BE
+        fit_type = function to fit data to, 'step' or 'Voigt'
+        xrange = subrange of each scan to be fit
+        '''
+        
+        f = {}
+        cen = list()
+        for i, EA in enumerate(EA_list):
+            if E_unit == 'BE':
+                x = EA.BEscale
+            else:
+                x = EA.KEscale
+                
+            y = EA.EDC.data
+            if fit_type == 'step':
+                fi = fit_step(x,y,xrange=xrange, plot=plot)
+                f[i] = fi
+                cen.append(fi[2][1])
+            elif fit_type == 'Voigt':
+                fi = fit_voigt(x,y,xrange=xrange, plot=plot)
+                f[i] = fi
+                cen.append(fi.params['center'].value)
+            else:
+                print(fit_type + 'is not a valid fitting function, see doc string')
+                
+        return np.array(cen)
