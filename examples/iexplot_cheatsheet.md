@@ -109,7 +109,7 @@ Plotting single mda scan
 
 Plotting single or stacked EA scans
 
-    data.it_mdaEA(scanNum, E_unit = 'KE', kmap = False, )
+    data.it_mdaEA(scanNum, E_unit = 'KE')
 
 Plotting a pynData object
 
