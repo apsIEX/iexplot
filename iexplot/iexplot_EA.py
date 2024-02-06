@@ -187,6 +187,9 @@ class PlotEA:
             EA_list = []
             stack_scale=np.empty((0))
             
+            if kwargs['debug']:
+                print('scanNumlist',scanNumlist)
+
             for scanNum in scanNumlist:
                 if kwargs['debug']:
                     print('scanNumlist: ',scanNumlist)
@@ -210,7 +213,7 @@ class PlotEA:
                     EAlist = _shortlist(kwargs['EAnum'],llist = ll,**kwargs)  
                 else:
                     EAlist = ll
-                
+                 
                 if kwargs['debug']:
                     print('EAlist: ',EAlist)
 
@@ -226,7 +229,10 @@ class PlotEA:
 
                 #Truncating stack_scale for number of images        
                 stack_scale = stack_scale[0:len(EA_list)]    
-                    
+            
+            if kwargs['debug']:
+                print('make_EA_list:',EA_list)
+
             return EA_list, stack_scale
     
 def stack_mdaEA(*scanNum,E_unit='BE',**kwargs):
@@ -255,7 +261,7 @@ def stack_mdaEA(*scanNum,E_unit='BE',**kwargs):
         EA_list,stack_scale = _make_num_list(*scanNum,**kwargs)
         _stack_mdaEA_from_list(EA_list,stack_scale, E_unit,**kwargs)
 
-def _stack_mdaEA_from_list(EA_list,stack_scale, E_unit,**kwargs):
+def _stack_mdaEA_from_list(EA_list,stack_scale, E_unit, **kwargs):
         """
         creates a volume of stacked spectra/or EDCs based on kwargs
         Note: does not currently account for scaling (dumb stacking)
@@ -272,7 +278,7 @@ def _stack_mdaEA_from_list(EA_list,stack_scale, E_unit,**kwargs):
             
         """
         kwargs.setdefault('E_offset',0.0)
-        kwargs.setdefault('debug',False)
+        kwargs.setdefault('debug',True)
         kwargs.setdefault('array_output',True)
         
         EA = EA_list[0]
@@ -293,7 +299,7 @@ def _stack_mdaEA_from_list(EA_list,stack_scale, E_unit,**kwargs):
             if type(kwargs['E_offset']) == float:
                 E_offset = kwargs['E_offset']
             else:
-                E_offset = kwargs['E_offset'][i]
+                E_offset = kwargs['E_offset'][i-1]
             E_scale = kmapping_energy_scale(EAnum, E_unit, E_offset = E_offset) 
             EA_list[i].scale['x'] = E_scale
 
@@ -302,6 +308,10 @@ def _stack_mdaEA_from_list(EA_list,stack_scale, E_unit,**kwargs):
             print(E_offset)
             
         #Stacking data
-        d = nstack(EA_list, stack_scale, **kwargs)
+        if len(EA_list) == 1:
+            d = EA_list[0]
+        else:
+            d = nstack(EA_list, stack_scale, **kwargs)
         
         return d    
+

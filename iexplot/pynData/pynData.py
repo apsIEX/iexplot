@@ -335,7 +335,11 @@ def nstack(nData_list,stack_scale=None,stack_unit="", **kwargs):
     #stacking the data
     stacklist = []
     
+    
+
     for i,d in enumerate(nData_list):
+        if kwargs['debug']:
+            print(d.data.shape)
         rank = len(d.data.shape)
         if i==0:
             stacklist = []

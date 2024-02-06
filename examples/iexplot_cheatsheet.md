@@ -48,7 +48,7 @@ For the full data structure see iexplot/examples/IEX_nData. Below are a list of 
 ## **<font color = 8a99ad>mda scans</font>**
 ---
 
-Plotting of 1D and 2D mda scans 
+Plotting of 1D and 2D mda scans #(AJE make function data.plot(scaNum,detNum))
     
     data.plotmda(scanNum,detNum)
 
@@ -57,19 +57,31 @@ Plotting the results of scan_sample_map with relevant detectors
 
     plot_sample_map(scanNum,detNum)
 
-Positioner data
+Positioners - list all #(AJE make function data.posAll(scaNum))
+
+    data.mda[scanNum].posAll  
+
+Positioners - extract data #(AJE rename data.posx(scaNum,posNum)m data.posx_label)
 
     x = data.mdaPos(scanNum,posNum=1) 
-    x_label = mdaPos_label(scanNum)
+    x_label = data.mdaPos_label(scanNum)
 
-Detector data
+Detectors - list all #(AJE make function mda_detAll(scaNum))
+
+    data.mda[scanNum].detAll  
+
+Detector data #(AJE rename data.det(scaNum,detNum))
 
     y = data.mdaDet(scanNum,detNum) 
     y_label = data.mdaDet_label(scanNum,detNum)
 
-Metadata / header
+Metadata / header #(AJE make function data.header(scaNum))
 
-    data.header(scanNum)
+    data.mda[scanNum]header(scanNum)
+
+  
+
+
     
 ## **<font color = 8a99ad>EA scans</font>**
 ---

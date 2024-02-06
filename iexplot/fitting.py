@@ -38,7 +38,7 @@ def _xrange(x,y,xrange=[np.inf,np.inf]):
         
     return x_sub, y_sub
 
-def gaussian(x,*coefs):
+def _gaussian(x,*coefs):
     """
     Function for a guassian
     coefs = [A,x0,sigma,bkgd]
@@ -78,8 +78,8 @@ def fit_gaussian(x,y,**kwargs):
     bkgd = np.mean(y_fit)
     coefs_0 = [A, x0, sigma, bkgd] if 'coefs_0' not in kwargs else kwargs['coefs_0']
 
-    coefs, covar = curve_fit(gaussian, x_fit, y_fit, coefs_0)
-    y_fit= gaussian(x_fit, *coefs)
+    coefs, covar = curve_fit(_gaussian, x_fit, y_fit, coefs_0)
+    y_fit= _gaussian(x_fit, *coefs)
     fit_vals = {
         'Amp':coefs[0],
         'center':coefs[1],
@@ -207,17 +207,19 @@ def fit_voigt(x,y,**kwargs):
     kwargs.setdefault('xrange',[np.inf,np.inf])
     
     #subrange
-    x, y = _xrange(x,y,kwargs['xrange'])    
+    x_fit, y_fit = _xrange(x,y,kwargs['xrange'])    
     
     model = lmfit.models.VoigtModel()
-    params = model.guess(y,x=x)
+    params = model.guess(y_fit,x=x_fit)
     
-    y_fit = model.fit(y,params, x=x)
+    y_fit = model.fit(y_fit,params, x=x_fit)
     
     if kwargs['plot']:
-        _plot_fit(x,y,x,y_fit.best_fit,**kwargs)
+        _plot_fit(x,y,x_fit,y_fit.best_fit,**kwargs)
     
-    return y_fit
+    coefs = [y_fit.params['height'].value, y_fit.params['center'].value, y_fit.params['fwhm'].value]
+    covar = 'still need to implement'
+    return x_fit,y_fit.best_fit, coefs, covar
 
 def _box(x, *p):
     """
@@ -335,34 +337,34 @@ def _plot_fit(x,y,x_fit,y_fit,fit_vals={},**kwargs):
     plt.legend()
     plt.show()
 
-def find_EF_offset(EA_list, E_unit,fit_type,xrange, plot = False):
+def find_EF_offset(EA_list, E_unit,fit_type,xrange, plot = False): #need to rewrite this in a more intelligent way AJE
         '''
         finds and applies the Fermi level offset for each scan in EA_list
         
         EA_list = list of EA scans 
         E_unit = KE or BE
-        fit_type = function to fit data to, 'step' or 'Voigt'
+        fit_type = function to fit data to, 'step', 'gaussian', 'lorentzian', or 'voigt'
         xrange = subrange of each scan to be fit
         '''
         
         f = {}
         cen = list()
+        fit_dict= {'step':fit_step,'lorentzian':fit_lorentzian,'gaussian':fit_gaussian, 'voigt': fit_voigt}
+
         for i, EA in enumerate(EA_list):
             if E_unit == 'BE':
                 x = EA.BEscale
             else:
                 x = EA.KEscale
-                
+
             y = EA.EDC.data
-            if fit_type == 'step':
-                fi = fit_step(x,y,xrange=xrange, plot=plot)
+
+            if fit_type in fit_dict:
+                fit_func = fit_dict[fit_type]
+                fi = fit_func(x,y,xrange=xrange, plot=plot)
                 f[i] = fi
                 cen.append(fi[2][1])
-            elif fit_type == 'Voigt':
-                fi = fit_voigt(x,y,xrange=xrange, plot=plot)
-                f[i] = fi
-                cen.append(fi.params['center'].value)
+
             else:
-                print(fit_type + 'is not a valid fitting function, see doc string')
-                
+                print(fit_type + ' is not a valid fitting function, see doc string')
         return np.array(cen)
