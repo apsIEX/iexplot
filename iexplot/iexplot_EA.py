@@ -210,7 +210,7 @@ class PlotEA:
                 
                 #creating shortlist of selected EAnum
                 if 'EAnum' in kwargs:
-                    EAlist = _shortlist(kwargs['EAnum'],llist = ll,**kwargs)  
+                    EAlist = _shortlist(*kwargs['EAnum'],llist = ll,**kwargs)  
                 else:
                     EAlist = ll
                  

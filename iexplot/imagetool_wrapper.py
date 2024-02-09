@@ -5,7 +5,7 @@ from lmfit import Parameters
 import pyimagetool as it
 from iexplot.plotting import plot_1D, plot_2D, plot_dimage
 from iexplot.pynData.pynData_ARPES import kmapping_stack
-from iexplot.utilities import _shortlist
+from iexplot.utilities import _shortlist, _make_num_list
 from iexplot.fitting import fit_voigt, fit_step, find_EF_offset
 from iexplot.iexplot_EA import PlotEA, _stack_mdaEA_from_list
 
@@ -143,7 +143,7 @@ class IEX_IT:
         kwargs.setdefault('fit_type','step')
         kwargs.setdefault('ang_offset',0.0)
         kwargs.setdefault('kmap',False)
-        #kwargs.setdefault('EAnum',1,np.inf) 
+        kwargs.setdefault('EAnum',(1,np.inf))
         #kwargs.setdefault('EDConly', False)
         kwargs.setdefault('fit_xrange', [-np.inf,np.inf])
         kwargs.setdefault('debug', False)
@@ -153,6 +153,7 @@ class IEX_IT:
 
         EA_list, stack_scale = PlotEA.make_EA_list(self, scanNumlist, **kwargs)
         
+
         if kwargs['debug']:
             print('EA list:',EA_list)
 
