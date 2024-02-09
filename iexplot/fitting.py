@@ -202,13 +202,13 @@ def fit_step(x,y,**kwargs):
     return  x_fit,y_fit,coefs,covar,fit_vals
 
 
-def fit_voigt(x,y,**kwargs):
+def fit_voigt(x,y,**kwargs): #lmfit can't guess for a composite model, try pseudo voigt? AJE
     kwargs.setdefault('plot',True)
     kwargs.setdefault('xrange',[np.inf,np.inf])
     
     #subrange
     x_fit, y_fit = _xrange(x,y,kwargs['xrange'])    
-    
+
     model = lmfit.models.VoigtModel()
     params = model.guess(y_fit,x=x_fit)
     
