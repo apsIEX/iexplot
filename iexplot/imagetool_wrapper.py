@@ -110,6 +110,7 @@ class IEX_IT:
         name = self._append_instance(tool)
         tool.setWindowTitle(name)
         tool.show()
+        return(tool)
 
 
     def it_mdaEA(self, *scanNums, **kwargs):
@@ -180,12 +181,12 @@ class IEX_IT:
             else:
                 d = _stack_mdaEA_from_list(EA_list,stack_scale, E_unit = kwargs['E_unit'], E_offset = -E_offset, debug = kwargs['debug'])
  
-        self.it_pynData(d)
-        return d
+        tool = self.it_pynData(d)
+        return d, tool
     
     
 
-    def it_export(self, it_num, img_prof, output,**kwargs):
+    def it_export(self, it_name, img_prof, output,**kwargs):
         """
         extract data from an individual plot in imagetool
 
@@ -204,7 +205,7 @@ class IEX_IT:
         axis_dict = {'prof_h':['x','Intensity',1], 'prof_v':['y','Intensity',0], 'prof_d':['z','Intensity',2], 'img_main':['xy',0,1], 'img_v':['zy',2,1], 'img_h':['xz',0,2]}
         output_list = ('data','plot','profile_plot')
         d = self.IT_instances()
-        tool = d['tool_'+str(it_num)]
+        tool = d[it_name]
         #try:
         it_img_name, dim_y, dim_x = axis_dict[img_prof]
         img = tool.get(it_img_name)
@@ -216,7 +217,7 @@ class IEX_IT:
                 if 'img' in img_prof:
                     plot_2D(img.data.T,img.axes[::-1],(tool.data.dims[dim_x],tool.data.dims[dim_y]),cmap = kwargs['cmap'])
                 elif 'prof' in img_prof:
-                    plot_1D(img[0],img[1],xlabel=tool.data.dims[dim_x],ylabel = dim_y)
+                    plot_1D(img[0],img[1],xlabel=tool.data.dims[dim_x],ylabel = dim_y, label = kwargs['label'])
             if output == 'profile_plot':
                 if 'img' in img_prof: 
                     plot_dimage(img.data.T,img.axes[::-1],(tool.data.dims[dim_x],tool.data.dims[dim_y]),cmap = kwargs['cmap'])
