@@ -180,7 +180,11 @@ class IEX_IT:
                 d = kmapping_stack(EA_list, E_unit = kwargs['E_unit'], KE_offset = -E_offset, debug = kwargs['debug'])
             else:
                 d = _stack_mdaEA_from_list(EA_list,stack_scale, E_unit = kwargs['E_unit'], E_offset = -E_offset, debug = kwargs['debug'])
- 
+        
+        if kwargs['E_unit'] == 'BE': #probably a way to do this more intelligently
+            d.unit['x'] = 'Binding Energy (ev)'
+        
+
         tool = self.it_pynData(d)
         return d, tool
     
