@@ -178,10 +178,12 @@ class PlotEA:
                     EAnum = (start,stop,countby) => to plot a subset of EA scans
                     EDConly = False (default) to stack the full image
                             = True to stack just the 1D EDCs
+                    index = False (default), stack scale by number
                 
             """
             kwargs.setdefault('EDConly',False)
             kwargs.setdefault('debug',False) 
+            kwargs.setdefault('index',False)
             
             scanNumlist = _make_num_list(*nums)
             EA_list = []
@@ -193,7 +195,10 @@ class PlotEA:
             for scanNum in scanNumlist:
                 if kwargs['debug']:
                     print('scanNumlist: ',scanNumlist)
-                if len(scanNumlist)==1:
+                if kwargs['index']:
+                    stack_scale = np.arange(0,len(scanNumlist))
+                    stack_unit = 'index'
+                elif len(scanNumlist)==1:
                     stack_scale = np.concatenate((stack_scale,self.mda[scanNum].posy[0].data))
                     stack_unit =self.mda[scanNum].posy[0].pv[1]
                 else:
