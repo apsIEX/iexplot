@@ -45,7 +45,7 @@ def plot_1D(x,y,**kwargs):
     kwargs.setdefault('scale_mean_index',None) 
     kwargs.setdefault("offset_x",0)
     kwargs.setdefault("scale_x",1)
-
+     
     if 'xrange' in kwargs:
         first_index, first_value = find_closest(x,kwargs['xrange'][0])
         last_index, last_falue   = find_closest(x,kwargs['xrange'][1])
@@ -74,16 +74,20 @@ def plot_1D(x,y,**kwargs):
     y=y*scale-offset
     x=x*kwargs["scale_x"]+kwargs["offset_x"]
 
-    #remove nonstandard kwargs
-    for key in ["Norm2One","offset","scale","offset_x","scale_x"]:
-        del kwargs[key]
-
     if 'xlabel' in kwargs:
         plt.xlabel(kwargs['xlabel'])
         del kwargs['xlabel']
     if 'ylabel' in kwargs:
         plt.ylabel(kwargs['ylabel'])
         del kwargs['ylabel']
+
+    #remove non-matplotlib kwargs
+    plt_kwargs = ['color','label','linestyle','linewidth','marker']
+
+    for key in list(kwargs.keys()):
+        if key not in plt_kwargs:
+            kwargs.pop(key)
+   
 
     plt.plot(x,y,**kwargs)
 
