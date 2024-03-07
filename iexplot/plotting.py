@@ -45,15 +45,17 @@ def plot_1D(x,y,**kwargs):
     kwargs.setdefault('scale_mean_index',None) 
     kwargs.setdefault("offset_x",0)
     kwargs.setdefault("scale_x",1)
-     
-    if 'xrange' in kwargs:
+
+    if 'xrange' in kwargs: 
         first_index, first_value = find_closest(x,kwargs['xrange'][0])
         last_index, last_falue   = find_closest(x,kwargs['xrange'][1])
         x = x[first_index:last_index]
         y = y[first_index:last_index]
         kwargs.pop('xrange')
 
-    if kwargs['Norm2One']:
+    #add a catch here for xrange outside of the data range? AJE
+
+    if kwargs['Norm2One']:  
         y=(y-min(y))/(max(y)-min(y))
 
     #offset and scaling
