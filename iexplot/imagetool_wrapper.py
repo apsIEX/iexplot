@@ -216,12 +216,12 @@ class IEX_IT:
         if output in output_list:
             if output == 'data':
                 cursor_info = IEX_IT.get_it_properties(tool)
-                return img, cursor_info  #add properties and axes here
+                r =  img, cursor_info  #add properties and axes here
             if output == 'plot':
                 if 'img' in img_prof:
                     plot_2D(img.data.T,img.axes[::-1],(tool.data.dims[dim_x],tool.data.dims[dim_y]),cmap = kwargs['cmap'])
                 elif 'prof' in img_prof:
-                    plot_1D(img[0],img[1],xlabel=tool.data.dims[dim_x],ylabel = dim_y, label = kwargs['label'])
+                    plot_1D(img[0],img[1],xlabel=tool.data.dims[dim_x],ylabel = dim_y)
             if output == 'profile_plot':
                 if 'img' in img_prof: 
                     plot_dimage(img.data.T,img.axes[::-1],(tool.data.dims[dim_x],tool.data.dims[dim_y]),cmap = kwargs['cmap'])
@@ -231,6 +231,10 @@ class IEX_IT:
             print("Error: not a valid output type")
         #except:
         #    print("Error: not a valid image or profile name"+str(axis_dict.keys()))
+        if output == 'data':
+            return r
+        else:
+            return None
 
     def get_it_properties(tool):
         list = ['index','pos','binwidth']
@@ -258,18 +262,13 @@ def pynData_to_ra(d):
     
     if len(d.data.shape)==2:
         dataArray = d.data.transpose(1,0)
-        #scaleArray = (d.scale['y'],d.scale['x'])
-        #unitArray = (d.unit['y'],d.unit['x'])
-        #dataArray = d.data
         scaleArray = (d.scale['x'],d.scale['y'])
         unitArray = (d.unit['x'],d.unit['y'])
         delta = (scaleArray[0][1]-scaleArray[0][0],scaleArray[1][1]-scaleArray[1][0])
         coord_min = [scaleArray[0][0],scaleArray[1][1]]
+
     elif len(d.data.shape)==3:
         dataArray = d.data.transpose(1,0,2)
-        #scaleArray = (d.scale['y'],d.scale['x'],d.scale['z'])
-        #unitArray = (d.unit['y'],d.unit['x'],d.unit['z'])
-        #dataArray = d.data
         scaleArray = (d.scale['x'],d.scale['y'],d.scale['z'])
         unitArray = (d.unit['x'],d.unit['y'],d.unit['z'])
         delta = (scaleArray[0][1]-scaleArray[0][0],scaleArray[1][1]-scaleArray[1][0],scaleArray[2][1]-scaleArray[2][0])
