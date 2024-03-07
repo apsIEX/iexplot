@@ -80,9 +80,10 @@ hc_over_e = 12.4            # hc/e in keV⋅A
 class nData:
     """
     nData is an np.array or either 1,2,3 dimensions and shape=(z,y,x)
-        2D: x/y-axis=1/0
-        3D: x/y/z-axis=2/1/0 (i.e data[0,:,:]=image at first motor value)
-    
+        2D: shape = (y,x)
+        3D: shape = (y,x,z) (i.e data[0,:,:]=image at first motor value)
+        
+
     usage
         scan=nData(array)
         scan.data => array
@@ -99,8 +100,6 @@ class nData:
         extras:
             scan.extras() => dictionary with metadata -- see domain specific extensions
             for neccessary keys nData does not require
-        scan.EDC = 1D nData object; sum over all angles
-        scan.MDC = 1D nData object; sum over all energies
             
     """
     def __init__(self, data):
@@ -109,14 +108,17 @@ class nData:
         self.scale = {}
         self.unit = {}
         self.extras = {}
-        self.scale['x'] = np.arange(data.shape[-1])
-        self.unit['x'] = ''
-        if dim>1:
-            self.scale['y'] = np.arange(data.shape[-2])
+        if dim == 1:
+            self.scale['x'] = np.arange(data.shape[0])
+            self.unit['x'] = ''
+        else:
+            self.scale['x'] = np.arange(data.shape[1])
+            self.unit['x'] = ''
+            self.scale['y'] = np.arange(data.shape[0])
             self.unit['y'] = ''
-        if dim>2:
-            self.scale['z'] = np.arange(data.shape[-3])
-            self.unit['z'] = ''
+            if dim > 2:
+                self.scale['z'] = np.arange(data.shape[2])
+                self.unit['z'] = ''
         return
 
 
@@ -193,7 +195,7 @@ class nData:
         h = h5py.File(fpath, 'w')
         
         h.create_dataset('data', data=self.data, dtype='f')
-        
+        '''
         scale = h.create_group('scale')
         for ax in self.scale.keys():
             scale.create_dataset(ax, data=self.scale[ax], dtype='f')
@@ -205,7 +207,23 @@ class nData:
         extras = h.create_group('extras')
         for key in self.extras.keys():
             extras.attrs[key] = self.extras[key]
-        
+        '''
+
+        for group in self:
+            group = h.create_group('group')
+            if group == 'scale':
+                for ax in self.group.keys():
+                    group.create_dataset(ax, data=self.scale[ax], dtype='f')
+            elif group == 'unit':
+                for ax in self.group.keys():
+                    group.attrs[ax] = self.unit[ax]
+            else:
+                for key in self.group.keys():
+                    group.attrs[key] = self.group[key]
+
+
+
+
         h.close()
         return
 
@@ -266,18 +284,18 @@ def nData_h5Group_w(nd,parent,name):
         group named: extra
             attrs[key]                   
     """
-    g=parent.create_group(name)
-    g.create_dataset('data', data=nd.data, dtype='f')
+    g=parent.require_group(name)
+    g.require_dataset('data', data=nd.data, dtype='f',shape=nd.data.shape)
 
-    scale = g.create_group('scale')
+    scale = g.require_group('scale')
     for ax in nd.scale.keys():
-        scale.create_dataset(ax, data=nd.scale[ax], dtype='f')
+        scale.require_dataset(ax, data=nd.scale[ax], dtype='f', shape=nd.scale[ax].shape)
 
-    unit = g.create_group('unit')
+    unit = g.require_group('unit')
     for ax in nd.unit.keys():
         unit.attrs[ax] = nd.unit[ax]
 
-    extras = g.create_group('extras')
+    extras = g.require_group('extras')
     for key in nd.extras.keys():
         extras.attrs[key] = nd.extras[key]   
     
@@ -307,20 +325,26 @@ def nstack(nData_list,stack_scale=None,stack_unit="", **kwargs):
    
     **kwargs
         extras: standard nData extras dictionary
-        array_output = True => (dataArray,scaleArray,unitArray) 
-                     = False (defaulg) => return nData
     """
-    kwargs.setdefault('debug',True)
+    kwargs.setdefault('debug',False)
     kwargs.setdefault('extras',{})
-    kwargs.setdefault('array_output',False)
 
     if type(stack_scale) == None:
         stack_scale = np.arange(1,len(nData_list)+1)
 
-        #stacking the data
+    #stacking the data
+    stacklist = []
+    
+    
+
     for i,d in enumerate(nData_list):
+        if kwargs['debug']:
+            print(d.data.shape)
         rank = len(d.data.shape)
         if i==0:
+            stacklist = []
+            if kwargs['debug'] == True:
+                print('rank = '+str(rank))
             stack = d.data
             xscale = d.scale['x']
             xunit = d.unit['x']
@@ -333,42 +357,43 @@ def nstack(nData_list,stack_scale=None,stack_unit="", **kwargs):
                 if len(nData_list[i+1].data.shape) == 1: #adding 1D to image
                     zscale = None
                     zunit = ''
-                elif len(nData_list[i+1].data.shape) == 2: #adding 1D to image
+                elif len(nData_list[i+1].data.shape) == 2: #adding 2D to image
                     zscale = np.array(stack_scale[i])
                     zunit = stack_unit   
-            elif rank == 2: 
-                zscale = d.scale['z']
-                zunit = d.unit['z']
+                elif len(nData_list[i+1].data.shape) == 3: #adding 2D to 3D
+                    zscale = d.scale['z']
+                    zunit = d.unit['z']
             else:
                 print('Can only stack 1D, 2D and 3D data sets')
         else:
             if rank == 1: #stacking along y
                 stack=np.vstack((stack,d.data))
-                
+                yscale=stack_scale
+                yunit = stack_unit
 
             else: #stacking along z
                 stack=np.dstack((stack,d.data))
                 zscale=stack_scale
                 zunit = stack_unit
+    
 
-
-    if kwargs['array_output']:
-        scaleArray = [yscale,xscale,zscale]
-        unitArray = [yunit,xunit,zunit]
-        return stack,scaleArray[:len(stack.shape)],unitArray[:len(stack.shape)]
-
+    d = nData(stack)
+    if rank == 1:
+        if kwargs['debug'] == True:
+            print('updating scales rank 1')
+        d.updateAx('x', xscale, xunit)
+        d.updateAx('y', yscale, yunit)
+        print(yscale)
     else:
-        d = nData(stack)
-        if rank == 1:
-            d.updateAx('x', xscale, xunit)
-            d.updateAx('y', yscale, yunit)
-        else:
-                d.updateAx('x', zscale, 'zunit')
-                d.updateAx('z', yscale, 'yunit')
-                d.updateAx('y', xscale, 'xunit')
-        d = nData(stack)
-        d.extras['stack']=kwargs['extras']
-        return d
+        if kwargs['debug'] == True:
+            print('updating scales rank > 1')
+            print(xunit,yunit,zunit)
+        d.updateAx('z', zscale, zunit)
+        d.updateAx('y', yscale, yunit)
+        d.updateAx('x', xscale, xunit)
+    metadata_stack(nData_list,d)
+
+    return d
         
     
 def nAppend(data1,data2,**kwargs):
@@ -444,6 +469,23 @@ def nAppend(data1,data2,**kwargs):
         nVol.extras.update({'nDataAppend',['data1','data2']})
         return nVol
 	
+
+def metadata_stack(nData_list,dstack):
+    """
+    Stacking metadata
+    """
+    for i,d in enumerate(nData_list):
+        keys_i = list(vars(nData_list[i]).keys())
+        for key in keys_i:
+            if key not in ['data','scale','unit']:
+                val_i = getattr(d,key)
+                if i == 0:
+                    setattr(dstack,key,[val_i])
+                else:
+                    val = getattr(dstack,key)
+                    val.append(val_i)
+                    setattr(dstack,key,val)
+
 
 
 

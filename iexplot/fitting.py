@@ -5,11 +5,38 @@ from numpy import log as ln
 from scipy.optimize import curve_fit
 from scipy.special import erfc
 import matplotlib.pyplot as plt
+import lmfit
 
 from iexplot.plotting import plot_1D
 from iexplot.plotting import find_closest   #index, value
 
+def _xrange(x,y,xrange=[np.inf,np.inf]):
+    """
+    xrange = [first_x_val, last_x_val]
+    return x_sub and y_sub over a range defined xrange so that x_sub is increasing
+    """
+    if xrange[0] == np.inf:
+        x_first = x[0]
+    else: 
+        x_first = xrange[0]
 
+    if xrange[1] == np.inf:
+        x_last = x[-1]
+    else: 
+        x_last = xrange[1]
+
+
+    first_index, first_value = find_closest(x,x_first)
+    last_index, last_value   = find_closest(x,x_last)
+
+    if first_index < last_index:
+        x_sub = x[first_index:last_index]
+        y_sub = y[first_index:last_index]
+    else:
+        x_sub = x[last_index:first_index]
+        y_sub = y[last_index:first_index]
+        
+    return x_sub, y_sub
 
 def _gaussian(x,*coefs):
     """
@@ -38,16 +65,10 @@ def fit_gaussian(x,y,**kwargs):
 
     """
     kwargs.setdefault('plot',True)
-    
+    kwargs.setdefault('xrange',[np.inf,np.inf])
+
     #subrange
-    if 'xrange' in kwargs:
-        first_index, first_value = find_closest(x,kwargs['xrange'][0])
-        last_index, last_falue   = find_closest(x,kwargs['xrange'][1])
-        x_fit = x[first_index:last_index]
-        y_fit = y[first_index:last_index]
-    else:
-        x_fit = x
-        y_fit = y
+    x_fit, y_fit = _xrange(x,y,kwargs['xrange'])
     
     #initial guess using subranges if not specified in kwargs
     A = np.max(y_fit)
@@ -99,16 +120,10 @@ def fit_lorentzian(x,y,**kwargs):
 
     """
     kwargs.setdefault('plot',True)
-    
+    kwargs.setdefault('xrange',[np.inf,np.inf])
+
     #subrange
-    if 'xrange' in kwargs:
-        first_index, first_value = find_closest(x,kwargs['xrange'][0])
-        last_index, last_falue   = find_closest(x,kwargs['xrange'][1])
-        x_fit = x[first_index:last_index]
-        y_fit = y[first_index:last_index]
-    else:
-        x_fit = x
-        y_fit = y
+    x_fit, y_fit = _xrange(x,y,kwargs['xrange'])
     
     #initial guess using subranges if not specified in kwargs
     A = np.max(y_fit)
@@ -131,6 +146,7 @@ def fit_lorentzian(x,y,**kwargs):
         _plot_fit(x,y,x_fit,y_fit,fit_vals,**kwargs)
 
     return  x_fit,y_fit,coefs,covar,fit_vals
+
 
 def _step(x,*coefs):
     """
@@ -158,19 +174,13 @@ def fit_step(x,y,**kwargs):
 
     """
     kwargs.setdefault('plot',True)
-    
+    kwargs.setdefault('xrange',[np.inf,np.inf])
+
     #subrange
-    if 'xrange' in kwargs:
-        first_index, first_value = find_closest(x,kwargs['xrange'][0])
-        last_index, last_falue   = find_closest(x,kwargs['xrange'][1])
-        x_fit = x[first_index:last_index]
-        y_fit = y[first_index:last_index]
-    else:
-        x_fit = x
-        y_fit = y
+    x_fit, y_fit = _xrange(x,y,kwargs['xrange'])
     
     #initial guess using subranges if not specified in kwargs
-    A = np.mean(np.sign(np.array(y_fit)))*(np.max(y_fit)-np.min(y_fit))/2 #step hight
+    A = np.mean(np.sign(np.array(y_fit)))*(np.max(y_fit)-np.min(y_fit))/2 #step height
     x0 = x_fit[find_closest(y_fit,np.mean(y_fit))[0]] #x point where mean intensity
     x1 = x_fit[find_closest(y_fit,1.25*np.mean(y_fit))[0]] #x point where 1.25 mean intensity
     width = abs(x1-x0)
@@ -190,6 +200,26 @@ def fit_step(x,y,**kwargs):
         _plot_fit(x,y,x_fit,y_fit,fit_vals,**kwargs)
 
     return  x_fit,y_fit,coefs,covar,fit_vals
+
+
+def fit_voigt(x,y,**kwargs): #lmfit can't guess for a composite model, try pseudo voigt? AJE
+    kwargs.setdefault('plot',True)
+    kwargs.setdefault('xrange',[np.inf,np.inf])
+    
+    #subrange
+    x_fit, y_fit = _xrange(x,y,kwargs['xrange'])    
+
+    model = lmfit.models.VoigtModel()
+    params = model.guess(y_fit,x=x_fit)
+    
+    y_fit = model.fit(y_fit,params, x=x_fit)
+    
+    if kwargs['plot']:
+        _plot_fit(x,y,x_fit,y_fit.best_fit,**kwargs)
+    
+    coefs = [y_fit.params['height'].value, y_fit.params['center'].value, y_fit.params['fwhm'].value]
+    covar = 'still need to implement'
+    return x_fit,y_fit.best_fit, coefs, covar
 
 def _box(x, *p):
     """
@@ -218,16 +248,10 @@ def fit_box(x,y,**kwargs):
 
     """
     kwargs.setdefault('plot',True)
-    
+    kwargs.setdefault('xrange',[np.inf,np.inf])
+
     #subrange
-    if 'xrange' in kwargs:
-        first_index, first_value = find_closest(x,kwargs['xrange'][0])
-        last_index, last_falue   = find_closest(x,kwargs['xrange'][1])
-        x_fit = x[first_index:last_index]
-        y_fit = y[first_index:last_index]
-    else:
-        x_fit = x
-        y_fit = y
+    x_fit, y_fit = _xrange(x,y,kwargs['xrange'])
     
     #initial guess using subranges if not specified in kwargs
     A = np.mean(np.sign(np.array(y_fit)))*(np.max(y_fit)-np.min(y_fit))/2 #step hight
@@ -268,16 +292,10 @@ def fit_poly(x,y,rank=3,**kwargs):
 
     """
     kwargs.setdefault('plot',True)
-    
+    kwargs.setdefault('xrange',[np.inf,np.inf])
+
     #subrange
-    if 'xrange' in kwargs:
-        first_index, first_value = find_closest(x,kwargs['xrange'][0])
-        last_index, last_falue   = find_closest(x,kwargs['xrange'][1])
-        x_fit = x[first_index:last_index]
-        y_fit = y[first_index:last_index]
-    else:
-        x_fit = x
-        y_fit = y
+    x_fit, y_fit = _xrange(x,y,kwargs['xrange'])
     
     coefs = poly.polyfit(x, y, rank)
     y_fit = poly.polyval(x_fit, coefs)
@@ -319,3 +337,34 @@ def _plot_fit(x,y,x_fit,y_fit,fit_vals={},**kwargs):
     plt.legend()
     plt.show()
 
+def find_EF_offset(EA_list, E_unit,fit_type,xrange, plot = False): #need to rewrite this in a more intelligent way AJE
+        '''
+        finds and applies the Fermi level offset for each scan in EA_list
+        
+        EA_list = list of EA scans 
+        E_unit = KE or BE
+        fit_type = function to fit data to, 'step', 'gaussian', 'lorentzian', or 'voigt'
+        xrange = subrange of each scan to be fit
+        '''
+        
+        f = {}
+        cen = list()
+        fit_dict= {'step':fit_step,'lorentzian':fit_lorentzian,'gaussian':fit_gaussian, 'voigt': fit_voigt}
+
+        for i, EA in enumerate(EA_list):
+            if E_unit == 'BE':
+                x = EA.BEscale
+            else:
+                x = EA.KEscale
+
+            y = EA.EDC.data
+
+            if fit_type in fit_dict:
+                fit_func = fit_dict[fit_type]
+                fi = fit_func(x,y,xrange=xrange, plot=plot)
+                f[i] = fi
+                cen.append(fi[2][1])
+
+            else:
+                print(fit_type + ' is not a valid fitting function, see doc string')
+        return np.array(cen)

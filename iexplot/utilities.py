@@ -33,6 +33,7 @@ def _make_num_list(*nums):
     else:
         print(nums,'not a valid argument, see doc string') 
         return None
+
     return num_list
 
 def _shortlist(*nums,llist,**kwargs):
@@ -50,6 +51,7 @@ def _shortlist(*nums,llist,**kwargs):
     kwargs.setdefault("debug",False)
     
     if kwargs['debug']:
+        print('_shortlist')
         print("nums: ",nums)
         print("llist",llist)
     llist.sort()

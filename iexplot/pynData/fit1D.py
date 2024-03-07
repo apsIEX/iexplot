@@ -34,7 +34,7 @@ from scipy import io, signal, interpolate, ndimage
 # tiff packages
 import tifffile
 
-from lmfit import Minimizer, Parameters, report_fit
+import lmfit
 
 
 #==============================================================================
@@ -107,7 +107,7 @@ def do_fit(x, y, model_func, guess_func, params=[], ROI=[], verbose=False, plotF
     # We removed the kwargs to reduce redundancy
     # minner = Minimizer(model_func, param, fcn_args=(x, y), fcn_kws={'ROI':ROI})
     
-    minner = Minimizer(model_func, params, fcn_args=(tx, ty))
+    minner = lmfit.Minimizer(model_func, params, fcn_args=(tx, ty))
     result = minner.minimize()
     
     misfit = result.residual*(-1)
@@ -122,7 +122,7 @@ def do_fit(x, y, model_func, guess_func, params=[], ROI=[], verbose=False, plotF
         fit_params['err'].loc[key] = result.params[key].stderr
 
     if verbose:
-        report_fit(result)
+        lmfit.report_fit(result)
         
     if plotFit:
         plt.figure()
@@ -140,7 +140,7 @@ def fitted_to_params(fit_params):
     
     The bounds and constraints will not be transferred
     '''
-    params = Parameters()
+    params = lmfit.Parameters()
     for key in fit_params.index:
         params.add(key, value=fit_params['value'].loc[key])
         
@@ -276,7 +276,7 @@ def guess_FermiLinearBG(x, y):
     Slope = (C2-C1)/(E2-E1)
     Intercept = E2-(C2-BG)/Slope
     
-    params = Parameters()
+    params = lmfit.Parameters()
     params.add('Ef', value=Ef)
     params.add('T', value=30., min=2.)
     params.add('Slope', value=Slope)

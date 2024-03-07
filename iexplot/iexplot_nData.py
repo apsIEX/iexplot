@@ -3,7 +3,7 @@
 #if mda.py is in a location outside of the folder containing these files, you will need to %run first
 
 
-__version__= 1.5      #JLM 8/5/2022
+__version__= 1.6      #AJE + JLM 9/12/2023 - updated imagetool stuff
 
 import os as os
 import re
@@ -11,8 +11,9 @@ from numpy import inf
 import h5py
 
 from iexplot.utilities import _shortlist 
-from iexplot.iexplot_mda import *
-from iexplot.iexplot_EA import *
+from iexplot.iexplot_mda import PlotMDA
+from iexplot.iexplot_EA import PlotEA
+from iexplot.imagetool_wrapper import IEX_IT
 
 from iexplot.pynData.nmda import nmda,nmda_h5Group_w,nmda_h5Group_r
 from iexplot.pynData.nEA import nEA
@@ -189,7 +190,7 @@ def _dirScanNumList(path,prefix,extension):
 
 #########################################################################################################
 #########################################################################################################
-class IEXdata(PlotMDA, PlotEA):
+class IEXdata(PlotMDA, PlotEA, IEX_IT):
     """"
     loads IEX (mda or EA) data and returns a dictionary containing pynData objects
         in Igor speak this is your experiment and the pynData objects are the waves
@@ -199,7 +200,7 @@ class IEXdata(PlotMDA, PlotEA):
                     = IEXdata(first,last,countby=1) => for a series of scans
                     = IEXdata(first,inf,overwrite=False) => all unloaded in the directory
 
-             mydata.update(firt,last,countby) updates the object mydata by loading scans, syntax is the same as above
+             mydata.update(first,last,countby) updates the object mydata by loading scans, syntax is the same as above
 
              myData.mda = dictionary of all individual mda scans 
              myData.EA = dictionary of all individual EA scans 
@@ -210,7 +211,42 @@ class IEXdata(PlotMDA, PlotEA):
              EA:
                  myData.EA[scanNum] => EA_nData object" 
 
-        """
+            =================================================================================================================
+            *scans =>
+                scanNum: for a single scan
+                inf: for all scans in directory
+                first,last: for all files between and including first and last; last can be inf
+                first,last,countby: to load a subset
+                [scanNum1,scanNum2]: to load a subset of scans
+            
+            dtype = "mdaAD" - mda and EA/mpa if exist (default, Note:path is to mda files)
+                    = "mda" - mda only
+                    = "EA" or "EAnc" for ARPES images only h5 and nc respectively
+                    = "mpa" - mpa only
+            
+            **kwargs
+                path: full path to mda files directory (e.g. path="/net/s29data/export/data_29idc/2021_2/Jessica/mda/" )
+                    path = CurrentDirectory(dtype); default 
+    
+                prefix: filename prefix (e.g. "ARPES_" or "Kappa_" or "EA_")
+                    prefix = CurrentDirectory(dtype); default
+                    
+                suffix: suffix for filename
+                    suffix = ""; default
+                    
+                nzerors: number of digit in filename 
+                    nzerors= 4; default => 0001
+                
+                overwrite = True/False; if False, only loads unloaded data"  
+                
+                q=False (default prints filepath and which scans are loaded); q=True turns off printing
+                
+                debug=False (default); if debug = True then prints lots of stuff to debug the program
+                
+                subset: used to load a subset of ADscans when dtype="mdaAD"; same formating as *scans
+                    subset=(1,inf,1); default => loads all
+            """
+
 
     def __init__(self,*scans, dtype="mdaAD",**kwargs):
         """
@@ -736,21 +772,12 @@ class IEXdata(PlotMDA, PlotEA):
         gmda=h5.create_group('mda')
         for scanNum in self.mda:
             nd=self.mda[scanNum]
-            name='mda_'+str(scanNum)
+            name=str(scanNum)
             nmda_h5Group_w(nd,gmda,name)
 
 
-            
-        #EA
-        gEA=h5.create_group('EA')
-        for scanNum in self.EA:
-            nd=self.EA[scanNum]
-            name="EA_"+str(scanNum)
-            nARPES_h5Group_w(nd,gEA,name)
-
-
         h5.close()
-        return
+        return 
 
                 
                 
@@ -801,22 +828,12 @@ def load_IEXnData(fpath):
     gmda=h5['mda']
     mdaLoaded=[]
     for scan in gmda.keys():
-        scanNum=int(scan.split("_")[-1])
+        scanNum=int(scan)
         mydata.mda[scanNum]=nmda_h5Group_r(gmda[scan])
         mdaLoaded.append(scanNum)  
     print("mda scans: "+str(mdaLoaded))
         
-    #EA
-    gEA=h5['EA']
-    EAloaded=[]
-    for scan in gEA.keys():
-        scanNum=int(scan.split("_")[-1])
-        mydata.EA[scanNum]=nARPES_h5Group_r(gEA[scan])
-        EAloaded.append(scanNum)
-        
-    print("EA scans: "+str(EAloaded))
-    h5.close()
-    
+
     return mydata
 
  

@@ -46,14 +46,16 @@ def plot_1D(x,y,**kwargs):
     kwargs.setdefault("offset_x",0)
     kwargs.setdefault("scale_x",1)
 
-    if 'xrange' in kwargs:
+    if 'xrange' in kwargs: 
         first_index, first_value = find_closest(x,kwargs['xrange'][0])
         last_index, last_falue   = find_closest(x,kwargs['xrange'][1])
         x = x[first_index:last_index]
         y = y[first_index:last_index]
         kwargs.pop('xrange')
 
-    if kwargs['Norm2One']:
+    #add a catch here for xrange outside of the data range? AJE
+
+    if kwargs['Norm2One']:  
         y=(y-min(y))/(max(y)-min(y))
 
     #offset and scaling
@@ -74,16 +76,20 @@ def plot_1D(x,y,**kwargs):
     y=y*scale-offset
     x=x*kwargs["scale_x"]+kwargs["offset_x"]
 
-    #remove nonstandard kwargs
-    for key in ["Norm2One","offset","scale","offset_x","scale_x"]:
-        del kwargs[key]
-
     if 'xlabel' in kwargs:
         plt.xlabel(kwargs['xlabel'])
         del kwargs['xlabel']
     if 'ylabel' in kwargs:
         plt.ylabel(kwargs['ylabel'])
         del kwargs['ylabel']
+
+    #remove non-matplotlib kwargs
+    plt_kwargs = ['color','label','linestyle','linewidth','marker']
+
+    for key in list(kwargs.keys()):
+        if key not in plt_kwargs:
+            kwargs.pop(key)
+   
 
     plt.plot(x,y,**kwargs)
 
@@ -253,7 +259,7 @@ def plot_dimage(dataArray,scaleArray,unitArray, **kwargs):
     plt.show()
     return {'images':(image),'profiles':(profileH,profileV),'scales':scales}
 
-def plot_dstack(dataArray,scaleArray,unitArray, **kwargs):
+def plot_3D(dataArray,scaleArray,unitArray, **kwargs):
     """
     dataArray is a 3D np.array(data[y][x][z]) => images are row by column data, which are then stacked (np.dstack)
     scaleArray = (scaleY,scaleX,scaleZ) 
@@ -484,7 +490,7 @@ def plot_dstack(dataArray,scaleArray,unitArray, **kwargs):
         ax6.xaxis.tick_top()
         ax6.set_xlabel(units[2]) 
 
-    return {'images':(image,imageH,imageV),'profiles':(profileH,profileV,profileD),'scales':scales}
+    #return {'images':(image,imageH,imageV),'profiles':(profileH,profileV,profileD),'scales':scales}
 
 def plot_ra(ra,**kwargs):
     dataArray=ra.data.data
@@ -494,7 +500,7 @@ def plot_ra(ra,**kwargs):
     if len(ra.data.data.shape)==2:
         plot_dimage(dataArray,scaleArray,unitArray, **kwargs)
     elif len(ra.data.data.shape)==3:
-        plot_dstack(dataArray,scaleArray,unitArray, **kwargs)
+        plot_3D(dataArray,scaleArray,unitArray, **kwargs)
 
 def colormap_colors(i,size,cmap_name,**kwargs):
     """
