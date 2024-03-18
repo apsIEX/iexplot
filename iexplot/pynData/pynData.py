@@ -226,6 +226,33 @@ class nData:
 
         h.close()
         return
+    
+    def crop_x(self,px_min,px_max):
+        """
+        crops nData object in the x dimension
+        works for dim = 1,2,3
+        px is pixal/index max, min
+        """
+        self.data = self.data[:,px_min:px_max,:]
+        self.scale['x'] = self.scale['x'][px_min:px_max]
+        
+
+    def crop_y(self,px_min,px_max):
+        """
+        crops nData object in the x dimension
+        works for dim = 1,2,3
+        """
+        self.data = self.data[px_min:px_max,:,:]
+        self.scale['y'] = self.scale['y'][px_min:px_max]
+        
+
+    def crop_z(self,px_min,px_max):
+        """
+        crops nData object in the x dimension
+        works for dim = 1,2,3
+        """
+        self.data = self.data[:,:,px_min:px_max]
+        self.scale['z'] = self.scale['z'][px_min:px_max]
 
 
 #==============================================================================
