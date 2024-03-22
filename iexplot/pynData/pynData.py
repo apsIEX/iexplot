@@ -231,10 +231,20 @@ class nData:
         """
         crops nData object in the x dimension
         works for dim = 1,2,3
-        px is pixal/index max, min
+        px is pixel/index max, min
         """
-        self.data = self.data[:,px_min:px_max,:]
-        self.scale['x'] = self.scale['x'][px_min:px_max]
+        dims = len(self.data.shape)
+        if dims == 3:
+            self.data = self.data[:,px_min:px_max,:]
+            self.scale['x'] = self.scale['x'][px_min:px_max]
+        elif dims == 2:            
+            self.data = self.data[:,px_min:px_max]
+            self.scale['x'] = self.scale['x'][px_min:px_max]
+        elif dims == 1:
+            self.data = self.data[px_min:px_max]
+            self.scale['x'] = self.scale['x'][px_min:px_max]
+        else:
+            print("Data needs to have 1, 2, or 3 dimensions, not ",str(dims))
         
 
     def crop_y(self,px_min,px_max):
@@ -242,17 +252,29 @@ class nData:
         crops nData object in the x dimension
         works for dim = 1,2,3
         """
-        self.data = self.data[px_min:px_max,:,:]
-        self.scale['y'] = self.scale['y'][px_min:px_max]
-        
+        dims = len(self.data.shape)
+
+        if dims == 3:
+            self.data = self.data[px_min:px_max,:,:]
+            self.scale['y'] = self.scale['y'][px_min:px_max]
+        elif dims == 2:
+            self.data = self.data[px_min:px_max,:]
+            self.scale['y'] = self.scale['y'][px_min:px_max]
+        else:
+            print("Data needs to have 2 or 3 dimensions, not ",str(dims))
 
     def crop_z(self,px_min,px_max):
         """
         crops nData object in the x dimension
         works for dim = 1,2,3
         """
-        self.data = self.data[:,:,px_min:px_max]
-        self.scale['z'] = self.scale['z'][px_min:px_max]
+        dims = len(self.data.shape)
+
+        if dims == 3:
+            self.data = self.data[:,:,px_min:px_max]
+            self.scale['z'] = self.scale['z'][px_min:px_max]
+        else:
+            print("Data needs to have 3 dimensions, not ",str(dims))
 
 
 #==============================================================================
@@ -445,7 +467,7 @@ def nAppend(data1,data2,**kwargs):
     else:
     ## Making stack1 a volume
         if len(np.shape(data1.data)) <3:
-            if kwargs['ax'] == 'z':
+            if kwargs['ax'] == 'x':
                 vol1=data1.data[np.newaxis,:,:]
             if kwargs['ax']  == 'y':
                 vol1=data1.data[:,np.newaxis,:]
@@ -455,7 +477,7 @@ def nAppend(data1,data2,**kwargs):
             vol1=data1.data
     ## Making stack2 a volume
         if len(np.shape(data2.data)) <3:
-            if kwargs['ax']  == 'z':
+            if kwargs['ax']  == 'x':
                 vol2=data2.data[np.newaxis,:,:]
             if kwargs['ax']  == 'y':
                 vol2=data2.data[:,np.newaxis,:]
@@ -510,7 +532,10 @@ def metadata_stack(nData_list,dstack):
                     setattr(dstack,key,[val_i])
                 else:
                     val = getattr(dstack,key)
-                    val.append(val_i)
+                    if type(val_i) == np.ndarray:
+                        val = np.vstack((val_i, val))
+                    else:
+                        val.append(val_i)
                     setattr(dstack,key,val)
 
 
