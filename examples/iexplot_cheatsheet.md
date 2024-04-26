@@ -114,6 +114,7 @@ Stacking EA spectra or EDCs
 
 ## **<font color = 8a99ad>imagetool</font>**
 ---
+### **Plotting**
 
 Plotting single mda scan
 
@@ -123,21 +124,39 @@ Plotting single or stacked EA scans
 
     data.it_mdaEA(scanNum, E_unit = 'KE')
 
-Plotting a pynData object
+Creating a new IT window from pynData object d
 
-    data.it_pyndata(d)
+    tool.new(d)
+
+### **Cursor/Bin**
+
+Retrieve cursor position and binwidth of an IT window:
+
+    tool.get_it_properties(IT_num)
+
+Set cursor position and binwidth of an IT window:
+
+    tool.cursor_bin(IT_num, **kwargs)
+
+Link multiple IT windows to set cursor position and binwidth to the same values
+
+    tool.synch(*tool_nums, **kwargs)
+
+
+
 
 ### **Exporting Data**
 ---
 
 Exporting an image/profile from an imagetool window
 
-    it_export(self, it_num, img_prof, output = 'plot')
-    it_export(self, it_num, img_prof, output = 'profile_plot')
+    tool.plot_export(IT_num, plot_name)
 
-Exporting cursor/bin data from an imagetool window
+Exporting data from an imagetool window
 
-    it_export(self, it_num, img_prof, output = 'data')
+    tool.export(IT_num, img_prof, plot_name)
+
+
 
 ### **Versioning** 
 ---
@@ -149,4 +168,12 @@ Retrieving list of all current imagetool instances
 Showing a specific instance of imagetool
 
     data.IT_show(IT_num)
+
+### **Other useful functions**
+
+Use an individual color from a colormap (index "i" out of length "size")
+
+    color = colormap_colors(i, size, cmap_name)
+
+
 

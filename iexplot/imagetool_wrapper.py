@@ -2,6 +2,7 @@ import numpy as np
 import re
 import pyimagetool as it
 from iexplot.plotting import plot_1D, plot_2D, plot_dimage
+from iexplot.pynData.pynData import nData
 
 
 
@@ -184,6 +185,26 @@ class IEX_IT:
 
         return name
     
+    def new(self, d):
+        '''
+        creates a new instance of imagetool and adds it to the tool class
+
+        d = data of type pynData or RegularDataArray
+
+        '''
+        
+        if isinstance(d,nData):
+            ra = pynData_to_ra(d)
+        elif type(d) == it.RegularDataArray:
+            ra = d
+        else: 
+            print('Not a valid data type, must be nData or RegularDataArray')
+        obj = it.imagetool(ra)
+        name = self._append_instance(obj)
+        obj.setWindowTitle(name)
+        obj.show()
+        return(obj)
+    
     def export_dictionary(self, img_prof):
         '''
         prof = [ax, unit, dimension]
@@ -265,6 +286,25 @@ class IEX_IT:
                 plot_1D(img[0],img[1],xlabel=it.data.dims[dim_x],ylabel = dim_y, **kwargs)
     
 
+    def synch(self,*tool_nums,**kwargs):
+        """
+        synchs the cursors for several tools based on tool_nums specified.
+        the first tool_num is the parent (i.e. those cursor info is used)
+        kwargs
+            c_x, c_y, c_z = cursor positions in terms of coordinates
+                None (default) will use current values
+            c = tuple of cursor positions in terms of coordinates (will supercede individual values)
+
+            b_x, b_y, b_z = cursor positions in terms of coordinates
+                None (default) will use current values
+            b = tuple of cursor positions in terms of coordinates (will supercede individual values)
+        """
+        
+        for i,tool_num in enumerate(tool_nums):
+            if i == 0:
+                c_new, b_new = self.cursor_bin(tool_num, **kwargs)
+            else:
+                self.cursor_bin(tool_num, c = c_new, b = b_new)
 
 def pynData_to_ra(d):
     """
