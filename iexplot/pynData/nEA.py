@@ -16,66 +16,66 @@ except:
 from iexplot.pynData.pynData import nData
 from iexplot.pynData.pynData_ARPES import nARPES
 
-class nEA_IEXheader:
+def _nEA_IEXextras(metadata):
     """
     Get IEX specific PVs and writes them to the nEA header
     """  
-    def __init__(self,metadata):
-        self.all=metadata
+    extras={'all':metadata}
+    
+    pvInfo = _IEX_ARPES_pvs(metadata)
 
-        pvInfo=self._IEXpvs(metadata)
+    beamline = ["hv","grating","ID","polarization","grating","exitSlit","ringCurrent"]
+    extras['beamline']={key: pvInfo[key] for key in beamline}
 
-        beamline = ["hv","grating","ID","polarization","grating","exitSlit","ringCurrent"]
-        self.beamline={key: pvInfo[key] for key in beamline}
+    sample = ["x","y","z","theta","chi","phi","TA","TB","TEY","TEY2"]
+    extras['sample']={key: pvInfo[key] for key in sample}
 
-        sample = ["x","y","z","theta","chi","phi","TA","TB","TEY","TEY2"]
-        self.sample={key: pvInfo[key] for key in sample}
+    HVscanInfo=['ENERGY:bins','NumBins','SweepBinSize','SweepSteps','ROI:height','ROI:width','sweepStartEnergy',"sweepStepEnergy","sweepStopEnergy"]
+    extras['HVscanInfo']={key: pvInfo[key] for key in HVscanInfo}
+    
+    return extras
+    
+    
 
-        HVscanInfo=['ENERGY:bins','NumBins','SweepBinSize','SweepSteps','ROI:height','ROI:width','sweepStartEnergy',"sweepStepEnergy","sweepStopEnergy"]
-        self.HVscanInfo={key: pvInfo[key] for key in HVscanInfo}
-
-        self.HVscanInfo = None
-        
-
-    def _IEXpvs(self,metadata):
-        """
-        returns dictionary with from extra pvs, used for the ARPES header
-        """
-        PVs={
-        "SESslit":"m8_SESslit",
-        "hv":"ActualPhotonEnergy",
-        "TA":"T_A",
-        "TB":"T_B",
-        "TEY":"TEY",
-        "TEY2":"TEY2",
-        "I0":"",
-        "hv":"ActualPhotonEnergy",
-        "ID":"ID_Energy_RBV",
-        "polarization":"ID_Mode_RBV",
-        "grating":"Grating_Density",
-        "exitSlit":"Slit3C-Size",
-        "ringCurrent":"RingCurrent",
-        "x":"m1_X",
-        "y":"m2_Y",
-        "z":"m3_Z",
-        "theta":"m4_Theta",
-        "chi":"m5_Chi",
-        "phi":"m6_Phi", 
-        'ENERGY:bins':"ENERGY:bins",
-        "NumBins":"NumBins",
-        "SweepBinSize":"SweepBinSize",
-        "SweepSteps":"SweepSteps",
-        "ROI:height":"ROI:height",
-        "ROI:width":"ROI:width",
-        "sweepStartEnergy":"sweepStartEnergy",
-        "sweepStepEnergy":"sweepStepEnergy",
-        "sweepStopEnergy":"sweepStopEnergy",
-        }
-        pvInfo={}
-        for key in PVs:
-            if PVs[key] in metadata:
-                pvInfo.update({key:metadata[PVs[key]]})
-        return pvInfo
+def _IEX_ARPES_pvs(metadata):
+    """
+    returns dictionary with from extra pvs, used for the ARPES header
+    """
+    PVs={
+    "SESslit":"m8_SESslit",
+    "hv":"ActualPhotonEnergy",
+    "TA":"T_A",
+    "TB":"T_B",
+    "TEY":"TEY",
+    "TEY2":"TEY2",
+    "I0":"",
+    "hv":"ActualPhotonEnergy",
+    "ID":"ID_Energy_RBV",
+    "polarization":"ID_Mode_RBV",
+    "grating":"Grating_Density",
+    "exitSlit":"Slit3C-Size",
+    "ringCurrent":"RingCurrent",
+    "x":"m1_X",
+    "y":"m2_Y",
+    "z":"m3_Z",
+    "theta":"m4_Theta",
+    "chi":"m5_Chi",
+    "phi":"m6_Phi", 
+    'ENERGY:bins':"ENERGY:bins",
+    "NumBins":"NumBins",
+    "SweepBinSize":"SweepBinSize",
+    "SweepSteps":"SweepSteps",
+    "ROI:height":"ROI:height",
+    "ROI:width":"ROI:width",
+    "sweepStartEnergy":"sweepStartEnergy",
+    "sweepStepEnergy":"sweepStepEnergy",
+    "sweepStopEnergy":"sweepStopEnergy",
+    }
+    pvInfo={}
+    for key in PVs:
+        if PVs[key] in metadata:
+            pvInfo.update({key:metadata[PVs[key]]})
+    return pvInfo
 
 class nEA(nARPES):
     """
@@ -230,16 +230,18 @@ class nEA(nARPES):
         
         
         setattr(EA,"scanNum",scanNum)
-        setattr(EA,"header",nEA_IEXheader(headerAll))
+        extras = getattr(EA,'extras')
+        extras.update(_nEA_IEXextras(headerAll))
+        setattr(EA,'extras',extras)
             
         nARPES_metadata={
             "KEscale":EA.scale['x'],
             "angScale":EA.scale['y'],
             'angOffset':0,
             "slitDir":"V",
-            'thetaX': EA.header.sample["theta"],
-            'thetaY': EA.header.sample["chi"],
-            "hv":EA.header.beamline["hv"],
+            'thetaX': EA.extras['sample']["theta"],
+            'thetaY': EA.extras['sample']["chi"],
+            "hv":EA.extras['beamline']["hv"],
             "wk":metadata["wk"],
             "EDC":EDC,
             "MDC":MDC,
@@ -247,7 +249,8 @@ class nEA(nARPES):
 
         }
         EA._nARPESattributes(nARPES_metadata)  
-        setattr(EA.header,"EAsettings",metadata["spectraInfo"])      
+        #setattr(EA.header,"EAsettings",metadata["spectraInfo"])   
+        EA.extras.update({"EAsettings":metadata["spectraInfo"]})
         
         return EA
     

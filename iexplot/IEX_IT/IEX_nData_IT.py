@@ -6,7 +6,7 @@ from iexplot.pynData.pynData_ARPES import kmapping_stack
 from iexplot.utilities import _shortlist
 from iexplot.fitting import find_EF_offset
 from iexplot.iexplot_EA import PlotEA, _stack_mdaEA_from_list
-from iexplot.imagetool_wrapper import IEX_IT, pynData_to_ra
+from iexplot.imagetool_wrapper import IEX_IT
 
 
 class IEX_nData_IT(IEX_IT):
@@ -37,23 +37,11 @@ class IEX_nData_IT(IEX_IT):
         dataArray = self.mda[scanNum].det[detNum].data
         x = self.mda[scanNum].posx[0].data[0]
         y = self.mda[scanNum].posy[0].data
-        self.plotmda(scanNum, detNum)
-        image = it.RegularDataArray(dataArray.T, delta = [y[1]-y[0],x[1]-x[0]], coord_min = [y[0],x[0]]) 
-        tool = it.ImageTool(image)
-        sleep(10)
+        ra = it.RegularDataArray(dataArray.T, delta = [y[1]-y[0],x[1]-x[0]], coord_min = [y[0],x[0]]) 
+        obj = self.new(ra)
 
-        name = self._append_instance(tool)
-        tool.setWindowTitle(name)
-        tool.show()
-
+        return obj
     
-    def it_pynData(self, d):
-        ra = pynData_to_ra(d)
-        tool = it.imagetool(ra)
-        name = self._append_instance(tool)
-        tool.setWindowTitle(name)
-        tool.show()
-        return(tool)
 
 
     def it_mdaEA(self, *scanNums, **kwargs):
@@ -79,8 +67,9 @@ class IEX_nData_IT(IEX_IT):
             fit_type = fitting function used to calculate offset, 'step' or 'Voigt'
             fit_xrange = subrange to apply fitting function over
         
-        
+        ☃    
         """
+
         kwargs.setdefault('E_unit','KE')
         kwargs.setdefault('find_E_offset',False)
         kwargs.setdefault('E_offset',0.0)
@@ -124,11 +113,11 @@ class IEX_nData_IT(IEX_IT):
             else:
                 d = _stack_mdaEA_from_list(EA_list,stack_scale, E_unit = kwargs['E_unit'], E_offset = -E_offset, debug = kwargs['debug'])
         
-        if kwargs['E_unit'] == 'BE': #probably a way to do this more intelligently
+        if kwargs['E_unit'] == 'BE':
             d.unit['x'] = 'Binding Energy (ev)'
         
-
-        tool = self.it_pynData(d)
-        return d, tool
+        self.new(d)
+        
+        return d
     
     

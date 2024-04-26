@@ -60,6 +60,8 @@ import numpy as np
 #from scipy import io, signal, interpolate, ndimage
 #from math import floor
 
+from iexplot.utilities import take_closest_value 
+
 
 
 #==============================================================================
@@ -103,22 +105,28 @@ class nData:
             
     """
     def __init__(self, data):
-        self.data = data
-        dim = len(data.shape)
-        self.scale = {}
-        self.unit = {}
-        self.extras = {}
-        if dim == 1:
-            self.scale['x'] = np.arange(data.shape[0])
-            self.unit['x'] = ''
+        """
+        modify to pass (recast)
+        """
+        if isinstance(data,nData):
+            pass
         else:
-            self.scale['x'] = np.arange(data.shape[1])
-            self.unit['x'] = ''
-            self.scale['y'] = np.arange(data.shape[0])
-            self.unit['y'] = ''
-            if dim > 2:
-                self.scale['z'] = np.arange(data.shape[2])
-                self.unit['z'] = ''
+            self.data = data
+            dim = len(data.shape)
+            self.scale = {}
+            self.unit = {}
+            self.extras = {}
+            if dim == 1:
+                self.scale['x'] = np.arange(data.shape[0])
+                self.unit['x'] = ''
+            else:
+                self.scale['x'] = np.arange(data.shape[1])
+                self.unit['x'] = ''
+                self.scale['y'] = np.arange(data.shape[0])
+                self.unit['y'] = ''
+                if dim > 2:
+                    self.scale['z'] = np.arange(data.shape[2])
+                    self.unit['z'] = ''
         return
 
 
@@ -195,8 +203,8 @@ class nData:
         h = h5py.File(fpath, 'w')
         
         h.create_dataset('data', data=self.data, dtype='f')
-        '''
-        scale = h.create_group('scale')
+        
+        scale = h.create_grsaveoup('scale')
         for ax in self.scale.keys():
             scale.create_dataset(ax, data=self.scale[ax], dtype='f')
         
@@ -205,11 +213,12 @@ class nData:
             unit.attrs[ax] = self.unit[ax]
         
         extras = h.create_group('extras')
-        for key in self.extras.keys():
-            extras.attrs[key] = self.extras[key]
+        if len(self.extras[0]) != 0:
+            for key in self.extras.keys():
+                extras.attrs[key] = self.extras[key]
         '''
 
-        for group in self:
+        for group in self.keys():
             group = h.create_group('group')
             if group == 'scale':
                 for ax in self.group.keys():
@@ -221,18 +230,42 @@ class nData:
                 for key in self.group.keys():
                     group.attrs[key] = self.group[key]
 
+        for group in self.keys():
+            
+        '''
 
 
 
         h.close()
         return
     
-    def crop_x(self,px_min,px_max):
+    def crop_x(self, crop_start, crop_end, **kwargs):
         """
         crops nData object in the x dimension
         works for dim = 1,2,3
-        px is pixel/index max, min
+        crop_start/end = index (default) or coordinate range to crop
+
+        kwargs 
+            index = False (default) to crop by coordinate
+                  = True to crop by index
         """
+        kwargs.setdefault('index', False)
+
+        if kwargs['coord']:
+            px_min = crop_start
+            px_max = crop_end
+        else:
+            coord_min = take_closest_value(self.scale['x'], crop_start)
+            index_min = np.where(self.scale['x'] == coord_min)[0][0]
+            
+            coord_max = take_closest_value(self.scale['x'], crop_end)
+            index_max = np.where(self.scale['x'] == coord_max)[0][0]
+
+            #if x-axis is flipped (i.e. for BE), need to flip bounds as well
+            px_min = min(index_min,index_max)
+            px_max = max(index_min,index_max)
+
+
         dims = len(self.data.shape)
         if dims == 3:
             self.data = self.data[:,px_min:px_max,:]
@@ -247,11 +280,29 @@ class nData:
             print("Data needs to have 1, 2, or 3 dimensions, not ",str(dims))
         
 
-    def crop_y(self,px_min,px_max):
+    def crop_y(self,crop_start, crop_end, **kwargs):
         """
         crops nData object in the x dimension
         works for dim = 1,2,3
         """
+
+        kwargs.setdefault('coord', False)
+
+        if kwargs['index']:
+            px_min = crop_start
+            px_max = crop_end
+        else:
+            coord_min = take_closest_value(self.scale['y'], crop_start)
+            index_min = np.where(self.scale['y'] == coord_min)[0][0]
+            
+            coord_max = take_closest_value(self.scale['y'], crop_end)
+            index_max = np.where(self.scale['y'] == coord_max)[0][0]
+
+            #if x-axis is flipped (i.e. for BE), need to flip bounds as well
+            px_min = min(index_min,index_max)
+            px_max = max(index_min,index_max)
+
+
         dims = len(self.data.shape)
 
         if dims == 3:
@@ -263,11 +314,28 @@ class nData:
         else:
             print("Data needs to have 2 or 3 dimensions, not ",str(dims))
 
-    def crop_z(self,px_min,px_max):
+    def crop_z(self,crop_start, crop_end, **kwargs):
         """
         crops nData object in the x dimension
         works for dim = 1,2,3
         """
+        kwargs.setdefault('coord', False)
+
+        if kwargs['index']:
+            px_min = crop_start
+            px_max = crop_end
+        else:
+            coord_min = take_closest_value(self.scale['z'], crop_start)
+            index_min = np.where(self.scale['z'] == coord_min)[0][0]
+            
+            coord_max = take_closest_value(self.scale['z'], crop_end)
+            index_max = np.where(self.scale['z'] == coord_max)[0][0]
+
+            #if x-axis is flipped (i.e. for BE), need to flip bounds as well
+            px_min = min(index_min,index_max)
+            px_max = max(index_min,index_max)
+
+
         dims = len(self.data.shape)
 
         if dims == 3:
@@ -312,6 +380,8 @@ def load_nData(fname, fdir=''):
     for key in h['extras'].keys():
         d.updateExtrasByKey(key,h['extras'].attrs[key])
     
+
+
     d.info()
     h.close()
     
@@ -440,7 +510,7 @@ def nstack(nData_list,stack_scale=None,stack_unit="", **kwargs):
         d.updateAx('z', zscale, zunit)
         d.updateAx('y', yscale, yunit)
         d.updateAx('x', xscale, xunit)
-    metadata_stack(nData_list,d)
+    #metadata_stack(nData_list,d) temporarily commented out to troubleshoot AJE
 
     return d
         
@@ -523,19 +593,24 @@ def metadata_stack(nData_list,dstack):
     """
     Stacking metadata
     """
-    for i,d in enumerate(nData_list):
-        keys_i = list(vars(nData_list[i]).keys())
-        for key in keys_i:
+    for i,d in enumerate(nData_list): #iterates over each EA in mda
+        keys_i = list(vars(nData_list[i]).keys()) 
+        for key in keys_i: #iterates over each key in EA
             if key not in ['data','scale','unit']:
                 val_i = getattr(d,key)
                 if i == 0:
-                    setattr(dstack,key,[val_i])
+                    setattr(dstack,key,[val_i]) #sets first key as attribute
                 else:
-                    val = getattr(dstack,key)
-                    if type(val_i) == np.ndarray:
+                    if type(val_i) == np.ndarray: #arrays get stacked in dimension 2
+                        val = getattr(dstack,key)
                         val = np.vstack((val_i, val))
-                    else:
+                    elif type(val_i) == str: #strings are put into a list
+                        val = getattr(dstack,key)
                         val.append(val_i)
+                    else: #everything else gets put into np arrays
+                        val = np.array(getattr(dstack,key))
+                        np.append(val,[val_i])
+                    #val = np.array(val)
                     setattr(dstack,key,val)
 
 
