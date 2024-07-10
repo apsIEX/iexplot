@@ -25,7 +25,7 @@ import numpy as np
 from scipy import interpolate
 
 
-from iexplot.pynData.pynData import nData, nData_h5Group_r, nData_h5Group_w, nstack
+from iexplot.pynData.pynData import nData, nData_h5Group_r, nData_h5Group_w, metadata_stack
 from iexplot.utilities import *
 from iexplot.plotting import plot_1D
 from iexplot.pynData.ARPES_functions import *
@@ -33,6 +33,7 @@ from iexplot.pynData.ARPES_functions import *
 
 ###############################################################################################
 class nARPES(nData):
+         
     def _nARPESattributes(self,metadata,**kwargs):
         """
         self is an pynData object and we will add the following attribute from the metadata dictionary
@@ -72,8 +73,13 @@ class nARPES(nData):
 
         self._BE_calc()
 
+    def nARPES_attributes():
+        attr_keys = ['KEscale','BEscale','angScale','angOffset','slitDir','thetaX','thetaY',
+         'hv','wk','EDC','MDC','spectraInfo']
+        return attr_keys
+    
     def get_nARPESattributes(self):
-        keys = ['KEscale','BEscale','angScale','angOffset','slitDir','thetaX','thetaY','hv','wk','EDC','MDC','spectraInfo']
+        keys = self.nARPES_attributes()
         attr = {}
         for key in keys:
             attr[key] = getattr(self,key)
@@ -206,7 +212,7 @@ def kmap_scan_hv(d,wk):
 
     return dnew
 
-def kmapping_boundries_slice(EA, V0=10):
+def kmapping_boundaries_slice(EA, V0=10):
     """
     EA = pynData_ARPES object
     """
@@ -224,8 +230,8 @@ def kmapping_boundries_slice(EA, V0=10):
         ky_max = theta_to_ky(KE_max,thetaX_max,thetaY)
     elif EA.slitDir == 'V':
         thetaX = EA.thetaX
-        kx_min = theta_to_kx(KE_max,thetaX)
-        kx_max = theta_to_kx(KE_max,thetaX)
+        kx_min = np.minimum(theta_to_kx(KE_max,thetaX),theta_to_kx(KE_min,thetaX))
+        kx_max = np.maximum(theta_to_kx(KE_max,thetaX),theta_to_kx(KE_min,thetaX))
         thetaY_min = np.min(EA.angScale)
         thetaY_max = np.max(EA.angScale)
         ky_min = theta_to_ky(KE_max,thetaX,thetaY_min)
@@ -241,16 +247,16 @@ def kmapping_boundries_slice(EA, V0=10):
     kz_max = k_to_kz(kx, ky, KE_max, V0)
     return  KE_min, KE_max, kx_min, kx_max, ky_min, ky_max, kz_min, kz_max
 
-def kmapping_boundries(EA_list):
+def kmapping_boundaries(EA_list):
     """
     EA_list = list of pynData_ARPES objects
     
     """
     for n,EA in enumerate(EA_list):
         if n == 0: 
-            KE_min, KE_max, kx_min, kx_max, ky_min, ky_max, kz_min, kz_max = kmapping_boundries_slice(EA)
+            KE_min, KE_max, kx_min, kx_max, ky_min, ky_max, kz_min, kz_max = kmapping_boundaries_slice(EA)
         #else:
-        _KE_min, _KE_max, _kx_min, _kx_max, _ky_min, _ky_max, _kz_min, _kz_max = kmapping_boundries_slice(EA)
+        _KE_min, _KE_max, _kx_min, _kx_max, _ky_min, _ky_max, _kz_min, _kz_max = kmapping_boundaries_slice(EA)
         KE_min = min(KE_min, _KE_min)
         KE_max = max(KE_max, _KE_max)
         kx_min = min(kx_min, _kx_min)
@@ -289,16 +295,18 @@ def kmapping_energy_scale(EA,E_unit='BE',**kwargs):
     return E_scale
         
 
-def kmapping_stack(EA_list, E_unit='BE',**kwargs):
+def kmapping_stack(EA_list, E_unit='BE', **kwargs):
     """
     creates a volume of stacked spectra in k-space
 
-    EA_list = 
+    EA_list = list of EA objects
+
+    kwargs =
+        KE_offset
     """
     kwargs.setdefault('KE_offset',0.0)
-    kwargs.setdefault('crop_range',(30,500))
 
-    KE_min, KE_max, kx_min, kx_max, ky_min, ky_max, kz_min, kz_max = kmapping_boundries(EA_list)
+    KE_min, KE_max, kx_min, kx_max, ky_min, ky_max, kz_min, kz_max = kmapping_boundaries(EA_list)
     EA = EA_list[0]
     
     #energy BE/KE
@@ -347,21 +355,16 @@ def kmapping_stack(EA_list, E_unit='BE',**kwargs):
 
             
         #now we need to interp image into 3D array
-        #print('img:',img.shape,img_y.shape, img_x.shape)
-        #print('data_new:',data_new.shape,data_yy.shape,data_xx.shape)
-
+        
         img_xx,img_yy = np.meshgrid(img_x,img_y)
-        data_new[:,:,n] = interpolate.griddata((np.ravel(img_xx),np.ravel(img_yy)),np.ravel(img),(data_xx,data_yy),fill_value=np.nan,rescale=True,method='nearest')
-
-
-    #cropped data
-    data_new = data_new[kwargs['crop_range'][0]:kwargs['crop_range'][1],:,:]
-    k_new = k_new[kwargs['crop_range'][0]:kwargs['crop_range'][1]]
-
+        data_new[:,:,n] = interpolate.griddata((np.ravel(img_xx),np.ravel(img_yy)),np.ravel(img),(data_xx,data_yy),fill_value=np.nanmin(img),rescale=True,method='nearest')
+        
+        data_new = np.nan_to_num(data_new, nan = np.nanmin(img))
 
     d = nData(data_new)
     d.updateAx('x',E_new,E_unit)
     d.updateAx('y',k_new,'ky')
+    metadata_stack(EA_list,d)
     return d
         
 ##########################################

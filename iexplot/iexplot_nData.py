@@ -13,7 +13,7 @@ import h5py
 from iexplot.utilities import _shortlist 
 from iexplot.iexplot_mda import PlotMDA
 from iexplot.iexplot_EA import PlotEA
-from iexplot.imagetool_wrapper import IEX_IT
+from iexplot.IEX_IT.IEX_nData_IT import IEX_nData_IT
 
 from iexplot.pynData.nmda import nmda,nmda_h5Group_w,nmda_h5Group_r
 from iexplot.pynData.nEA import nEA
@@ -190,7 +190,7 @@ def _dirScanNumList(path,prefix,extension):
 
 #########################################################################################################
 #########################################################################################################
-class IEXdata(PlotMDA, PlotEA, IEX_IT):
+class IEXdata(PlotMDA, PlotEA, IEX_nData_IT):
     """"
     loads IEX (mda or EA) data and returns a dictionary containing pynData objects
         in Igor speak this is your experiment and the pynData objects are the waves
@@ -209,12 +209,16 @@ class IEXdata(PlotMDA, PlotEA, IEX_IT):
                  myData.mda[scanNum].det[detNum] => nmda object
                  myData.mda[scanNum].header => extra PVs
              EA:
-                 myData.EA[scanNum] => EA_nData object" 
+                 myData.EA#global tool
+
+[scanNum] => EA_nData object" 
 
             =================================================================================================================
             *scans =>
                 scanNum: for a single scan
-                inf: for all scans in directory
+                inf: for a#global tool
+
+ll scans in directory
                 first,last: for all files between and including first and last; last can be inf
                 first,last,countby: to load a subset
                 [scanNum1,scanNum2]: to load a subset of scans
@@ -227,14 +231,17 @@ class IEXdata(PlotMDA, PlotEA, IEX_IT):
             **kwargs
                 path: full path to mda files directory (e.g. path="/net/s29data/export/data_29idc/2021_2/Jessica/mda/" )
                     path = CurrentDirectory(dtype); default 
-    
+    #global tool
+
+
                 prefix: filename prefix (e.g. "ARPES_" or "Kappa_" or "EA_")
                     prefix = CurrentDirectory(dtype); default
                     
                 suffix: suffix for filename
                     suffix = ""; default
-                    
-                nzerors: number of digit in filename 
+                    #global tool
+
+number of digit in filename 
                     nzerors= 4; default => 0001
                 
                 overwrite = True/False; if False, only loads unloaded data"  

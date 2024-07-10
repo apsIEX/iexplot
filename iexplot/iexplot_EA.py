@@ -240,31 +240,33 @@ class PlotEA:
 
             return EA_list, stack_scale
     
-def stack_mdaEA(*scanNum,E_unit='BE',**kwargs):
-        """
-        creates a volume of stacked spectra/or EDCs based on kwargs
-        Note: does not currently account for scaling (dumb stacking)
+    def stack_mdaEA(self, *scanNum,E_unit='BE',**kwargs):
+            """
+            creates a volume of stacked spectra/or EDCs based on kwargs
+            Note: does not currently account for scaling (dumb stacking)
 
-        *scanNum = scanNum if volume is a single Fermi map scan
-                = mda => start, stop, countby for series of mda scans
-                only debugs for a stack of mda scans...need to try a fermi map AJE
+            *scanNum = scanNum if volume is a single Fermi map scan
+                    = mda => start, stop, countby for series of mda scans
+                    only debugs for a stack of mda scans...need to try a fermi map AJE
 
-        E_unit = 'BE' or 'KE'
+            E_unit = 'BE' or 'KE'
 
-        **kwargs:      
-            EAnum = (start,stop,countby) => to plot a subset of scans (only EAnum = 1 by default)
-            EDConly = False (default) to stack the full image
-                    = True to stack just the 1D EDCs
-            
-                EAnum = (start,stop,countby) => to plot a subset of EA scans
-                            = True to stack just the 1D EDCs
-                    
-            E_offset = offset value for each scan based on curve fitting in E_units
-            E_offset type = np array if an offset is applied, float if no offset is applied
-            
-        """
-        EA_list,stack_scale = _make_num_list(*scanNum,**kwargs)
-        _stack_mdaEA_from_list(EA_list,stack_scale, E_unit,**kwargs)
+            **kwargs:      
+                EAnum = (start,stop,countby) => to plot a subset of scans (only EAnum = 1 by default)
+                EDConly = False (default) to stack the full image
+                        = True to stack just the 1D EDCs
+                
+                    EAnum = (start,stop,countby) => to plot a subset of EA scans
+                                = True to stack just the 1D EDCs
+                        
+                E_offset = offset value for each scan based on curve fitting in E_units
+                E_offset type = np array if an offset is applied, float if no offset is applied
+                
+            """
+            EA_list, stack_scale = PlotEA.make_EA_list(self,*scanNum, **kwargs)
+            d = _stack_mdaEA_from_list(EA_list,stack_scale, E_unit,**kwargs)
+
+            return d
 
 def _stack_mdaEA_from_list(EA_list,stack_scale, E_unit, **kwargs):
         """
@@ -283,7 +285,7 @@ def _stack_mdaEA_from_list(EA_list,stack_scale, E_unit, **kwargs):
             
         """
         kwargs.setdefault('E_offset',0.0)
-        kwargs.setdefault('debug',True)
+        kwargs.setdefault('debug',False)
         kwargs.setdefault('array_output',True)
         
         EA = EA_list[0]

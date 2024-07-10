@@ -71,3 +71,12 @@ def _shortlist(*nums,llist,**kwargs):
         print("shortlist: ",shortlist)
     return shortlist
     
+def take_closest_value(my_list,my_number):
+    """
+    Given a list of integers, I want to find which number is the closest to a number x.
+    
+    Previously: TakeClosest
+    """
+    return min(my_list, key=lambda x:abs(x-my_number))
+
+

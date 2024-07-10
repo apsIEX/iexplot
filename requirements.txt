@@ -7,6 +7,7 @@ netCDF4
 tifffile
 xarray
 opencv-python
+scikit-video
 
 #pyimagetool requirements
 PyQt5
