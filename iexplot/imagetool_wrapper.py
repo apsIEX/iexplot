@@ -1,20 +1,20 @@
 import numpy as np
 import re
 import pyimagetool as it
-from iexplot.plotting import plot_1D, plot_2D, plot_dimage
-from iexplot.pynData.pynData import nData
+
+from iexplot.pynData import nData
 
 
-
-class IEX_IT:
-    instances = {}
-
+class TOOLS:
+    """
+    container for managing imagetool instances
+    """
     def __init__(self, info = {}):  
         """
         add doc string here
         """
         self.info = info 
-        self.instance = None
+        self.instances = {}
         
         pass
 
@@ -65,7 +65,7 @@ class IEX_IT:
         except:
             print("tool_"+str(IT_num)+" doesn't exist")
 
-    def get_it_properties(self, IT_num):
+    def get_properties(self, IT_num,verbose=False):
         '''
         get the properties of the imagetool cursors and bins
         '''
@@ -83,8 +83,22 @@ class IEX_IT:
             val.append(tool.data.dims[i])
             
         dictionary['axes']=val
+        if verbose:
+            self.properties_string(it_num,verbose=verbose)
         return dictionary
     
+    
+    def properties_string(self,it_num,verbose=False):
+        """
+        returns the properies as a string 
+        """
+        s = ''
+        for key, val in self.get_it_properties(0).items():
+            s+= str(key)+': '+str(val)+'\n'
+        if verbose:
+            print(s[:-1])
+        return s[:-1]
+
     def cursor_bin(self,IT_num, **kwargs):
         '''
         edits specific values for cursor/binwidth 
@@ -189,22 +203,21 @@ class IEX_IT:
         '''
         creates a new instance of imagetool and adds it to the tool class
 
-        d = data of type pynData or RegularDataArray
+        d = data of type RegularDataArray or numpy array
 
         '''
-        
-        if isinstance(d,nData):
-            ra = pynData_to_ra(d)
-        elif type(d) == it.RegularDataArray:
-            ra = d
-        else: 
+        try: 
+            #if type(d) == it.RegularDataArray:
+            obj = it.imagetool(d)
+            name = self._append_instance(obj)
+            obj.setWindowTitle(name)
+            obj.show()
+            print('name: ',name)
+            return(obj)
+            
+        except: 
             print('Not a valid data type, must be nData or RegularDataArray')
-        obj = it.imagetool(ra)
-        name = self._append_instance(obj)
-        obj.setWindowTitle(name)
-        obj.show()
-        return(obj)
-    
+
     def export_dictionary(self, img_prof):
         '''
         prof = [ax, unit, dimension]
@@ -248,43 +261,7 @@ class IEX_IT:
         return data, cursor_info, dim_y, dim_x
 
 
-    def plot_export(self, IT_num, plot_name,**kwargs):
-            """
-            extract data from an individual plot in imagetool
-
-            IT_num = imagetool window number
-                    
-                    
-            plot_name = 
-                        'prof_h' => Intensity vs x 
-                        'prof_v' => Intensity vs y 
-                        'prof_d' => Intensity vs z
-                        'img_main' => Intensity(x,y) 
-                        'img_v' => Intensity(z,y) 
-                        'img_h' => Intensity(x,z) 
-
-            **kwargs:
-                cmap = 'viridis' (default)
-                image_profiles = False (default),
-                                True to include line profiles in images 
-            """
-            kwargs.setdefault('cmap','viridis')
-            kwargs.setdefault('image_profiles',False)
-
-        
-            it = self.obj(IT_num)
-
-            img, cursor_info, dim_y, dim_x = self.export( IT_num, plot_name)
-            
-
-            if 'img' in plot_name:
-                if kwargs['image_profiles']:
-                    plot_dimage(img.data.T,img.axes[::-1],(it.data.dims[dim_x],it.data.dims[dim_y]),cmap = kwargs['cmap'])
-                else:
-                    plot_2D(img.data.T,img.axes[::-1],(it.data.dims[dim_x],it.data.dims[dim_y]),cmap = kwargs['cmap'])
-            elif 'prof' in plot_name:
-                plot_1D(img[0],img[1],xlabel=it.data.dims[dim_x],ylabel = dim_y, **kwargs)
-    
+ 
 
     def synch(self,*tool_nums,**kwargs):
         """
@@ -306,27 +283,3 @@ class IEX_IT:
             else:
                 self.cursor_bin(tool_num, c = c_new, b = b_new)
 
-def pynData_to_ra(d):
-    """
-    converts a pynData object into a imagetool.RegularDataArray
-    """
-    
-    if len(d.data.shape)==2:
-        dataArray = d.data.transpose(1,0)
-        scaleArray = (d.scale['x'],d.scale['y'])
-        unitArray = (d.unit['x'],d.unit['y'])
-        delta = (scaleArray[0][1]-scaleArray[0][0],scaleArray[1][1]-scaleArray[1][0])
-        coord_min = [scaleArray[0][0],scaleArray[1][1]]
-
-    elif len(d.data.shape)==3:
-        dataArray = d.data.transpose(1,0,2)
-        scaleArray = (d.scale['x'],d.scale['y'],d.scale['z'])
-        unitArray = (d.unit['x'],d.unit['y'],d.unit['z'])
-        delta = (scaleArray[0][1]-scaleArray[0][0],scaleArray[1][1]-scaleArray[1][0],scaleArray[2][1]-scaleArray[2][0])
-        coord_min = [scaleArray[0][0],scaleArray[1][1],scaleArray[2][2]]
-    else:
-        print("don't yet know how to deal with data of shape"+str(d.data.shape))
-    
-    ra = it.RegularDataArray(dataArray, delta = delta, coord_min = coord_min, dims = unitArray)
-
-    return ra

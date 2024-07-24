@@ -3,4 +3,4 @@ from iexplot.imagetool_wrapper import *
 
 
 global tool
-tool = IEX_IT()
+tool = TOOLS()

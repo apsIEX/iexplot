@@ -229,7 +229,7 @@ ll scans in directory
                     = "mpa" - mpa only
             
             **kwargs
-                path: full path to mda files directory (e.g. path="/net/s29data/export/data_29idc/2021_2/Jessica/mda/" )
+                path: nzerorsfull path to mda files directory (e.g. path="/net/s29data/export/data_29idc/2021_2/Jessica/mda/" )
                     path = CurrentDirectory(dtype); default 
     #global tool
 
