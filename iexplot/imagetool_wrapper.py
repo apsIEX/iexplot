@@ -93,7 +93,7 @@ class TOOLS:
         returns the properies as a string 
         """
         s = ''
-        for key, val in self.get_it_properties(0).items():
+        for key, val in self.get_properties(0).items():
             s+= str(key)+': '+str(val)+'\n'
         if verbose:
             print(s[:-1])
@@ -132,7 +132,7 @@ class TOOLS:
                 kwargs['b_'+axis_list[i]] = cs
         
         tool = self.obj(IT_num)
-        info_dict = self.get_it_properties(IT_num)
+        info_dict = self.get_properties(IT_num)
         cursor = info_dict['pos']
         binwidth = info_dict['binwidth']
         
@@ -256,7 +256,7 @@ class TOOLS:
         axes, dim_y, dim_x = self.export_dictionary(plot_name)
         data = it.get(axes)
    
-        cursor_info = self.get_it_properties(IT_num)
+        cursor_info = self.get_properties(IT_num)
 
         return data, cursor_info, dim_y, dim_x
 
