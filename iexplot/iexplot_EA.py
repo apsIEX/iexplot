@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 
 import numpy as np
-from iexplot.utilities import _shortlist, _make_num_list 
+from iexplot.utilities import _shortlist, make_num_list 
 from iexplot.plotting import plot_1D, plot_2D, plot_3D
 from iexplot.pynData.pynData import nstack
 from iexplot.pynData.pynData_ARPES import kmapping_energy_scale
@@ -185,7 +185,7 @@ class PlotEA:
             kwargs.setdefault('debug',False) 
             kwargs.setdefault('index',False)
             
-            scanNumlist = _make_num_list(*nums)
+            scanNumlist = make_num_list(*nums)
             EA_list = []
             stack_scale=np.empty((0))
             

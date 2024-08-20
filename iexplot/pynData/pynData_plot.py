@@ -58,7 +58,7 @@ def plot_nd(*ds,**kwargs):
     #plt.show()
 
 
-def niceplot_avg(d,ax='y',Cen=np.nan,WidthPix=np.nan):
+def plot_nd_avg(d,ax='y',Cen=np.nan,WidthPix=np.nan):
     """
     bins 2D data in ax, with Center, and WidthPix 
     if Center=np.nan then center is the midpoint

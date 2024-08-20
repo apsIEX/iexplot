@@ -1,6 +1,6 @@
 from numpy import inf
 
-def _make_num_list(*nums):
+def make_num_list(*nums):
     """
     Making a shortlist based on *num
     *num =>
@@ -62,7 +62,7 @@ def _shortlist(*nums,llist,**kwargs):
         numslist[numslist.index(inf)] = last
         nums = tuple(numslist)
     #creating number list
-    num_list = _make_num_list(*nums)
+    num_list = make_num_list(*nums)
     shortlist = []
     for n in num_list: 
         if n in llist:
@@ -70,6 +70,7 @@ def _shortlist(*nums,llist,**kwargs):
     if kwargs["debug"]:
         print("shortlist: ",shortlist)
     return shortlist
+
     
 def take_closest_value(my_list,my_number):
     """

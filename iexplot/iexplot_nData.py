@@ -11,6 +11,8 @@ from numpy import inf
 import h5py
 
 from iexplot.utilities import _shortlist 
+from iexplot.IEX_funcs import CurrentDirectory, CurrentPrefix
+
 from iexplot.iexplot_mda import PlotMDA
 from iexplot.iexplot_EA import PlotEA
 from iexplot.IEX_IT.IEX_nData_IT import IEX_nData_IT
@@ -20,53 +22,7 @@ from iexplot.pynData.nEA import nEA
 from iexplot.pynData.pynData_ARPES import nARPES_h5Group_w, nARPES_h5Group_r
 from iexplot.pynData.nADtiff import nTiff   
 
-try:
-    from iexcode.instruments.scanRecord import mda_filepath, mda_prefix
-    from iexcode.instruments.electron_analyzer import EA_filepath, EA_prefix
-except:
-    print("iexcode is not loaded: you will need to specify path and prefix when calling IEXdata")
 
-
-###################################
-## default stuff (Users can modify here to load an home not using IEX function)
-###################################
-def CurrentDirectory(dtype):
-    """
-    Returns the current directory for:
-       if "mda" is in dtype => return mda path
-       elif "EA" is in dtype => returns EA path
-       
-       e.g. dtype=mdaEA => only get mda
-    """
-    if "mda" in dtype:
-        try:
-            path = mda_filepath()
-        except:
-            path=input("mda filepath needs to be specified")
-        return path
-
-    elif "EA" in dtype:
-        try:
-            path = EA_filepath()
-        except:
-            path = input("EA filepath needs to be specified")
-        return path
-    
-        
-def CurrentPrefix(dtype):
-    #if dtype == "mda" or dtype == "mdaEA":
-    if "mda" in dtype:
-        try:
-            prefix = mda_prefix()
-        except:
-            prefix = input("please specify the prefix")
-        
-    elif "EA" in dtype:
-        try:
-            prefix = EA_prefix()
-        except:
-            prefix = input("please specify the prefix")
-    return prefix
 
 ###################################
 # IEX variables
