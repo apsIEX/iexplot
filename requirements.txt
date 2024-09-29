@@ -3,10 +3,10 @@ matplotlib
 h5py
 numpy
 
-netCDF4
+#netCDF4
 tifffile
 xarray
-opencv-python
+#opencv-python
 scikit-video
 
 #pyimagetool requirements
@@ -16,3 +16,4 @@ pyqtgraph
 
 #package_data={'': ['PHI_XPS/*.tiff','orangebook_BE.csv']}
 #package_data={'': ['pyimagetool/cmaps/*']}
+
