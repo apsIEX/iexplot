@@ -7,7 +7,9 @@ from iexplot.plotting import plot_1D,plot_2D,plot_3D
 # Utils for plotting and slicing
 #==============================================================================
 
-def niceplot(*ds,**kwargs):
+
+
+def plot_nd(*ds,**kwargs):
     '''
     Simple plot for 1D and 2D nData
     *ds pnData files
@@ -53,10 +55,10 @@ def niceplot(*ds,**kwargs):
                 print('Warning: niceplot can only plot 1d and 2d data.')
     except:
             print('Not a valid object')
-    plt.show()
+    #plt.show()
 
 
-def niceplot_avg(d,ax='y',Cen=np.nan,WidthPix=np.nan):
+def plot_nd_avg(d,ax='y',Cen=np.nan,WidthPix=np.nan):
     """
     bins 2D data in ax, with Center, and WidthPix 
     if Center=np.nan then center is the midpoint
@@ -70,15 +72,15 @@ def niceplot_avg(d,ax='y',Cen=np.nan,WidthPix=np.nan):
             CenPix = np.argmin((Scale-Cen)**2)
         if np.isnan(WidthPix):
             WidthPix=len(Scale)//2
-        if(ax is 'x'):
+        if(ax == 'x'):
             img_avg = np.nansum(d.data[:,CenPix-WidthPix:CenPix+WidthPix], axis=1)
             bx='y'
-        elif(ax is 'y'):
+        elif(ax == 'y'):
             img_avg = np.nansum(d.data[CenPix-WidthPix:CenPix+WidthPix,:], axis=0)
             bx='x'
         avg=nData(img_avg)
         avg.updateAx('x', d.scale[bx], d.unit[bx])
-        niceplot(avg)
+        plot_nd(avg)
         
     else:
         print('only works for 2D data')
@@ -198,7 +200,7 @@ def Compare2D(d1,d2,**kwargs): #JM added
 	ax1.set_xlabel(x1Unit) # The line will do nothing if xUnit==''
 	ax1.set_ylabel(y2Unit)
 	# adding cursors
-	if csr is not None:
+	if csr != None:
 		ax1.plot(x1Scale, np.ones(len(x1Scale))*y1Scale[y1CenPix], color='r', linewidth=0.5)
 		ax1.plot(np.ones(len(y1Scale))*x1Scale[x1CenPix], y1Scale, color='b', linewidth=0.5)
 		if xWidthPix>0:
@@ -214,7 +216,7 @@ def Compare2D(d1,d2,**kwargs): #JM added
 	ax2.set_xlabel(x2Unit) # The line will do nothing if xUnit==''
 	ax2.set_ylabel(y2Unit)
 	#adding cursors
-	if csr is not None:
+	if csr != None:
 		ax2.plot(x1Scale, np.ones(len(x1Scale))*y1Scale[y1CenPix], color='r', linewidth=0.5)
 		ax2.plot(np.ones(len(y1Scale))*x1Scale[x1CenPix], y2Scale, color='b', linewidth=0.5)
 		if xWidthPix>0:
@@ -228,7 +230,7 @@ def Compare2D(d1,d2,**kwargs): #JM added
 	ax3 = fig.add_subplot(gs[0, 0:2], sharex=ax1)
 	ax3.plot(x1Scale, y1Cut, 'r-')
 	ax3.plot(x1Scale, y2Cut, 'm-')
-	if csr is not None:
+	if csr != None:
 		y1, y2 = ax2.get_ylim()
 		ax2.plot(np.array([x1Scale[x1CenPix],x1Scale[x1CenPix]]), np.array([y1, y2]), color='b', linewidth=0.5)
 		if xWidthPix>0:
@@ -240,7 +242,7 @@ def Compare2D(d1,d2,**kwargs): #JM added
 	ax3 = fig.add_subplot(gs[1:3,2], sharey=ax1)
 	ax3.plot(x1Cut, y1Scale,'b-')
 	ax3.plot(x2Cut, y2Scale,'g-')
-	if csr is not None:
+	if csr != None:
 		x1, x2 = ax3.get_xlim()
 		ax3.plot(np.array([x1, x2]), np.array([y1Scale[y1CenPix],y1Scale[y1CenPix]]), color='r', linewidth=0.5)
 		if yWidthPix>0:
