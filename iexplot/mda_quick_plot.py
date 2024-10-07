@@ -26,8 +26,8 @@ try:
     from iexcode.instruments.AD_utilities import AD_filepath,AD_prefix
     from iexcode.instruments.AUX100_diode import current2flux   
 except:
-    print('iexcode not install. You will need to specify path and prefix')
-
+    #print('iexcode not install. You will need to specify path and prefix')
+    pass
 
 ##############################################################################################################
 ##############################                  Plot Tiff,JPEG,PNG               ##############################

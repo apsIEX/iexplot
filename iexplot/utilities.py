@@ -1,6 +1,6 @@
 from numpy import inf
 
-def _make_num_list(*nums):
+def _make_num_list(*nums,**kwargs):
     """
     Making a shortlist based on *num
     *num =>
@@ -9,6 +9,10 @@ def _make_num_list(*nums):
         first,last,countby: to load a subset
         [num1,num2]: to load a subset does not need to be consecutive  
     """
+    kwargs.setdefault('debug',False)
+    if kwargs['debug']:
+        print('_make_num_list')
+        print('nums: ',*nums)
 
     num_list=[]
     if len(nums) == 1:
@@ -51,18 +55,22 @@ def _shortlist(*nums,llist,**kwargs):
     kwargs.setdefault("debug",False)
     
     if kwargs['debug']:
-        print('_shortlist')
-        print("nums: ",nums)
-        print("llist",llist)
+        print('\n_shortlist')
+        print("\tnums: ",nums)
+        print("\tllist",llist)
+
     llist.sort()
-    #dealing with inf
+
+    ### dealing with inf
     last = llist[-1]
     if inf in nums:
         numslist = list(nums)
         numslist[numslist.index(inf)] = last
         nums = tuple(numslist)
+
     #creating number list
     num_list = _make_num_list(*nums)
+
     shortlist = []
     for n in num_list: 
         if n in llist:

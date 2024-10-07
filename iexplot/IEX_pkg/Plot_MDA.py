@@ -4,15 +4,18 @@ import matplotlib.pyplot as plt
 from iexplot.utilities import _shortlist
 from iexplot.plotting import *
 from iexplot.pynData.pynData import nstack
+from iexplot.IEX_pkg.Plot_IT import pynData_to_ra
+from pyimagetool import tools
 
-class PlotMDA:
+
+class Plot_MDA:
     """
     adds mda plotting functions to IEXnData class
     """    
     def __init__(self):
         pass
-    
-    def mdaPos(self,scanNum,**kwargs):
+
+    def mda_positioner(self,scanNum,**kwargs):
         """
         returns the array for a positioner
 
@@ -39,7 +42,7 @@ class PlotMDA:
         if ax == 'z':
             return self.mda[scanNum].posz[posNum].data
 
-    def mdaPos_label(self,scanNum,**kwargs):
+    def mda_positioner_label(self,scanNum,**kwargs):
         """
         returns the array for a positioner
 
@@ -71,7 +74,7 @@ class PlotMDA:
         elif ax == 'z':
             return self.mda[scanNum].posz[posNum].pv[1] if len(self.mda[scanNum].posz[posNum].pv[1])>1 else self.mda[scanNum].posz[posNum].pv[0]
 
-    def mdaDet(self,scanNum, detNum):
+    def mda_detector(self,scanNum, detNum):
         """
         returns the array for a positioner and positioner pv/desc.
                         
@@ -82,7 +85,7 @@ class PlotMDA:
         """
         return self.mda[scanNum].det[detNum].data
 
-    def mdaDet_label(self,scanNum, detNum):
+    def mda_detector_label(self,scanNum, detNum):
         """
         returns the array for a positioner
                         
@@ -101,7 +104,7 @@ class PlotMDA:
         return self.mda[scanNum].det[detNum].pv[1] if len(self.mda[scanNum].det[detNum].pv[1])>1 else self.mda[scanNum].det[detNum].pv[0]
 
         
-    def plotmda(self,scanNum,detNum,**kwargs):
+    def plot_mda(self,scanNum,detNum,**kwargs):
         """
         simple plot for an mda scans either 1D or a row/column of a 2D data set
             
@@ -138,7 +141,7 @@ class PlotMDA:
         kwargs.setdefault("scale_x",1)
         kwargs.setdefault('Norm2One',False)
         
-        d = self.mdaDet(scanNum, detNum)
+        d = self.mda_detector(scanNum, detNum)
         
         #2D data
         if len(d.shape)==2:
@@ -150,13 +153,13 @@ class PlotMDA:
                 #remove any keys not associated with pcolormesh    
                 for key in ['offset','scale','offset_x','scale_x','Norm2One']:
                     kwargs.pop(key)
-                self.plotmda2D(scanNum, detNum, **kwargs)        
+                self.plot_mda_2D(scanNum, detNum, **kwargs)        
         #1D data
         else:
-            self.plotmda1D(scanNum, detNum, **kwargs)
+            self.plot_mda_1D(scanNum, detNum, **kwargs)
         
 
-    def plotmda1D(self,scanNum, detNum, **kwargs):
+    def plot_mda_1D(self,scanNum, detNum, **kwargs):
         """
         plots 1D mda data
         detNum = detector number for the image data
@@ -170,19 +173,19 @@ class PlotMDA:
         """ 
         #x-axis
         if 'x_detNum' in kwargs:
-            x = self.mdaDet(scanNum,detNum=kwargs['x_detNum'])
-            xunit = self.mdaDet_label(scanNum,detNum=kwargs['x_detNum'])
+            x = self.mda_detector(scanNum,detNum=kwargs['x_detNum'])
+            xunit = self.mda_detector_label(scanNum,detNum=kwargs['x_detNum'])
             del kwargs['x_detNum']
         elif 'posx_Num' in kwargs:
-            x = self.mdaPos(scanNum,posNum=kwargs['posx_Num'],ax='x')
-            xunit = self.mdaPos_label(scanNum,posNum=kwargs['posx_Num'],ax='x')
+            x = self.mda_positioner(scanNum,posNum=kwargs['posx_Num'],ax='x')
+            xunit = self.mda_positioner_label(scanNum,posNum=kwargs['posx_Num'],ax='x')
             del kwargs['posx_Num']
         else:
-            x = self.mdaPos(scanNum,posNum=0,ax='x')
-            xunit = self.mdaPos_label(scanNum,posNum=0,ax='x')
+            x = self.mda_positioner(scanNum,posNum=0,ax='x')
+            xunit = self.mda_positioner_label(scanNum,posNum=0,ax='x')
 
         #data
-        y = self.mdaDet(scanNum,detNum)
+        y = self.mda_detector(scanNum,detNum)
 
         if len(y.shape)>1:
             if 'row' in kwargs or 'column' in kwargs:
@@ -192,7 +195,7 @@ class PlotMDA:
         plt.xlabel(xunit)
 
 
-    def plotmda2D(self, scanNum, detNum, **kwargs):
+    def plot_mda_2D(self, scanNum, detNum, **kwargs):
         """
         plots 2D mda data
         detNum = detector number for the image data
@@ -203,33 +206,33 @@ class PlotMDA:
             x_detNum => x-scale is a detector
             y_detNum => y-scale is a detector     
         """
-        img = self.mdaDet(scanNum, detNum)
+        img = self.mda_detector(scanNum, detNum)
         
         #x-scaling
         if 'x_detNum' in kwargs:
-            xscale = self.mdaDet(scanNum,detNum=kwargs['x_detNum'],ax='x')
-            xunit = self.mdaDet_label(scanNum,detNum=kwargs['x_detNum'],ax='x')
+            xscale = self.mda_detector(scanNum,detNum=kwargs['x_detNum'],ax='x')
+            xunit = self.mda_detector_label(scanNum,detNum=kwargs['x_detNum'],ax='x')
             del kwargs['x_detNum']
         elif 'posx_Num' in kwargs:
-            xscale = self.mdaPos(scanNum,posNum=kwargs['posx_Num'],ax='x')
-            xunit = self.mdaPos_label(scanNum,posNum=kwargs['posx_Num'],ax='x')
+            xscale = self.mda_positioner(scanNum,posNum=kwargs['posx_Num'],ax='x')
+            xunit = self.mda_positioner_label(scanNum,posNum=kwargs['posx_Num'],ax='x')
             del kwargs['posx_Num']
         else:
-            xscale = self.mdaPos(scanNum,posNum=0,ax='x')
-            xunit = self.mdaPos_label(scanNum,posNum=0,ax='x')
+            xscale = self.mda_positioner(scanNum,posNum=0,ax='x')
+            xunit = self.mda_positioner_label(scanNum,posNum=0,ax='x')
         
         #y-scaling
         if 'y_detNum' in kwargs:
-            yscale = self.mdaDet(scanNum,detNum=kwargs['y_detNum'],ax='y')
-            yunit = self.mdaDet_label(scanNum,detNum=kwargs['y_detNum'],ax='y')
+            yscale = self.mda_detector(scanNum,detNum=kwargs['y_detNum'],ax='y')
+            yunit = self.mda_detector_label(scanNum,detNum=kwargs['y_detNum'],ax='y')
             del kwargs['y_detNum']
         elif 'posy_Num' in kwargs:
-            yscale = self.mdaPos(scanNum,posNum=kwargs['posy_Num'],ax='y')
-            yunit = self.mdaPos_label(scanNum,posNum=kwargs['posy_Num'],ax='y')
+            yscale = self.mda_positioner(scanNum,posNum=kwargs['posy_Num'],ax='y')
+            yunit = self.mda_positioner_label(scanNum,posNum=kwargs['posy_Num'],ax='y')
             del kwargs['posy_Num']
         else:
-            yscale = self.mdaPos(scanNum,posNum=0,ax='y')
-            yunit = self.mdaPos_label(scanNum,posNum=0,ax='y')
+            yscale = self.mda_positioner(scanNum,posNum=0,ax='y')
+            yunit = self.mda_positioner_label(scanNum,posNum=0,ax='y')
         
         scales = [yscale,xscale]
         units = [yunit,xunit]    
@@ -283,15 +286,31 @@ class PlotMDA:
             ax = fig.add_subplot(1,n,i+1)
             ax.set_title(title_list[i])
             ax.set_aspect(aspect_ratio)
-            self.plotmda(scanNum,det_list[i],**kwargs)
+            self.plot_mda(scanNum,det_list[i],**kwargs)
             plt.colorbar()
         
 
     
-    def header(self,scanNum):
+    def mda_header(self,scanNum):
         """
         returns a dictionary with all the adder info from the mda scan
     
         """
         d = self.mda[scanNum].header.data.mda[19].header.ScanRecord
         return d
+    
+    def it_mda(self,scanNum,detNum):
+        """
+        plot 2D mda data in imagetool
+
+        scanNum = scan number to plot
+        type = int
+
+        detNum = detector number to plot
+        type = int
+
+        """
+        #info 
+        #ra = pynData_to_ra(self.mda[scanNum].det[detNum])        
+        #tools.new(ra)
+        pass

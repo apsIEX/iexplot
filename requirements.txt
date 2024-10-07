@@ -6,6 +6,9 @@ numpy
 #netCDF4
 tifffile
 xarray
+opencv-python
+lmfit
+
 #opencv-python
 scikit-video
 
@@ -14,6 +17,5 @@ PyQt5
 PyQt5-sip
 pyqtgraph
 
-#package_data={'': ['PHI_XPS/*.tiff','orangebook_BE.csv']}
-#package_data={'': ['pyimagetool/cmaps/*']}
+
 

@@ -1,19 +1,21 @@
 import matplotlib.pyplot as plt
-
 import numpy as np
+
 from iexplot.utilities import _shortlist, _make_num_list 
 from iexplot.plotting import plot_1D, plot_2D, plot_3D
 from iexplot.pynData.pynData import nstack
 from iexplot.pynData.pynData_ARPES import kmapping_energy_scale
+from iexplot.IEX_pkg.Plot_IT import pynData_to_ra
+from pyimagetool import tools
 
-class PlotEA:
+class Plot_EA:
     """
-    adds EA plotting functions to IEXnData class
+    adds EA plotting methods to IEXnData class
     """
     def __init__(self):
         pass
 
-    def EAspectra(self,scanNum, EAnum=1, BE=False):
+    def EA_spectra(self,scanNum, EAnum=1, BE=False):
         """
         returns the array for an EAspectra, and x and y scaling    
         usage:
@@ -46,7 +48,7 @@ class PlotEA:
         return img,xscale,yscale,xunit,yunit
         
         
-    def EAspectraEDC(self,scanNum,EAnum=1,BE=False):
+    def EA_EDC(self,scanNum,EAnum=1,BE=False):
         """
         returns x,y energy scaling, EDC spectra
             
@@ -74,7 +76,7 @@ class PlotEA:
 
         return x,y,xlabel
         
-    def plotEDC(self,scanNum,EAnum=1,BE=False,**kwargs):
+    def plot_EDC(self,scanNum,EAnum=1,BE=False,**kwargs):
         """
         simple plotting for EDC
 
@@ -99,14 +101,14 @@ class PlotEA:
         kwargs.setdefault("scale_x",1)
         
         x=0;y=0            
-        x,y,xlabel = self.EAspectraEDC(scanNum,EAnum=EAnum,BE=BE)
+        x,y,xlabel = self.EA_EDC(scanNum,EAnum=EAnum,BE=BE)
                 
         plot_1D(x,y,xlabel=xlabel,**kwargs)
         
         if BE:
             plt.xlim(max(x),min(x))
 
-    def plotEA(self,scanNum,EAnum=1,BE=False,transpose=False,**kwargs):
+    def plot_EA(self,scanNum,EAnum=1,BE=False,transpose=False,**kwargs):
         """
         simple plotting for EA spectra
 
@@ -125,7 +127,7 @@ class PlotEA:
         """  
         kwargs.setdefault('shading','auto')
 
-        img,xscale,yscale,xunit,yunit = self.EAspectra(scanNum, EAnum, BE)
+        img,xscale,yscale,xunit,yunit = self.EA_spectra(scanNum, EAnum, BE)
 
         if transpose == True:
             plot_2D(img.T,[xscale,yscale],[xunit,yunit],**kwargs)
@@ -136,7 +138,7 @@ class PlotEA:
             if BE == True:
                 plt.xlim(max(xscale),min(xscale))
 
-    def plot_stack_mdaEA(self,*args,**kwargs):
+    def plot_mdaEA_stack(self,*args,**kwargs):
         """
         *args = scanNum if volume is a single Fermi map scan
                 = scanNum, start, stop, countby for series of mda scans
@@ -168,6 +170,14 @@ class PlotEA:
         plot_3D(np.array(dataArray),np.array(scaleArray),unitArray,**kwargs)
 
 
+    def it_EA(self,scanNum,EAnum=1):
+        """
+        plot EA in imagetool
+        """
+        ra = pynData_to_ra(self.mda[scanNum].EA[EAnum])
+        tools.new(ra)
+        pass
+    
     def make_EA_list(self, *nums, **kwargs):
             """
             creates an EA_list from list of scans
@@ -263,7 +273,7 @@ class PlotEA:
                 E_offset type = np array if an offset is applied, float if no offset is applied
                 
             """
-            EA_list, stack_scale = PlotEA.make_EA_list(self,*scanNum, **kwargs)
+            EA_list, stack_scale = Plot_EA.make_EA_list(self,*scanNum, **kwargs)
             d = _stack_mdaEA_from_list(EA_list,stack_scale, E_unit,**kwargs)
 
             return d

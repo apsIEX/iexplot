@@ -10,8 +10,6 @@ import numpy as np
 from iexplot.mda.mda import readMDA
 from iexplot.pynData.pynData import nData, nData_h5Group_w, nData_h5Group_r
 
-
-
 if __name__ == "__main__":
     print(__file__)
 
@@ -51,10 +49,11 @@ class _mdaHeader:
         return self.all[pv][2][0]
                             
 class nmda:
-    def __init__(self,*fpath,q=1):
+    def __init__(self,*fpath,**kwargs):
         """
         fpath = full path including filename and extension
-        q = 1 (default); quiet if not 1 prints full file path when loading
+        **kwargs
+        verbose: prints full file path when loading (default: False)
         
         Usage: 
         mda=nmda(fpath)
@@ -75,25 +74,31 @@ class nmda:
             
         
         """
+        kwargs.setdefault('verbose',False)
+        kwargs.setdefault('debug',False)
+
         self.fpath=""
         self.header=None
         self.det=None
         self.pos=None
         self.scanNum=None
 
+        if kwargs['debug']:
+            print('\nnmda.__init__')
+            print('\tfpath',fpath)
         
-        #print(fpath)
-        
+        #allow for instance with out loadin
         if fpath:
             self.fpath=fpath[0]
-            self._extractAll(q)
+            self._extractAll(**kwargs)
         else:
             pass        
         
     
                 
-    def _extractAll(self,q):
-        if(q!=1):
+    def _extractAll(self,**kwargs):
+        kwargs.setdefault('verbose',False)
+        if kwargs['verbose']:
             fpath=self.fpath
             print(fpath)
 
