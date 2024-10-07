@@ -12,4 +12,3 @@ from iexplot.video_utilities import *
 from iexplot.mda_quick_plot import *
 
  
-#from iexplot.iexplot_IT import pynData_to_ra

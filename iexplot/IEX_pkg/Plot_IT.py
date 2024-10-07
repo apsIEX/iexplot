@@ -108,3 +108,59 @@ def pynData_to_ra(d):
     
 #     tools.new(d) 
 
+def it_video(it_name, video_fname,fps,image_folder_path, it_dict = it_dict, **kwargs):
+    '''
+    Automatically sweeps cursors and creates a video of an imagetool window
+    
+    By default, will sweep over 10 points
+    
+    it_name = str, name of it window in it_dict
+    
+    **kwargs:
+        step_size = 5 (default), sweep will use number_of_points to determine step size
+                        int to manually set the spacing between frames
+    '''
+    
+    ### should be updated and moved into the code ###
+    
+    
+    kwargs.setdefault('step_size',5)
+
+        
+    it_address = it_dict[it_name]['address']
+    tool = return_object_from_memory(it_address)
+    window = tool.pg_win
+    
+    #select last axis
+    try:
+        sweep_axis = tool.data.axes[2]
+    except:
+        sweep_axis = tool.data.axes[1]
+    
+    
+    sweep_indices = []
+    length = len(sweep_axis)
+    
+    if type(kwargs['step_size']) == int:
+        index = 0
+        while index < length:
+            sweep_indices.append(index)
+            index += kwargs['step_size'] 
+    else:
+        print('Not a valid step size, must be int')
+    
+    image_filename_list = []
+    
+    #update and save IT window
+    for i in sweep_indices:
+        it_update_linked(it_dict[it_name], c_z = sweep_axis[i])    
+        
+        image = window.grab(window.rect())
+        filename = it_dict[it_name]['tool_name']+'_'+str(i)+'.png'
+        image.save(filename)
+        image_filename_list.append(filename)
+    
+    #make video
+    make_video(video_fname,fps,image_filename_list,image_folder_path,**kwargs)
+
+    

@@ -1,10 +1,6 @@
 from numpy import inf
 
-<<<<<<< HEAD
-def _make_num_list(*nums,**kwargs):
-=======
-def make_num_list(*nums):
->>>>>>> refs/remotes/origin/main
+def make_num_list(*nums,**kwargs):
     """
     Making a shortlist based on *num
     *num =>
@@ -73,12 +69,7 @@ def _shortlist(*nums,llist,**kwargs):
         nums = tuple(numslist)
 
     #creating number list
-<<<<<<< HEAD
-    num_list = _make_num_list(*nums)
-
-=======
     num_list = make_num_list(*nums)
->>>>>>> refs/remotes/origin/main
     shortlist = []
     for n in num_list: 
         if n in llist:
