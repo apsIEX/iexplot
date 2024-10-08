@@ -103,6 +103,7 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
         kwargs.setdefault("suffix",'')
         kwargs.setdefault("AD_overwrite",True)
 
+    
         ### setting attributes
         self._scans = scans
         self.dtype = dtype
@@ -114,7 +115,7 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
         self.prefix = None
         #setting prefix and path attributes
         self._IEX_path_prefix(**kwargs) 
-        
+
         ### debug
         if kwargs["debug"]:
             print("\nIEX_nData.__init__")
@@ -189,7 +190,7 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
             print("\n_extractData dtype: ", self.dtype)
             print('\tAD_key = ',AD_key)
        
-        iex_MDA = IEX_MDA()
+        iex_MDA = IEX_MDA(**kwargs)
         mda_kwargs = dict(kwargs)
         mda_kwargs.update({'path':self.path,'prefix':self.prefix,'ext':self.ext})
 
@@ -301,6 +302,8 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
         kwargs.setdefault('path',self.path)
         kwargs.setdefault('prefix',self.prefix)
         kwargs.setdefault('ext','')
+        kwargs.setdefault("subset",(1,inf,1))
+
 
         if kwargs['debug']:
             print('\n_load_ADdata')
@@ -369,10 +372,13 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
         kwargs.setdefault('overwrite',True)
         kwargs.setdefault('debug',False)
 
+        key_list = ['dtype','path','prefix','suffix','nzeros']
         for key in kwargs:
-            if key in ['dtype','path','prefix','suffix','nzeros']:
+            if key in key_list:
                  setattr(self,key,kwargs[key])
             
+        for key in key_list:
+            kwargs.update({key:getattr(self,key)})
         self._load_datasets(*scans,**kwargs)
         return  
     

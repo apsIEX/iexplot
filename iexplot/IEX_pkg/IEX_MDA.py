@@ -21,10 +21,23 @@ class IEX_MDA:
         data.mda = data.load_scans(short_list,**kwargs)
 
     """
-    def __init__(self):
+    def __init__(self,**kwargs):
         """
         """
+        self.prefix = ''
+        self.nzeros = 4
+        self.suffix = ''
+        self.ext = 'mda'
+        self.path = ''
+
+        self._update_attr(**kwargs)
+
         pass
+
+    def _update_attr(self, **kwargs):
+        for key in kwargs:
+            if key in vars(self):
+                setattr(self,key,kwargs[key])
 
     def load_scans(self,short_list,**kwargs):
         """
@@ -44,15 +57,12 @@ class IEX_MDA:
         fpath = path + filename
 
         """
-        try:
-            kwargs.setdefault('prefix',self.prefix )
-            kwargs.setdefault('nzeros',self.nzeros )
-            kwargs.setdefault('suffix',self.suffix )
-            kwargs.setdefault('ext',self.ext )
-            kwargs.setdefault('path',self.path )
-        except:
-            #print('Need to specify kwargs:  prefix,nzeros,suffix, ext, path')
-            pass
+        kwargs.setdefault('prefix',self.prefix )
+        kwargs.setdefault('nzeros',self.nzeros )
+        kwargs.setdefault('suffix',self.suffix )
+        kwargs.setdefault('ext',self.ext )
+        kwargs.setdefault('path',self.path )
+  
         
         kwargs.setdefault('debug',False)
         kwargs.setdefault('verbose',False)
