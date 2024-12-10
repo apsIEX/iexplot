@@ -566,11 +566,12 @@ def fit_mda(scanNum,detNum,fit_type,**kwargs):
     else:
         x,y,x_name,y_name=mda_1D(scanNum,detNum,1,0,kwargs['filepath'],kwargs['prefix'])
     
-    if iex.BL.endstation_name.lower() == 'kappa' and fit_type != 'poly':
-        try:
+    
+    try:
+        if iex.BL.endstation_name.lower() == 'kappa' and fit_type != 'poly':
             title=title + ' centroid = '+str(centroid_avg(scanNum))
-        except:
-            pass
+    except:
+        pass
 
     x = np.array(x)
     y = np.array(y)
