@@ -435,6 +435,7 @@ def nData_h5Group_r(h):
 #==============================================================================
 # Utils for appending/stacking
 #==============================================================================
+
 def nstack(nData_list,stack_scale=None,stack_unit="", **kwargs):
     """
     returns a stack of nData objects 
@@ -514,6 +515,7 @@ def nstack(nData_list,stack_scale=None,stack_unit="", **kwargs):
 
     return d
         
+
     
 def nAppend(data1,data2,**kwargs):
     """

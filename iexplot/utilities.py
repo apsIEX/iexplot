@@ -1,5 +1,19 @@
 from numpy import inf
 
+def make_nstack_list(obj,*nums,**kwargs):
+    """
+    obj is ndata object (e.g. data.AD or data.mda or data.mda[scanNum].EA)
+    nums is scanNum or EAnum
+    **kwargs from make_num_list):
+        none
+    """
+    
+    nData_list=[]
+    scanNum_list = make_num_list(*nums,**kwargs)
+    for scanNum in scanNum_list:
+        nData_list.append(obj[scanNum])
+    return nData_list
+
 def make_num_list(*nums,**kwargs):
     """
     Making a shortlist based on *num

@@ -5,8 +5,8 @@ from iexplot.utilities import _shortlist, make_num_list
 from iexplot.plotting import plot_1D, plot_2D, plot_3D
 from iexplot.pynData.pynData import nstack
 from iexplot.pynData.pynData_ARPES import kmapping_energy_scale
-from iexplot.IEX_pkg.Plot_IT import pynData_to_ra
-from pyimagetool import tools
+#from iexplot.IEX_pkg.Plot_IT import pynData_to_ra
+#from pyimagetool import tools
 
 class Plot_EA:
     """
@@ -174,8 +174,8 @@ class Plot_EA:
         """
         plot EA in imagetool
         """
-        ra = pynData_to_ra(self.mda[scanNum].EA[EAnum])
-        tools.new(ra)
+        #ra = pynData_to_ra(self.mda[scanNum].EA[EAnum])
+        #tools.new(ra)
         pass
     
     def make_EA_list(self, *nums, **kwargs):

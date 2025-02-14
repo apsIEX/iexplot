@@ -41,6 +41,7 @@ def plot_image(fpath,h=20,v=10,**kwargs):
         as
         cmap = colormap; examples => 'gray','BuPu','Inferno'
         vmin,vmax, adjust max and min of colormap
+        
     """   
     
     image = mpimg.imread(fpath)
@@ -61,7 +62,7 @@ def plot_image(fpath,h=20,v=10,**kwargs):
 def plot_images(fpath_1,fpath_2,h=20,v=10):
     """
     fpath = the full path to the image file
-    filepath = '/home/beams/29IDUSER/Documents/User_Folders/UserName/TifFile.tif'
+    path = '/home/beams/29IDUSER/Documents/User_Folders/UserName/TifFile.tif'
     """
     print(fpath_1)
     print(fpath_2)
@@ -107,10 +108,10 @@ def plot_mda(*ScanDet,**kwArg):
         ylabel = 'myLabel'        (default: pv name)
         ytickstyle = 'sci' for y axes    (default: 'plain')
         xtickstyle = 'sci' for y axes    (default: 'plain')
-    filepath: by default plot scans for the current data folder (as defined in BL_ioc() ScanRecord SaveData)
+    path: by default plot scans for the current data folder (as defined in BL_ioc() ScanRecord SaveData)
     or specified folder path:
-        e.g. user : filepath='/net/s29data/export/data_29idc/2018_2/UserName/mda/'
-        e.g. staff: filepath='/net/s29data/export/data_29idb/2018_2/mda/'
+        e.g. user : path='/net/s29data/export/data_29idc/2018_2/UserName/mda/'
+        e.g. staff: path='/net/s29data/export/data_29idb/2018_2/mda/'
     prefix: by default, uses prefix as defined in ScanRecord ("mda_")
     scanIOC: by default, uses the IOC for the current branch as define in BL_IOC()
     """
@@ -123,7 +124,7 @@ def plot_mda(*ScanDet,**kwArg):
     kwArg.setdefault('sizeH',1)
     kwArg.setdefault('sizeV',1)  
     kwArg.setdefault('title','')
-    kwArg.setdefault('filepath',None)
+    kwArg.setdefault('path',None)
     kwArg.setdefault('prefix',None)
     kwArg.setdefault('norm',None)     
     kwArg.setdefault('flux',None)
@@ -139,7 +140,7 @@ def plot_mda(*ScanDet,**kwArg):
     lw=kwArg['linewidth']
     ls=kwArg['linestyle']
     c=kwArg['color']
-    path=kwArg['filepath']
+    path=kwArg['path']
     prefix=kwArg['prefix']
     scanIOC=kwArg['scanIOC']
     save=kwArg['save']
@@ -256,9 +257,9 @@ def plot_mda(*ScanDet,**kwArg):
     except:
         pass
 
-def plot_mda2D(ScanNum,DetectorNum,title=None,color=None,filepath=None,prefix=None):
+def plot_mda2D(ScanNum,DetectorNum,title=None,color=None,path=None,prefix=None):
     try:
-        x,y,z,xName,yName,zName=mda_2D(ScanNum,DetectorNum,filepath,prefix)
+        x,y,z,xName,yName,zName=mda_2D(ScanNum,DetectorNum,path,prefix)
         fig, ax0 = plt.subplots()
         if color is None:
             color='gnuplot'
@@ -298,10 +299,10 @@ def plot_mda_series(*ScanDet,**kwArg):
         ylabel = 'myLabel'        (default: pv name)
         ytickstyle = 'sci' for y axes    (default: 'plain')
         xtickstyle = 'sci' for y axes    (default: 'plain')
-    filepath: by default plot scans for the current data folder (as defined in BL_ioc() ScanRecord SaveData)
+    path: by default plot scans for the current data folder (as defined in BL_ioc() ScanRecord SaveData)
     or specified folder path:
-        e.g. user : filepath='/net/s29data/export/data_29idc/2018_2/UserName/mda/'
-        e.g. staff: filepath='/net/s29data/export/data_29idb/2018_2/mda/'
+        e.g. user : path='/net/s29data/export/data_29idc/2018_2/UserName/mda/'
+        e.g. staff: path='/net/s29data/export/data_29idb/2018_2/mda/'
     prefix: by default, uses prefix as defined in ScanRecord ("mda_")
     scanIOC: by default, uses the IOC for the current branch as define in BL_IOC()
     """
@@ -367,10 +368,10 @@ def plot_mda_lists(*ScanDet,**kwArg):
         ylabel = 'myLabel'        (default: pv name)
         ytickstyle = 'sci' for y axes    (default: 'plain')
         xtickstyle = 'sci' for y axes    (default: 'plain')
-    filepath: by default plot scans for the current data folder (as defined in BL_ioc() ScanRecord SaveData)
+    path: by default plot scans for the current data folder (as defined in BL_ioc() ScanRecord SaveData)
     or specified folder path:
-        e.g. user : filepath='/net/s29data/export/data_29idc/2018_2/UserName/mda/'
-        e.g. staff: filepath='/net/s29data/export/data_29idb/2018_2/mda/'
+        e.g. user : path='/net/s29data/export/data_29idc/2018_2/UserName/mda/'
+        e.g. staff: path='/net/s29data/export/data_29idb/2018_2/mda/'
     prefix: by default, uses prefix as defined in ScanRecord ("mda_")
     scanIOC: by default, uses the IOC for the current branch as define in BL_IOC()
     """
@@ -385,7 +386,7 @@ def plot_mda_lists(*ScanDet,**kwArg):
         'sizeH':1,
         'sizeV':1,
         'title':'',
-        'filepath':None,
+        'path':None,
         'prefix':None,
         'norm':None,
         'flux':None,
@@ -403,7 +404,7 @@ def plot_mda_lists(*ScanDet,**kwArg):
     lw=args['linewidth']
     ls=args['linestyle']
     c=args['color']
-    path=args['filepath']
+    path=args['path']
     prefix=args['prefix']
     scanIOC=args['scanIOC']
   
@@ -444,11 +445,11 @@ def plot_mda_lists(*ScanDet,**kwArg):
                 detNum_list=[detNum_list]
                 for i in range(1,len(scanNum_list)):
                     detNum_list.append(detNum_list[0])
-            if type(args['filepath']) is not list:
-                filepath_list=[args['filepath']]
+            if type(args['path']) is not list:
+                path_list=[args['path']]
                 for i in range(1,len(scanNum_list)):
-                    filepath_list.append(filepath_list[0])
-            else: filepath_list=args['filepath']
+                    path_list.append(path_list[0])
+            else: path_list=args['path']
             if type(args['prefix']) is not list:
                 prefix_list=[args['prefix']]
                 for i in range(1,len(scanNum_list)):
@@ -463,7 +464,7 @@ def plot_mda_lists(*ScanDet,**kwArg):
             for index in range(0,len(scanNum_list)):
                 i=scanNum_list[index]
                 j=detNum_list[index]
-                path=filepath_list[index]
+                path=path_list[index]
                 prefix=prefix_list[index]
                 scanIOC=scanIOC_list[index]
                 #print(i)
@@ -547,14 +548,14 @@ def fit_mda(scanNum,detNum,fit_type,**kwargs):
         plot: True/False plots the data and the fit (default=True)
         xrange=[x_first,x_last] to fit subrange 
         coefs_0=[Amplitude,x0,sigma,bkgd] to specifiy initial guesses, otherwise autoguess
-        filepath: to load data in a different path
+        path: to load data in a different path
         prefix: to load data with a different prefix
 
     """
     kwargs.setdefault('hkl_positioner',False)
     kwargs.setdefault('title','')
     kwargs.setdefault('plot',True)
-    kwargs.setdefault('filepath',None)
+    kwargs.setdefault('path',None)
     kwargs.setdefault('prefix',None)
     title=kwargs['title']
 
@@ -562,9 +563,9 @@ def fit_mda(scanNum,detNum,fit_type,**kwargs):
     if kwargs['hkl_positioner']:
         hkl_positioner=kwargs['hkl_positioner']
         d={'h':46,'k':47,'l':48,'tth':54,'th':55,'chi':56,'phi':57}
-        x,y,x_name,y_name=mda_1D_vsDet(scanNum,detNum,d[hkl_positioner.lower()],1,0,kwargs['filepath'],kwargs['prefix'])
+        x,y,x_name,y_name=mda_1D_vsDet(scanNum,detNum,d[hkl_positioner.lower()],1,0,kwargs['path'],kwargs['prefix'])
     else:
-        x,y,x_name,y_name=mda_1D(scanNum,detNum,1,0,kwargs['filepath'],kwargs['prefix'])
+        x,y,x_name,y_name=mda_1D(scanNum,detNum,1,0,kwargs['path'],kwargs['prefix'])
     
     
     try:
@@ -645,23 +646,23 @@ def fit_mda_box(scanNum,detNum,**kwargs):
 ##############################################################################################################
 ##############################                  Extracting mda Data               ##############################
 ##############################################################################################################
-def mda_unpack(ScanNum,filepath=None,prefix=None):
+def mda_unpack(ScanNum,path=None,prefix=None):
     """ Return data file + dictionary D##:("pv",index##)
-    filepath: by default plot scans for the current data folder (as defined in BL_ioc() ScanRecord SaveData)
+    path: by default plot scans for the current data folder (as defined in BL_ioc() ScanRecord SaveData)
     or specified folder path:
-        e.g. filepath='/net/s29data/export/data_29idb/2018_1/mda_b/'
+        e.g. path='/net/s29data/export/data_29idb/2018_1/mda_b/'
     prefix: by default, uses prefix as defined in ScanRecord
             "mda_" for users, "Kappa_" or "ARPES_" for staff (sometimes)
     """
     try:
-        if filepath is None:
-            filepath = mda_filepath()
+        if path is None:
+            path = mda_filepath()
         if prefix is None:
             prefix = mda_prefix()
     except:
-        print('Please specify filepath and prefix, BL is not defined')
+        print('Please specify path and prefix, BL is not defined')
 
-    mdaFile=join(filepath,prefix+'{:04}.mda'.format(ScanNum))
+    mdaFile=join(path,prefix+'{:04}.mda'.format(ScanNum))
     data_file = readMDA(mdaFile)
     try:
         D={}
@@ -672,11 +673,11 @@ def mda_unpack(ScanNum,filepath=None,prefix=None):
         return (data_file,D)
     except:
         pass
-def mda_1D(ScanNum,DetectorNum,coeff=1,bckg=0,filepath=None,prefix=None):
+def mda_1D(ScanNum,DetectorNum,coeff=1,bckg=0,path=None,prefix=None):
     """ Return x=positionner and y=detector(DetectorNum)
     for a given detector number DYY (as shown in dview). """
     try:
-        (data_file,det)=mda_unpack(ScanNum,filepath,prefix)
+        (data_file,det)=mda_unpack(ScanNum,path,prefix)
         index=det[DetectorNum][1]
         x = data_file[1].p[0].data
         y = data_file[1].d[index].data
@@ -699,11 +700,11 @@ def mda_1D(ScanNum,DetectorNum,coeff=1,bckg=0,filepath=None,prefix=None):
         pass
 
 
-def mda_1D_unscaled(ScanNum,DetectorNum,filepath=None,prefix=None):
+def mda_1D_unscaled(ScanNum,DetectorNum,path=None,prefix=None):
     """ Return x=positionner and y=detector(DetectorNum)
     for a given detector number DYY (as shown in dview). """
     try:
-        (data_file,det)=mda_unpack(ScanNum,filepath,prefix)
+        (data_file,det)=mda_unpack(ScanNum,path,prefix)
         if (data_file,det) == (None,None):
             return(None)
         else:
@@ -728,11 +729,11 @@ def mda_1D_unscaled(ScanNum,DetectorNum,filepath=None,prefix=None):
     except:
         pass
 
-def mda_1D_Xindex(ScanNum,DetectorNum,coeff=1,bckg=0,filepath=None,prefix=None):
+def mda_1D_Xindex(ScanNum,DetectorNum,coeff=1,bckg=0,path=None,prefix=None):
     """ Return x=index and y=detector(DetectorNum)
     for a given detector number DYY (as shown in dview). """
     try:
-        (data_file,det)=mda_unpack(ScanNum,filepath,prefix)
+        (data_file,det)=mda_unpack(ScanNum,path,prefix)
         index=det[DetectorNum][1]
         x = data_file[1].d[0].data
         y = data_file[1].d[index].data
@@ -752,12 +753,12 @@ def mda_1D_Xindex(ScanNum,DetectorNum,coeff=1,bckg=0,filepath=None,prefix=None):
     except:
         pass
 
-def mda_1D_vsDet(ScanNum,DetectorNum,DetectorNum2,coeff=1,bckg=0,filepath=None,prefix=None):
+def mda_1D_vsDet(ScanNum,DetectorNum,DetectorNum2,coeff=1,bckg=0,path=None,prefix=None):
     """ Return x=index and y=detector(DetectorNum)
     for a given detector number DYY (as shown in dview). """
     try:
-        #print(ScanNum,filepath,prefix,scanIOC)
-        (data_file,det)=mda_unpack(ScanNum,filepath,prefix)
+        #print(ScanNum,path,prefix,scanIOC)
+        (data_file,det)=mda_unpack(ScanNum,path,prefix)
         index=det[DetectorNum][1]
         index2=det[DetectorNum2][1]
         x = data_file[1].d[0].data
@@ -785,14 +786,14 @@ def mda_1D_vsDet(ScanNum,DetectorNum,DetectorNum2,coeff=1,bckg=0,filepath=None,p
     except:
         pass
 
-def mda_Flux(ScanNum,DetectorNum,EnergyNum,filepath=None,prefix=None):
+def mda_Flux(ScanNum,DetectorNum,EnergyNum,path=None,prefix=None):
     """ Return x=positionner and y=Flux(DetectorNum)
     for a given diode recorded as detector number DYY (see ## in dview).
     EnergyNum is the detector number for the mono RBV.
 
     """
     try:
-        (data_file,det)=mda_unpack(ScanNum,filepath,prefix)
+        (data_file,det)=mda_unpack(ScanNum,path,prefix)
         index=det[DetectorNum][1]
         Eindex=det[EnergyNum][1]
         x = data_file[1].p[0].data
@@ -816,11 +817,11 @@ def mda_Flux(ScanNum,DetectorNum,EnergyNum,filepath=None,prefix=None):
 
 
 
-def mda_NormDet(ScanNum,DetectorNum,NormNum,coeff=1,bckg=0,filepath=None,prefix=None):
+def mda_NormDet(ScanNum,DetectorNum,NormNum,coeff=1,bckg=0,path=None,prefix=None):
     """ Return x=positionner and y=detector(DetectorNum)
     for a given detector number DYY (as shown in dview). """
     try:
-        (data_file,det)=mda_unpack(ScanNum,filepath,prefix)
+        (data_file,det)=mda_unpack(ScanNum,path,prefix)
         index=det[DetectorNum][1]
         index_Norm=det[NormNum][1]
         x = data_file[1].p[0].data
@@ -843,13 +844,13 @@ def mda_NormDet(ScanNum,DetectorNum,NormNum,coeff=1,bckg=0,filepath=None,prefix=
     except:
         pass
 
-def mda_DivScan(ScanNum1,DetectorNum1,ScanNum2,DetectorNum2,coeff=1,bckg=0,filepath=None,prefix=None):
+def mda_DivScan(ScanNum1,DetectorNum1,ScanNum2,DetectorNum2,coeff=1,bckg=0,path=None,prefix=None):
     """ Return x=positionner and y=detector(DetectorNum)
     for a given detector number DYY (as shown in dview). """
     try:
-        (data_file1,det1)=mda_unpack(ScanNum1,filepath,prefix)
+        (data_file1,det1)=mda_unpack(ScanNum1,path,prefix)
         index1=det1[DetectorNum1][1]
-        (data_file2,det2)=mda_unpack(ScanNum2,filepath,prefix)
+        (data_file2,det2)=mda_unpack(ScanNum2,path,prefix)
         index2=det2[DetectorNum2][1]
         x1 = data_file1[1].p[0].data
         y1= data_file1[1].d[index1].data
@@ -873,11 +874,11 @@ def mda_DivScan(ScanNum1,DetectorNum1,ScanNum2,DetectorNum2,coeff=1,bckg=0,filep
 
 
 
-def mda_2D(ScanNum,DetectorNum,filepath=None,prefix=None):
+def mda_2D(ScanNum,DetectorNum,path=None,prefix=None):
     """ Return x=positionner and y=detector(DetectorNum)
     for a given detector number DYY (as shown in dview). """
     try:
-        (data_file,det)=mda_unpack(ScanNum,filepath,prefix)
+        (data_file,det)=mda_unpack(ScanNum,path,prefix)
         index=det[DetectorNum][1]
         x_temp = data_file[2].p[0].data
         y_temp = data_file[1].p[0].data
@@ -990,7 +991,7 @@ class _mdaHeader:
 class mdaFile:
     
     
-    '''mydata=mdaFile(first=0,last=None,name=datasetName,filepath=None,prefix=None)
+    '''mydata=mdaFile(first=0,last=None,name=datasetName,path=None,prefix=None)
     
     /net/s29data/export/data_29idb/2020_3/mda/Kappa_0107.mda is a 1-D file; 1 dimensions read in.
     
@@ -1033,10 +1034,10 @@ class mdaFile:
           readback_name - name of EPICS PV (e.g., 'xxx:m1.VAL')
     '''
 
-    def __init__(self,first=1,last=None,name='mydata',filepath=None,prefix=None,q=False):
-        if filepath == None:
-            filepath = iex.BL.mda.filepath()
-        self.path  = filepath
+    def __init__(self,first=1,last=None,name='mydata',path=None,prefix=None,q=False):
+        if path == None:
+            path = iex.BL.mda.path()
+        self.path  = path
         self._name  = name
         self._first = first
         self._last  = last
@@ -1091,11 +1092,11 @@ class mdaFile:
             ##### File info:
             
             filename=mda
-            filepath=self.path
-            #print(filepath)
+            path=self.path
+            #print(path)
             num=self.scanList[i]
             #print(num)
-            fullpath=join(filepath,filename)
+            fullpath=join(path,filename)
             #print(fullpath)
             data=readMDA(fullpath,useNumpy=True)    # data = scanDim object of mda module
             
@@ -1209,8 +1210,8 @@ class mdaFile:
 
 
 
-    def updateFiles(self,first=0,last=inf,name=None,filepath=None,prefix=None):
-        new=mdaFile(first,last,name,filepath,prefix)
+    def updateFiles(self,first=0,last=inf,name=None,path=None,prefix=None):
+        new=mdaFile(first,last,name,path,prefix)
         self.loadedFiles=list(dict.fromkeys(self.loadedFiles+new.loadedFiles))
         self._allFiles=list(dict.fromkeys(self._allFiles+new._allFiles))              # merging the 2 list and removing duplicates
         self.scanList=list(dict.fromkeys(self.scanList+new.scanList))
@@ -1280,14 +1281,14 @@ def nc_unpack(scanNum,**kwargs):
         data array is accessed
             nc.variables['array_data'][:][0]
             
-    FilePath: by default plot scans for the current data folder (as shown on detector panel)
+    path: by default plot scans for the current data folder (as shown on detector panel)
     or specified folder path ending with '/':
-        e.g. user : FilePath='/net/s29data/export/data_29idc/2018_2/UserName/netCDF/'
-        e.g. staff: FilePath='/net/s29data/export/data_29idb/2018_2/netCDF/'
+        e.g. user : path='/net/s29data/export/data_29idc/2018_2/UserName/netCDF/'
+        e.g. staff: path='/net/s29data/export/data_29idb/2018_2/netCDF/'
     Prefix: by default, uses prefix as shown on detector panel ("EA_")
     """
     ADplugin = '29idcEA:netCDF1:'
-    kwargs.setdefault('path',AD_filepath(ADplugin))
+    kwargs.setdefault('path',AD_path(ADplugin))
     kwargs.setdefault('prefix',AD_prefix(ADplugin))
     fname = kwargs['prefix']+'{:04}.nc'.format(scanNum)
     fpath = join(kwargs['path'],fname)
@@ -1368,8 +1369,8 @@ def EA_spectra(scanNum,EnergyAxis='KE',**kwargs):
     **kwargs:
     path: by default plot scans for the current data folder (as shown on detector panel)
     or specified folder path ending with '/':
-        e.g. user : FilePath='/net/s29data/export/data_29idc/2018_2/UserName/netCDF/'
-        e.g. staff: FilePath='/net/s29data/export/data_29idb/2018_2/netCDF/'
+        e.g. user : path='/net/s29data/export/data_29idc/2018_2/UserName/netCDF/'
+        e.g. staff: path='/net/s29data/export/data_29idb/2018_2/netCDF/'
     prefix: by default, uses prefix as shown on detector panel ("EA_")
     
     Useage:
@@ -1387,27 +1388,27 @@ def EA_spectra(scanNum,EnergyAxis='KE',**kwargs):
         x=hv-wk-np.array(x)
     return x, y, img
 
-def EA_EDC(scanNum,EnergyAxis='KE',FilePath=None,Prefix=None):
+def EA_EDC(scanNum,EnergyAxis='KE',path=None,Prefix=None):
     """
     Returns
         x = KE or BE energy scale; BE is calculated based on the wk in the SES and the mono energy
         y = Integrated intensity
-    FilePath: by default plot scans for the current data folder (as shown on detector panel)
+    path: by default plot scans for the current data folder (as shown on detector panel)
     or specified folder path ending with '/':
-        e.g. user : FilePath='/net/s29data/export/data_29idc/2018_2/UserName/netCDF/'
-        e.g. staff: FilePath='/net/s29data/export/data_29idb/2018_2/netCDF/'
+        e.g. user : path='/net/s29data/export/data_29idc/2018_2/UserName/netCDF/'
+        e.g. staff: path='/net/s29data/export/data_29idb/2018_2/netCDF/'
     Prefix: by default, uses prefix as shown on detector panel ("EA_")
     
     Simple plot:   x,y=EA_Spectrum(ScanNum);plt.plot(x,y);plt.xlim(min(x),xmax(x));plt.show()
 """
-    x, ang, img = EA_spectra(scanNum, EnergyAxis,FilePath,Prefix)
+    x, ang, img = EA_spectra(scanNum, EnergyAxis,path,Prefix)
     y = np.asarray([sum(img[:,i]) for i in range(img.shape[1])])
     return x, y
 
-def EA_metadata(ScanNum,FilePath=None,Prefix=None):
+def EA_metadata(ScanNum,path=None,Prefix=None):
     """ Returns: ActualPhotonEnergy,WorkFunction,GratingPitch,MirrorPitch
     """
-    nc=nc_unpack(ScanNum,FilePath,Prefix)
+    nc=nc_unpack(ScanNum,path,Prefix)
     # SES parameters
     LowEnergy=nc.variables['Attr_LowEnergy'][:][0]
     HighEnergy=nc.variables['Attr_HighEnergy'][:][0]
@@ -1444,15 +1445,15 @@ def EA_metadata(ScanNum,FilePath=None,Prefix=None):
     return WorkFunction,ActualPhotonEnergy,MirrorPitch,GratingPitch,Grating_Density,Grating_Slot,offset,b2
 
 
-def Get_EDCmax(ScanNum,EnergyAxis='KE',FilePath=None,Prefix=None):
-    x,y=EA_EDC(ScanNum, EnergyAxis,FilePath,Prefix)
+def Get_EDCmax(ScanNum,EnergyAxis='KE',path=None,Prefix=None):
+    x,y=EA_EDC(ScanNum, EnergyAxis,path,Prefix)
     maxY= max(y)
     maxX=round(x[np.where(y == max(y))][0],3)
     return maxX,maxY  # energy position, intensity of the peak
 
 
 
-def EDC_Series(first,last,countby, EnergyAxis='BE',title="",norm=None,FilePath=None,Prefix=None):
+def EDC_Series(first,last,countby, EnergyAxis='BE',title="",norm=None,path=None,Prefix=None):
     """
     Plots a seriew of EA_Spectrum
     """
@@ -1461,7 +1462,7 @@ def EDC_Series(first,last,countby, EnergyAxis='BE',title="",norm=None,FilePath=N
     fig = plt.figure(figsize=(6,6))
     a1 = fig.add_axes([0,0,1,1])
     for ScanNum in range(first,last+countby,countby):
-        x,y=EA_EDC(ScanNum, EnergyAxis,FilePath,Prefix)
+        x,y=EA_EDC(ScanNum, EnergyAxis,path,Prefix)
         if norm is not None: maxvalue=max(y)
         else: maxvalue=1
         plt.plot(x,y/maxvalue,label='#'+str(ScanNum))
@@ -1476,30 +1477,30 @@ def EDC_Series(first,last,countby, EnergyAxis='BE',title="",norm=None,FilePath=N
 def plot_nc(*ScanNum,**kwgraph):
     """
     ScanNum = Scan number to be plotted: single scan, or range (first,last,countby) to average.
-    kwgraph = EDC / FilePath / Prefix
+    kwgraph = EDC / path / Prefix
         - Transmission mode: angle integrated EDC.
         - Angular mode:
             default: band map only
             EDC = 'y' : angle integrated EDC only
             EDC = 'both': angle integrated EDC + band map
             EnergyAxis = KE (default) or BE (BE uses work function from SES)
-    FilePath: by default plot scans for the current data folder (as shown on detector panel)
+    path: by default plot scans for the current data folder (as shown on detector panel)
     or specified folder path ending with '/':
-        e.g. user : FilePath='/net/s29data/export/data_29idc/2018_2/UserName/netCDF/'
-        e.g. staff: FilePath='/net/s29data/export/data_29idb/2018_2/netCDF/'
+        e.g. user : path='/net/s29data/export/data_29idc/2018_2/UserName/netCDF/'
+        e.g. staff: path='/net/s29data/export/data_29idb/2018_2/netCDF/'
     Prefix: by default, uses prefix as shown on detector panel ("EA_")
 
     """
-    FilePath,Prefix,EDC,EnergyAxis,avg=None,None,None,'KE',None
+    path,Prefix,EDC,EnergyAxis,avg=None,None,None,'KE',None
     if kwgraph is not None:
         for key, value in list(kwgraph.items()):
-            if key=='FilePath': FilePath=value
+            if key=='path': path=value
             if key=='Prefix':   Prefix=value
             if key=='EDC':   EDC=value
             if key=='EnergyAxis':   EnergyAxis=value
             if key=='avg':  avg=1
     #Get lens mode
-    nc=nc_unpack(ScanNum[0],FilePath,Prefix)
+    nc=nc_unpack(ScanNum[0],path,Prefix)
     LensMode=nc.variables['Attr_LensMode'][:][0]        
     #Loading Scans ()
     first=ScanNum[0]
@@ -1510,8 +1511,8 @@ def plot_nc(*ScanNum,**kwgraph):
         last=ScanNum[1]
         countby=ScanNum[2]
     for n in range(first,last+countby,countby):
-        x,intensity=EA_EDC(n,EnergyAxis,FilePath,Prefix)
-        x,y,img =EA_spectra(n,EnergyAxis,FilePath,Prefix)
+        x,intensity=EA_EDC(n,EnergyAxis,path,Prefix)
+        x,y,img =EA_spectra(n,EnergyAxis,path,Prefix)
         if n == first:
             Spectra=intensity
             Img=img
@@ -1578,14 +1579,14 @@ def plot_nc(*ScanNum,**kwgraph):
 
 def plot_nc_Sum(first,last,**kwgraph):
 
-    FilePath,Prefix=None,None
+    path,Prefix=None,None
     if kwgraph is not None:
         for key, value in list(kwgraph.items()):
-            if key=='FilePath': FilePath=value
+            if key=='path': path=value
             if key=='Prefix':   Prefix=value
     for n in range(first,last+1):
         print(n)
-        nc=nc_unpack(n,FilePath,Prefix)
+        nc=nc_unpack(n,path,Prefix)
         x,xname,ycrop,yname,img,hv,wk,PE=EA_data(nc)
         LensMode=nc.variables['Attr_LensMode'][:][0]
         if n == first:
