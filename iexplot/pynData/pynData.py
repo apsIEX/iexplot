@@ -503,7 +503,7 @@ def nstack(nData_list,stack_scale=None,stack_unit="", **kwargs):
             print('updating scales rank 1')
         d.updateAx('x', xscale, xunit)
         d.updateAx('y', yscale, yunit)
-        print(yscale)
+        
     else:
         if kwargs['debug'] == True:
             print('updating scales rank > 1')

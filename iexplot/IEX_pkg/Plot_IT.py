@@ -1,6 +1,37 @@
 
 from pyimagetool import tools, RegularDataArray
 
+from matplotlib.colors import ListedColormap
+from pyimagetool.cmaps.CMap import *
+cmp = CMap()
+
+def imagetool_cmaps(key=None,**kwargs):
+    """
+    used to generate cmaps used by pyimagetool
+    key = None => prints list of cmap names/keys
+    **kwargs:
+        ct_reverse
+        ct_gamma
+
+    usage:
+        plt.imshow(img,cmap=imagetool_cmaps('cold_warm'))
+    """
+    kwargs.setdefault('ct_reverse',False)
+    kwargs.setdefault('ct_gamma',1)
+    cmap_list = cmp.cmaps
+    if key == None:
+        print('Available cmaps: ',cmap_list)
+        return
+    if key in cmap_list:
+        dat=np.arange(1,2,1)
+        dat = cmp.load_ct(key,kwargs['ct_reverse'], kwargs['ct_gamma'])
+        cmap = ListedColormap(dat/255)
+        return cmap
+    else:
+        print(key,'is not a available cmap \n Available cmaps: ',cmap_list)
+        return
+
+
 def pynData_to_ra(d):
     """
     converts a pynData object into a imagetool.RegularDataArray

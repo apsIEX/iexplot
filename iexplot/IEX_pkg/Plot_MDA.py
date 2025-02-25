@@ -1,9 +1,13 @@
 
+import re
+
+from IPython.display import display_markdown
+
 import matplotlib.pyplot as plt
 
-from iexplot.utilities import _shortlist, make_num_list
+from iexplot.utilities import make_num_list
 from iexplot.plotting import *
-
+from iexplot.pynData.pynData import nstack
 
 
 class Plot_MDA:
@@ -12,6 +16,12 @@ class Plot_MDA:
     """    
     def __init__(self):
         pass
+
+    def mda_positioners_list(self,scanNum):
+        """
+        prints the positioners associated with the mda file
+        """
+        self.mda[scanNum].posAll()
 
     def mda_positioner(self,scanNum,**kwargs):
         """
@@ -33,12 +43,13 @@ class Plot_MDA:
         posNum = kwargs['posNum']
         ax = kwargs['ax']
 
-        if ax == 'x':
-            return self.mda[scanNum].posx[posNum].data
-        if ax == 'y':
-            return self.mda[scanNum].posy[posNum].data
-        if ax == 'z':
-            return self.mda[scanNum].posz[posNum].data
+        try:
+            mda_pos = getattr(self.mda[scanNum],'pos'+ax)
+            return mda_pos[posNum].data
+        except:
+            print('No mda positioner: pox'+ax+'['+str(posNum)+']')
+            print('\n')
+            self.mda_positioners_list()
 
     def mda_positioner_label(self,scanNum,**kwargs):
         """
@@ -65,17 +76,25 @@ class Plot_MDA:
         posNum = kwargs['posNum']
         ax = kwargs['ax']
         
-        if ax == 'x':
-            return self.mda[scanNum].posx[posNum].pv[1] if len(self.mda[scanNum].posx[posNum].pv[1])>0 else self.mda[scanNum].posx[posNum].pv[0]
-        elif ax == 'y':
-            return self.mda[scanNum].posy[posNum].pv[1] if len(self.mda[scanNum].posy[posNum].pv[1])>0 else self.mda[scanNum].posy[posNum].pv[0]
-        elif ax == 'z':
-            return self.mda[scanNum].posz[posNum].pv[1] if len(self.mda[scanNum].posz[posNum].pv[1])>0 else self.mda[scanNum].posz[posNum].pv[0]
+        try:
+            mda_pos = getattr(self.mda[scanNum],'pos'+ax)
+            return mda_pos[posNum].pv[1] if len(mda_pos[posNum].pv[1])>0 else mda_pos[posNum].pv[0]
 
+        except:
+            print('No mda positioner: pox'+ax+'['+str(posNum)+']')
+            print('\n')
+            self.mda_positioners_list()
+    
+    def mda_detectors_list(self,scanNum):
+        """
+        list all the detectors for a given mda scan
+        """
+        self.mda[scanNum].detAll()
+        
+    
     def mda_detector(self,scanNum, detNum):
         """
-        returns the array for a positioner and positioner pv/desc.
-                        
+        returns the array for a positioner and positioner pv/desc
         usage for 1D data:
         x = mdaPos(305)
         y = mdaDet(305,16)
@@ -287,48 +306,75 @@ class Plot_MDA:
             self.plot_mda(scanNum,det_list[i],**kwargs)
             plt.colorbar()
         
-
+    def mda_stack_1D(self,*scans,detNum=1,pv=None,**kwargs):
+        """
+        stack a series of 1D mda scans
+        """
+        stack_scale=[]
+        nData_list=[]
+        for scanNum in make_num_list(*scans):
+            try:
+                stack_scale.append(self.mda_extra_pvs(scanNum,pv,verbose=False))
+                unit = pv
+            except:
+                stack_scale.append(scanNum)  
+                unit = 'scanNum'
+            nData_list.append(self.mda[scanNum].det[detNum])
+        
+        d = nstack(nData_list, stack_scale, **kwargs)
+        d.updateScale('y',stack_scale)
+        d.updateUnit('y',pv)
+        return d
     
-    def mda_header(self,scanNum):
+    def mda_extra_pvs_all(self,scanNum):
         """
         returns a dictionary with all the adder info from the mda scan
     
         """
-        d = self.mda[scanNum].header.data.mda[19].header.ScanRecord
+        d = self.mda[scanNum].header.all
         return d
     
-    def mda_extra_pvs(self,scanNum,search,verbose=True):
+    def mda_extra_pvs(self,scanNum,search,**kwargs):
         """
         looks through the mda header to return the value of an extra_pv
         search is a string
-
+        ** kwargs
+            verbose
+            desc (= True to search pv description)
+            
         """
+        kwargs.setdefault('verbose', False)
+        kwargs.setdefault('desc',False)
+
+        headerList = self.mda[scanNum].header.all
+
+        d = {key:value for key, value in headerList.items() if key not in headerList['ourKeys']}
+
+        if search in headerList['ourKeys']:
+            return d[key]
+
+        if kwargs['desc']:
+            d = {key:value for key, value in d.items() if search.lower() == value[0].lower()}
         
-        header = self.mda[scanNum].header.all
-        d={}
-        for key in list(header.keys()):
-            if search.lower() in key.lower():
-                if key in header['ourKeys']:
-                    return header[key]
-                else:
-                    d[key]=header[key]
+        else: 
+            d = {key:value[:3] for key, value in headerList.items() if search.lower() in key.lower()}
 
         vals = []
         
-        if verbose:
+        if kwargs['verbose']:
             print('pv','desc','val','unit')
             
         for key in d.keys():
 
             pv = key
-            desc = header[key][0]
-            val = header[key][2]
+            desc = d[key][0]
+            val = d[key][2]
             if type(val)==list:
                 val = val[0]
             vals.append(val)
-            unit = header[key][1]
+            unit = d[key][1]
         
-            if verbose:
+            if kwargs['verbose']:
                 print(pv,desc,val,unit)
         if len(vals) == 1:
             return vals[0]
@@ -343,7 +389,21 @@ class Plot_MDA:
         """
         search = 'ENERGY_MON'
         return self.mda_extra_pvs(scanNum,search,verbose=False)
-        
+    
+    def mda_grating(self,scanNum):
+        """
+        returns the photon energy (mono readback) in eV
+        """
+        search = 'GRT_DENSITY'
+
+        grt_den = self.mda_extra_pvs(scanNum,search,verbose=False)
+        if round(grt_den,0) == 1200:
+            return 'MEG'
+        elif round(grt_den,0) == 2400:
+            return 'HEG'
+        else:
+            return grt_den
+
     def mda_polarization(self,scanNum):
         """
         returns the ID polarization
@@ -357,71 +417,246 @@ class Plot_MDA:
         """
         search = 'EnergySet'
         return self.mda_extra_pvs(scanNum,search,verbose=False)
+    
+    def mda_BL(self,scanNum):
+        """
+        returns the extra pvs related to beamline optics
+        """
+        headerList = self.mda[scanNum].header.all
+        d={}
+        #APS-OG: ID29 
+        #APS-U: S29ID
+        d['ID'] = {key:value[:3] for key, value in headerList.items() if 'ID' in key}
+        d['mono'] = {key:value[:3] for key, value in headerList.items() if 'mono' in key}
+        d['energy'] = {key:value[:3] for key, value in headerList.items() if 'energy' in key.lower()}
+        d['BL_motors'] = {key:value[:3] for key, value in headerList.items() if '29idb:m' in key}
+        d['slits'] = {key:value[:3] for key, value in headerList.items() if 'slit' in key.lower()} 
+        return d
 
+    def mda_slit(self,scanNum):
+        """
+        """
+        headerList = self.mda[scanNum].header.all
+        d={}
+        slit_pvs={'c': ['29idb:m24.RBV'],
+                'd': ['29idb:m26.RBV', '29idb:m27.RBV']
+                }
+        for branch,pvs in slit_pvs.items():
+            vals = []
+            for pv in pvs:
+                vals.append(self.mda_extra_pvs(scanNum,pv,verbose=False))
+            if len(vals)==2:
+                vals = abs(vals[1]-vals[0])
+            d[branch] = vals
+    
+        if 'arpes' in self.prefix.lower():
+            return d['c']
+        elif 'kappa' in self.prefix.lower():
+            return d['d']
+        elif 'octupole' in self.prefix.lower():
+            return d['d']
+        else:
+            return d
+    
+    def mda_sample(self,scanNum):
+        """
+        returns the extra pvs related to sample position and temperature of Kappa and ARPES endstations
+        """
+        headerList = self.mda[scanNum].header.all
+        d={}
+        # Kappa
+        sampleInfo={**{key:value[:3] for key, value in headerList.items() if '29idKappa:m' in key},
+                    **{key:value[:3] for key, value in headerList.items() if '29idKappa:Euler' in key},
+                    **{key:value[:3] for key, value in headerList.items() if 'LS331' in key}}
+        d.update(sampleInfo)
+
+        # ARPES
+        sampleInfo={**{key:value[:3] for key, value in headerList.items() if '29idc:m' in key},
+                        **{key:value[:3] for key, value in headerList.items() if '29idARPES:LS335' in key}
+                    }
+        d.update(sampleInfo)
+        return d
+    
+    def mda_x(self,scanNum):
+        """
+        returns the sample x position
+        """
+        search = 'x'
+        return self.mda_extra_pvs(scanNum,search,desc=True, verbose=False)
+    
+    def mda_y(self,scanNum):
+        """
+        returns the sample y position
+        """
+        search = 'y'
+        return self.mda_extra_pvs(scanNum,search,desc=True, verbose=False)
+    
+    def mda_z(self,scanNum):
+        """
+        returns the sample z position
+        """
+        search = 'z'
+        return self.mda_extra_pvs(scanNum,search,desc=True, verbose=False)
+    
+    def mda_th(self,scanNum):
+        """
+        returns the sample th position
+        """
+        search = 'th'
+        return self.mda_extra_pvs(scanNum,search,desc=True, verbose=False)
+    
+    def mda_chi(self,scanNum):
+        """
+        returns the sample chi position
+        """
+        search = 'chi'
+        return self.mda_extra_pvs(scanNum,search,desc=True, verbose=False)
+    
+    def mda_phi(self,scanNum):
+        """
+        returns the sample phi position
+        """
+        search = 'phi'
+        return self.mda_extra_pvs(scanNum,search,desc=True, verbose=False)
+    
+    def mda_tth(self,scanNum):
+        """
+        returns the sample tth position
+        """
+        search = 'tth'
+        return self.mda_extra_pvs(scanNum,search,desc=True, verbose=False)
+        
+    def mda_tthdet(self,scanNum):
+        """
+        returns the extra pvs related to tth (Kappa only)
+        """
+        headerList = self.mda[scanNum].header.all
+        detkeys=['29idMZ0:scaler1.TP','29idKappa:m9.RBV','29idKappa:userCalcOut10.OVAL','29iddMPA:C0O','29idKappa:userStringSeq6.STR1','29idd:Unidig1Bo0']
+        detInfo={**{key:value[:3] for key, value in headerList.items() if '29idd:A' in key},
+                **{key:value[:3] for key,value in headerList.items() if key in detkeys}}   
+        return detInfo
+
+    def mda_m3r(self,scanNum):
+        """
+        returns the extra pvs related to m3r
+        """
+        headerList = self.mda[scanNum].header.all
+        d={}
+        d.update({key:value[:3] for key, value in headerList.items() if '29id_m3r' in key})
+        #cam6 APS-OG
+        d.update({key:value[:3] for key, value in headerList.items() if 'ps6' in key.lower()})
+        #cam6 APS-U
+        d.update({key:value[:3] for key, value in headerList.items() if 'vmb6' in key.lower()})
+        return d
+
+    def mda_UBinfo(self,scanNum,**kwargs):
+        """
+        
+        """
+        headerList = self.mda[scanNum].header.all
+        d={}
+        comment=""
+        for i, key in enumerate(list(headerList.keys())):
+                if re.search('saveData_comment1', key) : 
+                    comment=str(headerList[key][2])
+                elif re.search('saveData_comment2', key) : 
+                    if headerList[key][2] != '':
+                        comment+=' - '+str(headerList[key][2])
+        d['comment']=comment     
+        UBinfo={**{key:value[:3] for key, value in headerList.items() if '29idKappa:UB' in key}}
+        print(UBinfo)
+        for key in UBinfo.keys():
+            d[key]=UBinfo[key]
+        return d
 
     def mda_summary(self,*scanNums,**kwargs):
         """
+        makes a markdown table of scan parameters from pv_list
+        *scanNum = scanNumbers
+        
         **kwargs
-            separator = '|'
             pv_list = ['positioner','polarization','hv']
+            round: for floats round to that many decimals (default: 3)
+            comment: must be a function of scanNum if not None
+
+        
         """
         kwargs.setdefault('separator', '|')
         kwargs.setdefault('pv_list',['positioner','polarization','hv'])
+        kwargs.setdefault('debug',False)
+        kwargs.setdefault('round',3)
+        kwargs.setdefault('comment',None)
+        
         scanNum_list = make_num_list(*scanNums)
-    
+        if kwargs['debug']:
+            print('scanNum_list:',scanNum_list)
 
-        for i,scanNum in enumerate(scanNum_list):
-            if i==0: 
-                verbose = True
-            else:
-                verbose = False
-            
-            d = self.mda_scan_summary(scanNum,kwargs['pv_list'],verbose=verbose)
+        result = ''
+        header = kwargs['separator']
+        line = kwargs['separator']
 
-            header = kwargs['separator']
-            line = kwargs['separator']
+        for i,scanNum in enumerate(scanNum_list):  
+            #get scan info
+            d = self.mda_scan_summary(scanNum,**kwargs)
+            if kwargs['comment'] != None:
+                d['comment']=kwargs['comment'](scanNum)
             entry = kwargs['separator']
             for key in d.keys():
-                header+=(key+kwargs['separator'])
-                line+=('---'+kwargs['separator'])
+                if i == 0:
+                    header+=(key+kwargs['separator'])
+                    line+=(':-:'+kwargs['separator'])
                 entry+=(str(d[key])+kwargs['separator'])
             if i == 0:
-                print(header)
-                print(line)
-            print(entry)
-            
+                result+=header+'\n'
+                result+=line+'\n'
+                
+            result+=entry+'\n'
+        if kwargs['debug']:
+            print(result)
+        display_markdown(result,raw=True)
 
-    def mda_scan_summary(self,scanNum,pv_list,verbose=False):
+
+    def mda_scan_summary(self,scanNum,**kwargs):
         """
-        returns a dictionary entry with co
+        returns a dictionary entry of extra pvs found in pv_list
+        **kwargs
+            pv_list (default: ['positioner','polarization','hv'])
+            verbose (default: True)
+            round if value is float then rounds to that many decimals(default:3)
         """
-    
+        kwargs.setdefault('pv_list',['positioner','polarization','hv'])
+        kwargs.setdefault('verbose',True)
+        kwargs.setdefault('round',3)
+        kwargs.setdefault('debug',False)
+
         d={}
         d['scanNum']=scanNum
-        for key in pv_list:
-            try:
-                if key.lower() == 'positioner': 
-                    rank = self.mda_extra_pvs(scanNum,'rank')
-                    separator = ' / '
-                    val = ''
-                    for i, axis in enumerate(['x','y','z','t'][0:rank]):
-                        val += self.mda_positioner_label(scanNum,ax=axis)
-                        if (rank > 1) and (i < rank-1):
-                            val+=separator    
-                    d[key]= val
-                elif key.lower() == 'polarization':
-                    d[key] = self.mda_polarization(scanNum)
-                elif key.lower() == 'hv':
-                    d[key] = self.mda_hv(scanNum)
-                elif key.lower() == 'id_sp':
-                    d[key] = self.mda_id_sp(scanNum)
-                else:
-                    d[key] = self.mda_extra_pvs(scanNum,key,verbose=False)
-            except:
-                if verbose:
-                    print('pv string '+key+' is not found')
+
+        for key in kwargs['pv_list']:
+            if 'scanNum' in kwargs['pv_list']:
+                pass
+            else:
+                try:
+                    attr = 'mda_'+key.lower()
+                    if 'positioner' in key.lower():
+                            val = self.mda_positioner_label(scanNum)
+                    
+                    elif hasattr(self,attr):
+                        val = getattr(self,attr)(scanNum)
+                    else:
+                        val = self.mda_extra_pvs(scanNum,key,verbose=False)
+                    try:
+                        val = round(val,kwargs['round'])
+                    except:
+                        pass
+                        
+                    d[key]=val  
+                except:
+                    if kwargs['verbose']:
+                        print('pv string '+key+' is not found')
+            if kwargs['debug']:
+                print(d)
         return d
-        
 
     
     
