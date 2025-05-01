@@ -10,11 +10,12 @@ import re
 from numpy import inf
 import h5py
 
-from iexplot.utilities import _shortlist 
+from iexplot.utilities import _shortlist,_dirScanNumList, _create_dir_shortlist
 
 from iexplot.IEX_pkg.IEX_MDA import IEX_MDA
 from iexplot.IEX_pkg.IEX_EA import IEX_EA
 from iexplot.IEX_pkg.IEX_ADtiff import IEX_ADtiff
+from iexplot.IEX_pkg.IEX_MCA import IEX_MCA
 
 #IEX data type plotting
 from iexplot.IEX_pkg.Plot_MDA import Plot_MDA
@@ -24,28 +25,7 @@ from iexplot.IEX_pkg.Plot_AD import Plot_AD
 
  #########################################################################################################
 
-def _dirScanNumList(path,prefix,extension):
-    """
-    returns a list of scanNumbers for all files with prefix and extension in path
-    """
-    #so that path ends in /
-    path = os.path.join(path,'')
-
-    #getting and updating directory info
-    allfiles = [f for f in os.listdir(path) if os.path.isfile(path+f)]
-    #print(allfiles)
-
-    split=prefix[-1] 
-    allfiles_prefix = [x for (i,x) in enumerate(allfiles) if allfiles[i].split(split)[0]==prefix[:-1]] 
-    #print(allfiles_prefix)
-
-    allfiles_dtype = [x for (i,x) in enumerate(allfiles_prefix) if allfiles_prefix[i].split('.')[-1]==extension]
-    #print(allfiles_dtype)
-
-    allscanNumList = [int(allfiles_dtype[i][allfiles_dtype[i].find('_')+1:allfiles_dtype[i].find('_')+5]) for (i,x) in enumerate(allfiles_dtype)]
-    #print(allscanNumList)
-
-    return allscanNumList        
+ 
 
 #########################################################################################################
 #########################################################################################################
@@ -66,7 +46,7 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
             [scanNum1,scanNum2]: to load a subset of scans
         
         dtype: data type
-            = "mdaAD" - mda and EA/mpa if exist (default, Note:path is to mda files)
+            = "mdaAD" - mda and EA/mpa/MCA if exist (default, Note:path is to mda files)
             = "mda" - mda only
             = "EA" or "EAnc" for ARPES images only h5 and nc respectively
             = "mpa" - mpa only
@@ -181,9 +161,11 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
         elif ("AD" in self.dtype):
             if self.prefix.lower()=="ARPES_".lower():
                 AD_key = "EA" 
+            if self.prefix.lower()=="Octupole_".lower():
+                AD_key = "MCA"    
             else:
                 AD_key = 'AD'
-
+        
         loadedList=[] 
 
         if kwargs["debug"] == True:
@@ -205,7 +187,7 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
                 print("\tmdapath: ",mdapath)
                 print("\tuserpath: ",userpath) 
 
-            #checking if mda exists
+            #checking if mda exists 
             if hasattr(self,'mda') == False:
                 setattr(self,'mda',{})
             attr = self.mda
@@ -230,7 +212,10 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
                     AD_kwargs = dict(kwargs)
                     AD_kwargs['dtype'] = AD_key
                     AD_kwargs['userpath'] = userpath #extension gets added in _load_AD_data
-                    AD_kwargs['prefix'] = "MDAscan"+str.zfill(str(mda_scanNum),self.nzeros)+"_"                        
+                    if 'AD_prefix' in kwargs:
+                        AD_kwargs['prefix'] = kwargs['AD_prefix']
+                    else:
+                        AD_kwargs['prefix'] = "MDAscan"+str.zfill(str(mda_scanNum),self.nzeros)+"_"                        
 
                     #checking if ADattr exists and get already loaded scans
                     if hasattr(self.mda[mda_scanNum],AD_key) == False:
@@ -274,23 +259,11 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
             excluded_list 
             overwrite
         """
-        kwargs.setdefault('debug',True)
+        kwargs.setdefault('debug',False)
         kwargs.setdefault('overwrite',True)
         kwargs.setdefault('excluded_list',[])
 
-        if kwargs['debug']:
-            print("\n_create_shortlist")
-            print('\tscans : ',scans)
-            print('\tkwargs:',kwargs)
-
-        longlist = _dirScanNumList(kwargs['path'],kwargs['prefix'],kwargs['ext'])
-        if len(longlist)<1:
-            return []
-        shortlist = _shortlist(*scans,llist=longlist,**kwargs)
-        if kwargs['overwrite'] == False: #only load new scans
-            shortlist =[x for x in shortlist if x not in kwargs['excluded_list']]
-            #remove duplicates if any
-            shortlist.sort() 
+        shortlist = _create_dir_shortlist(*scans,**kwargs)
         return shortlist
     
     def _load_ADdata(self,*scans, **kwargs):
@@ -320,6 +293,9 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
             kwargs['ext'] = 'TIFF'
             load_f = iex_ADtiff.load
 
+        elif 'MCA' in kwargs['dtype']:
+            iex_MCA = iex_MCA(**kwargs)
+            load_f = iex_MCA.load
 
         if len(kwargs['ext']):
             if 'userpath' in kwargs:

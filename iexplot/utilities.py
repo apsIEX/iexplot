@@ -1,3 +1,4 @@
+import os
 from numpy import inf
 
 def make_nstack_list(obj,*nums,**kwargs):
@@ -101,4 +102,61 @@ def take_closest_value(my_list,my_number):
     """
     return min(my_list, key=lambda x:abs(x-my_number))
 
+#########################################################################################################
+def _dirScanNumList(path,prefix,extension):
+    """
+    returns a list of scanNumbers for all files with prefix and extension in path
+    """
+    #so that path ends in /
+    path = os.path.join(path,'')
 
+    #getting and updating directory info
+    allfiles = [f for f in os.listdir(path) if os.path.isfile(path+f)]
+    #print(allfiles)
+
+    split=prefix[-1] 
+    allfiles_prefix = [x for (i,x) in enumerate(allfiles) if allfiles[i].split(split)[0]==prefix[:-1]] 
+    #print(allfiles_prefix)
+
+    allfiles_dtype = [x for (i,x) in enumerate(allfiles_prefix) if allfiles_prefix[i].split('.')[-1]==extension]
+    #print(allfiles_dtype)
+
+    allscanNumList = [int(allfiles_dtype[i][allfiles_dtype[i].find('_')+1:allfiles_dtype[i].find('_')+5]) for (i,x) in enumerate(allfiles_dtype)]
+    #print(allscanNumList)
+
+    return allscanNumList       
+
+def _create_dir_shortlist(*scanNums,path,prefix,ext, **kwargs):
+    """
+  *scanNums =>
+        scanNums: for a single scan
+        inf: for all num in longlist
+        first,last: for all numbers between and including first and last; last can be inf
+        first,last,countby: to load a subset
+        [num1,num2]: to load a subset of scans
+    path = full path to directory of files
+    prefix = part of filename up to number
+    ext = filename extension
+
+    **kwargs:
+        excluded_list 
+        overwrite
+    """
+    kwargs.setdefault('debug',False)
+    kwargs.setdefault('overwrite',True)
+    kwargs.setdefault('excluded_list',[])
+
+    if kwargs['debug']:
+        print("\n_create_shortlist")
+        print('\tscans : ',scanNums)
+        print('\tkwargs:',kwargs)
+
+    longlist = _dirScanNumList(path,prefix,ext)
+    if len(longlist)<1:
+        return []
+    shortlist = _shortlist(*scanNums,llist=longlist,**kwargs)
+    if kwargs['overwrite'] == False: #only load new scans
+        shortlist =[x for x in shortlist if x not in kwargs['excluded_list']]
+        #remove duplicates if any
+        shortlist.sort() 
+    return shortlist
