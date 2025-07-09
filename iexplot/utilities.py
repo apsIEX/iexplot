@@ -126,7 +126,7 @@ def _dirScanNumList(path,prefix,extension):
 
     return allscanNumList       
 
-def _create_dir_shortlist(*scanNums,path,prefix,ext, **kwargs):
+def  _create_dir_shortlist(*scanNums,path,prefix,ext, **kwargs):
     """
   *scanNums =>
         scanNums: for a single scan

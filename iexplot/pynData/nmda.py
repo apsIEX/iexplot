@@ -217,8 +217,6 @@ class nmda:
             d=self.det[key]
             d.updateAx(axis,scale,PV)
 
-
-
     
     def setScaleDet(self,axis='x',detNum=1): 
         """

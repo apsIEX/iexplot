@@ -39,21 +39,21 @@ class IEX_MCA(IEX_MDA):
             if key in vars(self):
                 setattr(self,key,kwargs[key])
     
-    def load(self,*scans,image=True,**kwargs):
+    def load(self,scan_list,image=True,**kwargs):
         """
         Loads mca spectra returns the data as
             2D pynData if image = True
             dictionary of 1D spectr if image = False
             
         """
-        mda_d = self._load_1D_scans(*scans,**kwargs)
+        mda_d = self._load_1D_scans(scan_list,**kwargs)
         if image:
             return self._stack_1D_scans(mda_d)
         else:
             return mda_d
             
                 
-    def _load_1D_scans(self,*scans,**kwargs):
+    def _load_1D_scans(self,scan_list,**kwargs):
         """
         uses IEX_MDA to load scans
         ** kwargs:
@@ -66,7 +66,13 @@ class IEX_MCA(IEX_MDA):
         fpath = path + filename
 
         """
-        scan_list = _create_dir_shortlist(*scans,path=self.path,prefix=self.prefix,ext=self.ext,**kwargs)
+        kwargs.setdefault('debug',False)
+        self._update_attr(**kwargs)
+   
+
+        if kwargs['debug']: 
+            print('MCA path = ',self.path)
+
         d = IEX_MDA(path=self.path,prefix=self.prefix,ext=self.ext)
         mda_d = d.load_scans(scan_list)
         
@@ -76,10 +82,13 @@ class IEX_MCA(IEX_MDA):
         """
         stacks all scans in dictionary of mda scans
         """
+        self._update_attr(**kwargs)
         channels = list(mda_d.keys())
         nData_list = []
         for scanNum in channels:
             nData_list.append(mda_d[scanNum].det[1])
         stack = nstack(nData_list,stack_scale=channels,stack_unit='channels')
         return stack
+    
+
         

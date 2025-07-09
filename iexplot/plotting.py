@@ -106,9 +106,13 @@ def plot_2D(img,scales,units,**kwargs):
     yscale,xscale = scales
     yunit,xunit = units
 
-    plt.pcolormesh(xscale, yscale, img, **kwargs)
-    plt.xlabel(xunit)
-    plt.ylabel(yunit)
+    if 'profiles' in kwargs and kwargs['profile']==True:
+        plot_dimage(img,scales,units, **kwargs)
+        
+    else:
+        plt.pcolormesh(xscale, yscale, img, **kwargs)
+        plt.xlabel(xunit)
+        plt.ylabel(yunit)
 
 def reduce2d(x,y, **kwargs):
     """

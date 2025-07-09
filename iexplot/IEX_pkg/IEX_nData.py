@@ -21,6 +21,7 @@ from iexplot.IEX_pkg.IEX_MCA import IEX_MCA
 from iexplot.IEX_pkg.Plot_MDA import Plot_MDA
 from iexplot.IEX_pkg.Plot_EA import Plot_EA
 from iexplot.IEX_pkg.Plot_AD import Plot_AD
+from iexplot.IEX_pkg.Plot_MCA import Plot_MCA
 
 
  #########################################################################################################
@@ -29,7 +30,7 @@ from iexplot.IEX_pkg.Plot_AD import Plot_AD
 
 #########################################################################################################
 #########################################################################################################
-class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
+class IEX_nData(Plot_MDA,Plot_EA,Plot_AD,Plot_MCA):
     """"
     loads IEX (mda, EA, ADtiff) data and returns a dictionary containing pynData objects
         in Igor speak this is your experiment and the pynData objects are the waves
@@ -46,11 +47,12 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
             [scanNum1,scanNum2]: to load a subset of scans
         
         dtype: data type
-            = "mdaAD" - mda and EA/mpa/MCA if exist (default, Note:path is to mda files)
+            = "mdaAD" - mda and Area Detector data such as EA, MCA if exist (default, Note:path is to mda files)
             = "mda" - mda only
             = "EA" or "EAnc" for ARPES images only h5 and nc respectively
             = "mpa" - mpa only
             = "ADtiff"  
+            
         
         **kwargs
             path: full path to mda files directory (e.g. path="/net/s29data/export/data_29idc/2021_2/Jessica/mda/" )
@@ -72,8 +74,14 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
             
             debug=False (default); if debug = True then prints lots of stuff to debug the program
             
+            ** ADkwargs
             subset: used to load a subset of ADscans when dtype="mdaAD"; same formating as *scans
                 subset=(1,inf,1); default => loads all
+            AD_filepath
+                default is ../dtype/ relative to mda folder
+            AD_prefix
+                default = "MDAscan"+str.zfill(str(mda_scanNum),self.nzeros)+"_"+str.zfill(str(AD_scanNum)
+            
         """
         kwargs.setdefault('overwrite',True)
         kwargs.setdefault('verbose',False)
@@ -154,6 +162,7 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
         kwargs.setdefault('verbose',False)
 
         ### set AD_key to EA for ARPES mdaAD
+        ### set AD_key to MCA for Octupole mdaAD
         if 'tif' in self.dtype:
             AD_key = 'AD'
         elif 'EA' in self.dtype:
@@ -165,7 +174,8 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
                 AD_key = "MCA"    
             else:
                 AD_key = 'AD'
-        
+        else:
+                AD_key = None
         loadedList=[] 
 
         if kwargs["debug"] == True:
@@ -208,7 +218,7 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
                 loadedList.append(list(mda_d.keys()))
                 
                 ### loading any associated area detector data
-                if ('AD' in self.dtype) or ('EA' in self.dtype):
+                if ('AD' in self.dtype) or ('EA' in self.dtype) :
                     AD_kwargs = dict(kwargs)
                     AD_kwargs['dtype'] = AD_key
                     AD_kwargs['userpath'] = userpath #extension gets added in _load_AD_data
@@ -229,9 +239,14 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
                         print('AD_shortlist',AD_shortlist)
                     if len(AD_shortlist) >0:
                         setattr(self.mda[mda_scanNum],AD_key,AD_d)
+                        #Add scaling here
+                        for AD in AD_d:
+                            if (AD.data.shape)
                     else:
                         if kwargs['debug']:
                             print('dtype = '+self.dtype+' has no associated AD data')
+                    
+                
 
         #loading EA or AD only
         elif ('AD' in self.dtype) or ('EA' in self.dtype): 
@@ -262,8 +277,15 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
         kwargs.setdefault('debug',False)
         kwargs.setdefault('overwrite',True)
         kwargs.setdefault('excluded_list',[])
-
-        shortlist = _create_dir_shortlist(*scans,**kwargs)
+        
+        shortlist_kwargs = {'debug':kwargs['debug'],
+                            'excluded_list':kwargs['excluded_list'],
+                            'overwrite':kwargs['overwrite']}
+        if kwargs['debug']:
+            print('IEX_nData._create_shortlist')
+            print(*scans,kwargs['path'],kwargs['prefix'],kwargs['ext'])
+        
+        shortlist = _create_dir_shortlist(*scans,path=kwargs['path'],prefix=kwargs['prefix'],ext=kwargs['ext'], **shortlist_kwargs)
         return shortlist
     
     def _load_ADdata(self,*scans, **kwargs):
@@ -293,14 +315,18 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
             kwargs['ext'] = 'TIFF'
             load_f = iex_ADtiff.load
 
-        elif 'MCA' in kwargs['dtype']:
-            iex_MCA = iex_MCA(**kwargs)
+        elif 'mca' in kwargs['dtype'].lower():
+            iex_MCA = IEX_MCA(**kwargs)
+            if 'userpath' in kwargs:
+                kwargs['path'] = os.path.join(kwargs['userpath'],'mca','')
+                kwargs.pop('userpath')
+            kwargs['ext'] = 'mda'
             load_f = iex_MCA.load
 
         if len(kwargs['ext']):
             if 'userpath' in kwargs:
                 kwargs['path'] = os.path.join(kwargs['userpath'],kwargs['ext'],'')
-
+        
         if kwargs["debug"]:
             print("\tLoading AD_dtype = "+kwargs['dtype'])
             print("\tAD prefix",kwargs['prefix'])
@@ -313,7 +339,6 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD):
         shortlist = self._create_shortlist(*scans, **kwargs)
         if kwargs['debug']:
             print('\tAD shortlist: ',shortlist)
-            print
         
         ### loading AD data
         if len(shortlist)>0:

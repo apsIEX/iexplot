@@ -37,7 +37,7 @@ def plot_nd(*ds,**kwargs):
                 else:
                     x = d.scale['x']
                     y = d.data
-                    plot_1D(x,y,xlabel=d.unit['x'],ylabel=d.unit['y'])
+                    plot_1D(x,y,xlabel=d.unit['x'])
                     
             elif dim==2:
                 img = d.data
@@ -58,11 +58,13 @@ def plot_nd(*ds,**kwargs):
     #plt.show()
 
 
-def plot_nd_avg(d,ax='y',Cen=np.nan,WidthPix=np.nan):
+def plot_nd_avg(d,ax='y',Cen=np.nan,WidthPix=np.nan,**kwargs):
     """
     bins 2D data in ax, with Center, and WidthPix 
     if Center=np.nan then center is the midpoint
     if WidthPix=np.nan then whole image is binned    
+
+	**kwargs are plot kwargs
     """
     if(len(d.data.shape)==2):
         Scale=d.scale[ax]
@@ -80,7 +82,7 @@ def plot_nd_avg(d,ax='y',Cen=np.nan,WidthPix=np.nan):
             bx='x'
         avg=nData(img_avg)
         avg.updateAx('x', d.scale[bx], d.unit[bx])
-        plot_nd(avg)
+        plot_nd(avg,**kwargs)
         
     else:
         print('only works for 2D data')
