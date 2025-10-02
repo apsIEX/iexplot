@@ -110,7 +110,7 @@ def plot_2D(img,scales,units,**kwargs):
         plot_dimage(img,scales,units, **kwargs)
         
     else:
-        plt.pcolormesh(xscale, yscale, img, **kwargs)
+        pcm = plt.pcolormesh(xscale, yscale, img, **kwargs)
         plt.xlabel(xunit)
         plt.ylabel(yunit)
 
