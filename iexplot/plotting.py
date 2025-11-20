@@ -25,7 +25,7 @@ def find_closest(x, x_val):
 """ useful plotting routines """
 ########################################################################
 
-def plot_1D(x,y,**kwargs):
+def plot_1D(x,y,ax=None,**kwargs):
     """
     x / y 1D numpy arrays 
     **kwargs
@@ -45,6 +45,9 @@ def plot_1D(x,y,**kwargs):
     kwargs.setdefault('scale_mean_index',None) 
     kwargs.setdefault("offset_x",0)
     kwargs.setdefault("scale_x",1)
+
+    if ax == None:
+        ax = plt.gca()
 
     if 'xrange' in kwargs: 
         first_index, first_value = find_closest(x,kwargs['xrange'][0])
@@ -77,10 +80,10 @@ def plot_1D(x,y,**kwargs):
     x=x*kwargs["scale_x"]+kwargs["offset_x"]
 
     if 'xlabel' in kwargs:
-        plt.xlabel(kwargs['xlabel'])
+        ax.set_xlabel(kwargs['xlabel'])
         del kwargs['xlabel']
     if 'ylabel' in kwargs:
-        plt.ylabel(kwargs['ylabel'])
+        ax.set_ylabel(kwargs['ylabel'])
         del kwargs['ylabel']
 
     #remove non-matplotlib kwargs
@@ -91,17 +94,22 @@ def plot_1D(x,y,**kwargs):
             kwargs.pop(key)
    
 
-    plt.plot(x,y,**kwargs)
+    ax.plot(x,y,**kwargs)
 
-def plot_2D(img,scales,units,**kwargs):
+def plot_2D(img,scales,units,ax=None,**kwargs):
     """
     img = 2D numpy array (y,x)
     scales = [yscale,xscale]
     units = [yunit,xunit]
+    
+    ax = axis for subplots otherwise plt.gca
+    
     **kwargs = pcolormesh keywords
         kwargs.setdefault('shading','auto')
+        
     """
     kwargs.setdefault('shading','auto')
+    
 
     yscale,xscale = scales
     yunit,xunit = units
@@ -110,9 +118,13 @@ def plot_2D(img,scales,units,**kwargs):
         plot_dimage(img,scales,units, **kwargs)
         
     else:
-        pcm = plt.pcolormesh(xscale, yscale, img, **kwargs)
-        plt.xlabel(xunit)
-        plt.ylabel(yunit)
+        if ax == None:
+            ax = plt.gca()
+
+        im1 = ax.pcolormesh(xscale, yscale, img, **kwargs)
+        ax.set_xlabel(xunit)
+        ax.set_ylabel(yunit)
+        
 
 def reduce2d(x,y, **kwargs):
     """

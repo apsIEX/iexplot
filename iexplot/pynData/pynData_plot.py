@@ -26,7 +26,6 @@ def plot_nd(*ds,**kwargs):
 
 
     '''
-    plt.figure()
     d=ds[0]
     try:
         dim = len(d.data.shape)

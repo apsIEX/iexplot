@@ -2,8 +2,7 @@
 from pyimagetool import tools, RegularDataArray
 
 from matplotlib.colors import ListedColormap
-from pyimagetool.cmaps.CMap import *
-cmp = CMap()
+import pyimagetool.cmaps.CMap
 
 def imagetool_cmaps(key=None,**kwargs):
     """
@@ -18,13 +17,13 @@ def imagetool_cmaps(key=None,**kwargs):
     """
     kwargs.setdefault('ct_reverse',False)
     kwargs.setdefault('ct_gamma',1)
-    cmap_list = cmp.cmaps
+    cmap_list = pyimagetool.cmaps.CMap.update_cmap_list()
     if key == None:
         print('Available cmaps: ',cmap_list)
         return
     if key in cmap_list:
         dat=np.arange(1,2,1)
-        dat = cmp.load_ct(key,kwargs['ct_reverse'], kwargs['ct_gamma'])
+        dat = pyimagetool.cmaps.CMap.load_ct(key,kwargs['ct_reverse'], kwargs['ct_gamma'])
         cmap = ListedColormap(dat/255)
         return cmap
     else:

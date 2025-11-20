@@ -1,7 +1,10 @@
 import os
+import numpy as np
+
 from iexplot.IEX_pkg.IEX_MDA import IEX_MDA
 from iexplot.pynData import nstack
-from iexplot.utilities import _create_dir_shortlist
+from iexplot.utilities import _create_dir_shortlist, take_closest_value
+
 
 class IEX_MCA(IEX_MDA):
     """
@@ -91,4 +94,3 @@ class IEX_MCA(IEX_MDA):
         return stack
     
 
-        

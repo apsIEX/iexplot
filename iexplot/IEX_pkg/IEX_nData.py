@@ -81,6 +81,8 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD,Plot_MCA):
                 default is ../dtype/ relative to mda folder
             AD_prefix
                 default = "MDAscan"+str.zfill(str(mda_scanNum),self.nzeros)+"_"+str.zfill(str(AD_scanNum)
+
+            AD_type => to specify AD_key instead of using prefix to determine
             
         """
         kwargs.setdefault('overwrite',True)
@@ -163,14 +165,17 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD,Plot_MCA):
 
         ### set AD_key to EA for ARPES mdaAD
         ### set AD_key to MCA for Octupole mdaAD
-        if 'tif' in self.dtype:
+        if 'ADtype' in kwargs:
+            AD_key = kwargs['AD_key']
+
+        elif 'tif' in self.dtype:
             AD_key = 'AD'
         elif 'EA' in self.dtype:
             AD_key = 'EA'
         elif ("AD" in self.dtype):
             if self.prefix.lower()=="ARPES_".lower():
                 AD_key = "EA" 
-            if self.prefix.lower()=="Octupole_".lower():
+            if "octupole" in self.prefix.lower():
                 AD_key = "MCA"    
             else:
                 AD_key = 'AD'
@@ -240,8 +245,9 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD,Plot_MCA):
                     if len(AD_shortlist) >0:
                         setattr(self.mda[mda_scanNum],AD_key,AD_d)
                         #Add scaling here
-                        for AD in AD_d:
-                            if (AD.data.shape)
+                        #for AD in AD_d:
+                        #    pass
+                            #if (AD.data.shape)
                     else:
                         if kwargs['debug']:
                             print('dtype = '+self.dtype+' has no associated AD data')
