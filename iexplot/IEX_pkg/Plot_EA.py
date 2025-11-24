@@ -50,7 +50,7 @@ class Plot_EA:
         
     def EA_EDC(self,scanNum,EAnum=1,BE=False):
         """
-        returns x,y energy scaling, EDC spectra
+        returns x,y,label =  energy scaling, EDC spectra, units_label
             
         usage:
             plt.plot(data.EAspectraEDC(151))    
@@ -137,6 +137,80 @@ class Plot_EA:
             plot_2D(img,[yscale,xscale],[yunit,xunit],**kwargs)
             if BE == True:
                 plt.xlim(max(xscale),min(xscale))
+
+
+    def EA_beamline(self,scanNum,EAnum=1):
+        """
+        returns info about beamline
+        """
+        return self.mda[scanNum].EA[EAnum].extras['beamline'] 
+        
+    def EA_HVscanInfo(self,scanNum,EAnum=1):
+        """
+        returns info about Scienta HV settings
+        """
+        return self.mda[scanNum].EA[EAnum].extras['HVscanInfo'] 
+        
+    def EA_sample(self,scanNum,EAnum=1):
+        """
+        returns info about Scienta HV settings
+        """
+        return self.mda[scanNum].EA[EAnum].extras['sample'] 
+
+    def EA_setting(self,scanNum,EAnum=1):
+        """
+        returns info about Scienta parameters
+        """
+        return self.mda[scanNum].EA[EAnum].extras['EAsettings'] 
+
+    def EA_extras(self,scanNum,EAnum=1):
+        """
+        returns all the metadata in the file
+        """
+        return self.mda[scanNum].EA[EAnum].extras
+
+    def EA_pass_energy(self,scanNum,EAnum=1):
+        """
+        returns pass energy
+        """
+        return self.mda[scanNum].EA[EAnum].extras['EAsettings']['passEnergy'] 
+        
+    def EA_frames(self,scanNum,EAnum=1):
+        """
+        returns pass frames
+        """
+        return self.mda[scanNum].EA[EAnum].extras['EAsettings']['frames'] 
+
+    def EA_KE(self,scanNum,EAnum=1):
+        """
+        returns KE_center for fixed mode and baby sweep scans
+        returne KE_start,KE_stop_KE_step for swept mode scans
+        """
+        d = self.mda[scanNum].EA[EAnum].extras['EAsettings']
+        
+        if d['acqMode'] ==2:
+            return d['kineticEnergy'] 
+            
+        if d['acqMode']==1:
+            return d['sweptStart'],d['sweptStop'],d['sweptStep']   
+        
+    def EA_hv(self,scanNum,EAnum=1):
+        """
+        returns photon energy
+        """
+        return self.mda[scanNum].EA[EAnum].extras['beamline']['hv'] 
+
+    def EA_exit_slit(self,scanNum,EAnum=1):
+        """
+        returns exitSlit size
+        """
+        return self.mda[scanNum].EA[EAnum].extras['beamline']['exitSlit'] 
+
+    def EA_ringCurrent(self,scanNum,EAnum=1):
+        """
+        returns exitSlit size
+        """
+        return self.mda[scanNum].EA[EAnum].extras['beamline']['ringCurrent'] 
 
     def plot_mdaEA_stack(self,*args,**kwargs):
         """
@@ -285,13 +359,9 @@ def _stack_mdaEA_from_list(EA_list,stack_scale, E_unit, **kwargs):
 
         E_unit = 'KE' or 'BE'
 
-        **kwargs:      
-            EAnum = (start,stop,countby) => to plot a subset of scans
-            EDConly = False (default) to stack the full image
-                    = True to stack just the 1D EDCs
-                    
-            E_offset = offset value for each scan based on curve fitting
-            E_offset type = np array if an offset is applied, float if no offset is applied
+        **kwargs:                                   
+            E_offset = offset value for each scan based on curve fitting 
+                        can be an np.array or float depending if it varies along stack-directions
             
         """
         kwargs.setdefault('E_offset',0.0)
@@ -309,7 +379,6 @@ def _stack_mdaEA_from_list(EA_list,stack_scale, E_unit, **kwargs):
             KE_min = min(KE_min, _KE_min)
             KE_max = max(KE_max, _KE_max)
                
-        
             
         #BE/KE conversion
         for i,EAnum in enumerate(EA_list):
@@ -331,4 +400,5 @@ def _stack_mdaEA_from_list(EA_list,stack_scale, E_unit, **kwargs):
             d = nstack(EA_list, stack_scale, **kwargs)
         
         return d    
+
 
