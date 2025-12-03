@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from iexplot.plotting import *
 from iexplot.pynData import  nData
 
-from iexplot.pynData.pynData_plot import plot_nd, plot_nd_avg
+from iexplot.pynData.pynData_plot import plot_nd, nd_avg
 
 from iexplot.utilities import  take_closest_value
 
@@ -26,10 +26,22 @@ class Plot_MCA:
         scanNum is mda scanNum
         bins 2D data in ax, with Center, and WidthPix 
         if Center=np.nan then center is the midpoint
-        if WidthPix=np.nan then whole image is binned    
+        if WidthPix=np.nan then whole image is binned 
+
+        **kwargs, normal plot_1D +
+            Norm2Edge: True/False to normalize XAS (1D only)
+   
         """
         nd = self.mda[scanNum].MCA
-        plot_nd_avg(nd,ax='y',Cen=np.nan,WidthPix=np.nan)
+        avg = nd_avg(d,ax='y',Cen=np.nan,WidthPix=np.nan,**kwargs)
+        x = avg.scale['x']
+        y = avg.data
+
+        if 'Norm2Edge'  in kwargs:
+            if kwargs['Norm2Edge']:
+                plot_Norm2Edge(x,y,**kwargs)
+        else:
+            plot_1D(x,y,**kwargs)       
         
     def mca_spectra(self,scanNum):
         return self.mda[scanNum].MCA.data

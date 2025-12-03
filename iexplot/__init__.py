@@ -8,6 +8,7 @@ from iexplot.plotting import *
 from iexplot.fitting import *
 from iexplot.video_utilities import *
 from iexplot.mda_quick_plot import *
+from iexplot.XAS_utilities import *
 
 IEXdata = IEX_nData
 

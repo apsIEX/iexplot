@@ -56,9 +56,9 @@ def plot_nd(*ds,**kwargs):
             print('Not a valid object')
     #plt.show()
 
-
-def plot_nd_avg(d,ax='y',Cen=np.nan,WidthPix=np.nan,**kwargs):
+def nd_avg(d,ax='y',Cen=np.nan,WidthPix=np.nan,**kwargs):
     """
+    returns avg (an ndata object) which
     bins 2D data in ax, with Center, and WidthPix 
     if Center=np.nan then center is the midpoint
     if WidthPix=np.nan then whole image is binned    
@@ -81,6 +81,20 @@ def plot_nd_avg(d,ax='y',Cen=np.nan,WidthPix=np.nan,**kwargs):
             bx='x'
         avg=nData(img_avg)
         avg.updateAx('x', d.scale[bx], d.unit[bx])
+        return avg
+    else:
+        print('only works for 2D data')
+
+def plot_nd_avg(d,ax='y',Cen=np.nan,WidthPix=np.nan,**kwargs):
+    """
+    bins 2D data in ax, with Center, and WidthPix 
+    if Center=np.nan then center is the midpoint
+    if WidthPix=np.nan then whole image is binned    
+
+	**kwargs are plot kwargs
+    """
+    if(len(d.data.shape)==2):
+        avg =  nd_avg(d,ax='y',Cen=np.nan,WidthPix=np.nan,**kwargs)
         plot_nd(avg,**kwargs)
         
     else:

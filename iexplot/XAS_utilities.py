@@ -1,4 +1,5 @@
-from iexplot.plotting import find_closest
+from iexplot.plotting import find_closest, plot_1D
+
 
 def _Norm2Edge_index(x,**kwargs):
     """
@@ -43,7 +44,7 @@ def _Norm2Edge_index(x,**kwargs):
         
     return i0,i1,i2,i3
 
-    def Norm2Edge(x,y, **kwargs):
+def Norm2Edge(x,y, **kwargs):
     """
     return the Normalized y data for an edge jump
     if the signal is negative it invertes to a positive edge jump
@@ -99,8 +100,9 @@ def plot_Norm2Edge(x,y,**kwargs):
 
     y = Norm2Edge(x,y,**kwargs)
     plot_1D(x,y,**kwargs)
+    
     if kwargs['plot_pre_post']:
-        i0,i1,i2,i3 = _Norm2Edge_index(self,scanNum,**kwargs)
+        i0,i1,i2,i3 = _Norm2Edge_index(x,**kwargs)
         
         plot_1D(x[i0:i1],y[i0:i1],marker="x")
         plot_1D(x[i2:i3],y[i2:i3],marker="x")

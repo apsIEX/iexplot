@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 from iexplot.utilities import make_num_list
 from iexplot.plotting import *
+from iexplot.XAS_utilities import plot_Norm2Edge,Norm2Edge
 from iexplot.pynData.pynData import nstack
 
 
@@ -144,6 +145,8 @@ class Plot_MDA:
                 scale: y *= scale
                 offset_x: x += offset_x 
                 scale_x: x *= scale_x
+
+                Norm2Edge: True/False to normalize XAS (1D only)
                 
             for 2D data: plots image by default
                 row = index for plotting a single row from a 2D data set
@@ -187,6 +190,9 @@ class Plot_MDA:
 
             row => for the nth row of a 2D array
             column => or the nth column of a 2D array
+
+            Norm2Edge: True/False to normalize XAS
+
         """ 
         #x-axis
         if 'x_detNum' in kwargs:
@@ -208,7 +214,12 @@ class Plot_MDA:
             if 'row' in kwargs or 'column' in kwargs:
                 x,y,kwargs = reduce2d(x,y, **kwargs)
 
-        plot_1D(x,y,**kwargs)
+        if 'Norm2Edge'  in kwargs:
+            if kwargs['Norm2Edge']:
+                plot_Norm2Edge(x,y,**kwargs)
+        else:
+            plot_1D(x,y,**kwargs)
+                               
         plt.xlabel(xunit)
 
 

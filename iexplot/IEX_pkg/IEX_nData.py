@@ -67,7 +67,7 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD,Plot_MCA):
             nzerors: number of digit in filename 
                 nzerors= 4; default => 0001
             
-            overwrite = True/False; to reloaded the data / only loaded unloaded data (default: True)  
+            overwrite = Te of Auger processes and radiative recombinatiorue/False; to reloaded the data / only loaded unloaded data (default: True)  
             overwrite_AD 
 
             verbose: prints which scans are loaded (default: False)

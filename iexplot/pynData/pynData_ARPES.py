@@ -281,10 +281,16 @@ def kmapping_energy_scale(EA,E_unit='BE',**kwargs):
     kwargs.setdefault('hv',EA.hv)
     kwargs.setdefault('wk',EA.wk)
     kwargs.setdefault('E_offset',0.0)
+    kwargs.setdefault('debug',False)
+
     
     KE = EA.KEscale+kwargs['E_offset']
     wk = kwargs['wk']
     hv = kwargs['hv']
+
+    if kwargs['debug']:
+        message = 'kmapping_energy_scale:  hv='+str(hv)+" wk="+str(wk)+" E_offset="+str(kwargs['E_offset'])
+        print(message)
     
     if E_unit == 'BE':
         E_scale = KE_to_BE(KE,hv,wk)
