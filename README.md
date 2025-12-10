@@ -4,6 +4,9 @@
 	conda create --name iex_env python=3.8 ipykernel jupyterlab
 	conda activate iex_env
 	ipython kernel install --user --name=iex_env
+
+## Trouble shooting: if kernel doesn't show up in jupyter
+	python -m ipykernel install --user --name=iex_env --display-name="iex_env"
 	
 ## Installing iexplot 
 ### directly from git
