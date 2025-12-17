@@ -315,7 +315,7 @@ class Plot_MDA:
             ax.set_title(title_list[i])
             ax.set_aspect(aspect_ratio)
             self.plot_mda(scanNum,det_list[i],**kwargs)
-            plt.colorbar()
+            
         
     def mda_stack_1D(self,*scans,detNum=1,pv=None,**kwargs):
         """
