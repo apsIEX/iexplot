@@ -11,9 +11,11 @@
 
 # - modified for python 3
 
+# xrdl3
 
 
-__version__ = '2.1'
+
+__version__ = '3.1'
 
 
 
@@ -27,17 +29,7 @@ import string
 
 have_fast_xdr = False
 
-#try:
-
-#	import f_xdrlib as xdr
-
-#	have_fast_xdr = True
-
-#except:
-
-#	import xdrlib as xdr
-
-import xdrlib as xdr
+import xdrlib3 as xdr
 
 
 

@@ -8,6 +8,7 @@ tifffile
 xarray
 opencv-python
 lmfit
+xdrlib3
 
 #opencv-python
 scikit-video

@@ -8,3 +8,10 @@ def T_K2meV(Temp_K, verbose=False):
     if verbose:
         print("kB*T(K) = "+str(meV)+" meV")
     return 
+
+def imfp(hv):
+    """
+    returns the inelastic mean free path in nm using the universal curve impf 143/hv**2 + 0.054*sqrt(hv)  
+    hv = photon energy in eV
+    """
+    return 143/hv**2 + 0.054*sqrt(hv)

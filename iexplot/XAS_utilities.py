@@ -1,3 +1,4 @@
+import numpy as np
 from iexplot.plotting import find_closest, plot_1D
 
 

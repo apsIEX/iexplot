@@ -51,7 +51,11 @@ class IEX_MCA(IEX_MDA):
         """
         mda_d = self._load_1D_scans(scan_list,**kwargs)
         if image:
-            return self._stack_1D_scans(mda_d)
+            try:
+                stack = self._stack_1D_scans(mda_d)
+            except: #for when scan is aborted
+                stack = mda_d
+            return stack
         else:
             return mda_d
             

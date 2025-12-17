@@ -145,15 +145,10 @@ class IEX_nData(Plot_MDA,Plot_EA,Plot_AD,Plot_MCA):
         
         ### set path and prefix attributes
         if 'path' in kwargs:
-            print(kwargs['path'])
             self.path = os.path.join(kwargs['path'],'')
-            print(os.path.join(kwargs['path'],''))
+            if kwargs['debug']: print(self.path)
         if 'prefix' in kwargs:
             self.prefix = kwargs['prefix']
-
-        ### set path and prefix attributes
-        if (kwargs["verbose"]==False) or kwargs['debug']:
-            print("path = "+kwargs["path"])
 
     
     def _load_datasets(self,*scans,**kwargs):
