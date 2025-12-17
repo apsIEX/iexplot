@@ -103,6 +103,7 @@ def plot_2D(img,scales,units,ax=None,**kwargs):
     units = [yunit,xunit]
     
     ax = axis for subplots otherwise plt.gca
+    cbar = True/False add colorbar
     
     **kwargs = pcolormesh keywords
         kwargs.setdefault('shading','auto')
@@ -124,6 +125,9 @@ def plot_2D(img,scales,units,ax=None,**kwargs):
         im1 = ax.pcolormesh(xscale, yscale, img, **kwargs)
         ax.set_xlabel(xunit)
         ax.set_ylabel(yunit)
+        if 'cbar' in kwargs and kwargs['cbar']==True:
+            plt.colorbar(im1, ax=ax)
+            
         
 
 def reduce2d(x,y, **kwargs):
