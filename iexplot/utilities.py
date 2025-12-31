@@ -103,6 +103,16 @@ def take_closest_value(my_list,my_number):
     return min(my_list, key=lambda x:abs(x-my_number))
 
 #########################################################################################################
+def list_files_in_directory(directory_path):
+    """Returns a list of all files in a directory."""
+    files_list = []
+    with os.scandir(directory_path) as entries:
+        for entry in entries:
+            if entry.is_file():
+                files_list.append(entry.name)
+    return files_list
+
+
 def _dirScanNumList(path,prefix,extension):
     """
     returns a list of scanNumbers for all files with prefix and extension in path
@@ -111,7 +121,7 @@ def _dirScanNumList(path,prefix,extension):
     path = os.path.join(path,'')
 
     #getting and updating directory info
-    allfiles = [f for f in os.listdir(path) if os.path.isfile(path+f)]
+    allfiles = list_files_in_directory(path)
     #print(allfiles)
 
     split=prefix[-1] 
