@@ -60,18 +60,8 @@ import numpy as np
 #from scipy import io, signal, interpolate, ndimage
 #from math import floor
 
-from iexplot.utilities import take_closest_value 
-
-
-
-#==============================================================================
-# Global variables in science
-#==============================================================================
-
-kB = 8.6173423e-05          # Boltzmann k in eV/K
-me = 5.68562958e-32         # Electron mass in eV*(Angstroms^(-2))*s^2
-hbar = 6.58211814e-16       # hbar in eV*s
-hc_over_e = 12.4            # hc/e in keV⋅A
+from iexplot.utilities import take_closest_value
+from iexplot.plotting import find_closest
 
 
 #==============================================================================
@@ -433,14 +423,14 @@ def nData_h5Group_r(h):
     return d
 
 #==============================================================================
-# Utils for appending/stacking
+# Utils for appending/dstacking
 #==============================================================================
 
-def nstack(nData_list,stack_scale=None,stack_unit="", **kwargs):
+def ndstack(nData_list,dstack_scale=None,dstack_unit="", **kwargs):
     """
-    returns a stack of nData objects 
+    returns a dstack of nData objects 
     nData_list = list of nData objects, where the first element is the base object 
-    stack_scale = np.array for scaling (does not need to be monotonic)
+    dstack_scale = np.array for scaling (does not need to be monotonic)
                 = None => index
    
     **kwargs
@@ -449,11 +439,11 @@ def nstack(nData_list,stack_scale=None,stack_unit="", **kwargs):
     kwargs.setdefault('debug',False)
     kwargs.setdefault('extras',{})
 
-    if type(stack_scale) == None:
-        stack_scale = np.arange(1,len(nData_list)+1)
+    if type(dstack_scale) == None:
+        dstack_scale = np.arange(1,len(nData_list)+1)
 
-    #stacking the data
-    stacklist = []
+    #dstacking the data
+    dstacklist = []
     
     
 
@@ -462,15 +452,15 @@ def nstack(nData_list,stack_scale=None,stack_unit="", **kwargs):
             print(d.data.shape)
         rank = len(d.data.shape)
         if i==0:
-            stacklist = []
+            dstacklist = []
             if kwargs['debug'] == True:
                 print('rank = '+str(rank))
-            stack = d.data
+            dstack = d.data
             xscale = d.scale['x']
             xunit = d.unit['x']
             if rank == 1:
-                yscale = np.array(stack_scale[i])
-                yunit = stack_unit
+                yscale = np.array(dstack_scale[i])
+                yunit = dstack_unit
             elif rank == 2:
                 yscale = d.scale['y']
                 yunit = d.unit['y']
@@ -478,26 +468,26 @@ def nstack(nData_list,stack_scale=None,stack_unit="", **kwargs):
                     zscale = None
                     zunit = ''
                 elif len(nData_list[i+1].data.shape) == 2: #adding 2D to image
-                    zscale = np.array(stack_scale[i])
-                    zunit = stack_unit   
+                    zscale = np.array(dstack_scale[i])
+                    zunit = dstack_unit   
                 elif len(nData_list[i+1].data.shape) == 3: #adding 2D to 3D
                     zscale = d.scale['z']
                     zunit = d.unit['z']
             else:
-                print('Can only stack 1D, 2D and 3D data sets')
+                print('Can only dstack 1D, 2D and 3D data sets')
         else:
-            if rank == 1: #stacking along y
-                stack=np.vstack((stack,d.data))
-                yscale=stack_scale
-                yunit = stack_unit
+            if rank == 1: #dstacking along y
+                dstack=np.vdstack((dstack,d.data))
+                yscale=dstack_scale
+                yunit = dstack_unit
 
-            else: #stacking along z
-                stack=np.dstack((stack,d.data))
-                zscale=stack_scale
-                zunit = stack_unit
+            else: #dstacking along z
+                dstack=np.dstack((dstack,d.data))
+                zscale=dstack_scale
+                zunit = dstack_unit
     
 
-    d = nData(stack)
+    d = nData(dstack)
     if rank == 1:
         if kwargs['debug'] == True:
             print('updating scales rank 1')
@@ -511,10 +501,9 @@ def nstack(nData_list,stack_scale=None,stack_unit="", **kwargs):
         d.updateAx('z', zscale, zunit)
         d.updateAx('y', yscale, yunit)
         d.updateAx('x', xscale, xunit)
-    #metadata_stack(nData_list,d) temporarily commented out to troubleshoot AJE
+    #metadata_dstack(nData_list,d) temporarily commented out to troubleshoot AJE
 
     return d
-        
 
     
 def nAppend(data1,data2,**kwargs):
@@ -537,7 +526,7 @@ def nAppend(data1,data2,**kwargs):
     if (len(np.shape(data1.data)) <2 ) or (len(np.shape(data2.data)) <2 ):
         print("Append only works for 2D or 3D datasets")
     else:
-    ## Making stack1 a volume
+    ## Making dstack1 a volume
         if len(np.shape(data1.data)) <3:
             if kwargs['ax'] == 'x':
                 vol1=data1.data[np.newaxis,:,:]
@@ -547,7 +536,7 @@ def nAppend(data1,data2,**kwargs):
                 vol1=data1.data[:,:,np.newaxis]
         else:
             vol1=data1.data
-    ## Making stack2 a volume
+    ## Making dstack2 a volume
         if len(np.shape(data2.data)) <3:
             if kwargs['ax']  == 'x':
                 vol2=data2.data[np.newaxis,:,:]
@@ -557,10 +546,10 @@ def nAppend(data1,data2,**kwargs):
                 vol2=data2.data[:,:,np.newaxis]
         else:
             vol2=data2.data
-    ## Stacking vol2 ontop of vol1
+    ## dStacking vol2 ontop of vol1
         if kwargs['ax']  == 'x':
             if (np.shape(vol1)[1]==np.shape(vol2)[1]) and (np.shape(vol1)[2]==np.shape(vol2)[2]):
-                vol1=np.dstack((vol1,vol2))
+                vol1=np.ddstack((vol1,vol2))
                 xscale=np.append(data1.scale['x'],data2.scale['x'])
                 yscale=data1.scale['y']
                 zscale=data1.scale['z']
@@ -568,7 +557,7 @@ def nAppend(data1,data2,**kwargs):
                 print("Data sets must be the same size in y and z")
         if kwargs['ax']  == 'y':
             if (np.shape(vol1)[0]==np.shape(vol2)[0]) and (np.shape(vol1)[2]==np.shape(vol2)[2]):
-                vol1=np.hstack((vol1,vol2))
+                vol1=np.hdstack((vol1,vol2))
                 xscale=data1.scale['x']
                 yscale=np.append(data1.scale['y'],data2.scale['y'])
                 zscale=data1.scale['z']
@@ -576,7 +565,7 @@ def nAppend(data1,data2,**kwargs):
                 print("Data sets must be the same size in x and z")
         if kwargs['ax']  == 'z':
             if (np.shape(vol1)[0]==np.shape(vol2)[0]) and (np.shape(vol1)[1]==np.shape(vol2)[1]):
-                vol1=np.vstack((vol1,vol2))
+                vol1=np.vdstack((vol1,vol2))
                 xscale=data1.scale['x']
                 yscale=data1.scale['y']
                 zscale=np.append(data1.scale['z'],data2.scale['z'])
@@ -591,9 +580,9 @@ def nAppend(data1,data2,**kwargs):
         return nVol
 	
 
-def metadata_stack(nData_list,dstack):
+def metadata_dstack(nData_list,ddstack):
     """
-    Stacking metadata
+    dStacking metadata
     """
     for i,d in enumerate(nData_list): #iterates over each EA in mda
         keys_i = list(vars(nData_list[i]).keys()) 
@@ -601,22 +590,85 @@ def metadata_stack(nData_list,dstack):
             if key not in ['data','scale','unit']:
                 val_i = getattr(d,key)
                 if i == 0:
-                    setattr(dstack,key,[val_i]) #sets first key as attribute
+                    setattr(ddstack,key,[val_i]) #sets first key as attribute
                 else:
-                    if type(val_i) == np.ndarray: #arrays get stacked in dimension 2
-                        val = getattr(dstack,key)
-                        val = np.vstack((val_i, val))
+                    if type(val_i) == np.ndarray: #arrays get dstacked in dimension 2
+                        val = getattr(ddstack,key)
+                        val = np.vdstack((val_i, val))
                     elif type(val_i) == str: #strings are put into a list
-                        val = getattr(dstack,key)
+                        val = getattr(ddstack,key)
                         val.append(val_i)
                     else: #everything else gets put into np arrays
-                        val = np.array(getattr(dstack,key))
+                        val = np.array(getattr(ddstack,key))
                         np.append(val,[val_i])
                     #val = np.array(val)
-                    setattr(dstack,key,val)
+                    setattr(ddstack,key,val)
 
 
 
+def slice_dstack(axes,dstack,c,b):
+    """
+    returns a slice from a 3D dstack
+    
+    axes = 'xy','yx','xz','zx','yz','zy' of desired slice
+    dstack = 3D nData object with monotonic scaling
+    c = [x,y,z] where to slice in scale space
+    b = [bin_x,bin_y,bin_z], how much to bin
+
+    """
+    #convert cursor from scale to pixel
+    c_px = []
+    for i,ax in enumerate(dstack.scale.keys()):
+        c_px.append(int(find_closest(dstack.scale[ax],c[i])[0]))
+    
+    #convert bin from scale to pixel
+    b_px = []
+    for i,ax in enumerate(dstack.scale.keys()):
+        b_px.append(int(b[i]/(dstack.scale[ax][1]-dstack.scale[ax][0])))
+    #note that dstack.data is  [y,x,z], while 
+    ar = dstack.data.transpose((1, 0, 2))
+
+    #slicing the dstack 
+    if axes == 'yz':
+        img = np.nansum(ar[c_px[0]-b_px[0]:c_px[0]+max(b_px[0],1),:,:],axis=0)
+        img = nData(img.T)
+        img.updateAx('x', dstack.scale['y'], dstack.unit['y'])
+        img.updateAx('y', dstack.scale['z'], dstack.unit['z'])
+    
+    elif axes == 'zy':
+        img = np.nansum(ar[c_px[0]-b_px[0]:c_px[0]+max(b_px[0],1),:,:],axis=0)
+        img = nData(img)
+        img.updateAx('y', dstack.scale['y'], dstack.unit['y'])
+        img.updateAx('x', dstack.scale['z'], dstack.unit['z'])
+    
+    elif axes == 'xz':
+        img = np.nansum(ar[:,c_px[1]-b_px[1]:c_px[1]+max(b_px[1],1),:],axis=1)
+        img = nData(img.T)
+        img.updateAx('x', dstack.scale['x'], dstack.unit['x'])
+        img.updateAx('y', dstack.scale['z'], dstack.unit['z'])
+
+    elif axes == 'zx':
+        img = np.nansum(ar[:,c_px[1]-b_px[1]:c_px[1]+max(b_px[1],1),:],axis=1)
+        img = nData(img)
+        img.updateAx('y', dstack.scale['x'], dstack.unit['x'])
+        img.updateAx('x', dstack.scale['z'], dstack.unit['z'])        
+    
+    elif axes == 'xy':
+        img = np.nansum(ar[:,:,c_px[2]-b_px[2]:c_px[2]+max(b_px[2],1)],axis=2)
+        img = nData(img.T)
+        img.updateAx('x', dstack.scale['x'], dstack.unit['x'])
+        img.updateAx('y', dstack.scale['y'], dstack.unit['y'])
+
+    elif axes == 'yx':
+        img = np.nansum(ar[:,:,c_px[2]-b_px[2]:c_px[2]+max(b_px[2],1)],axis=2)
+        img = nData(img)
+        img.updateAx('y', dstack.scale['x'], dstack.unit['x'])
+        img.updateAx('x', dstack.scale['y'], dstack.unit['y']) 
+
+    extras = dstack.extras
+    extras.update({'slice_cb':(c,b)})
+    img.updateExtras(extras)
+    return img    
 
 
 

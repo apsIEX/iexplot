@@ -1,9 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy import interpolate
+
 
 from iexplot.utilities import _shortlist, make_num_list 
 from iexplot.plotting import plot_1D, plot_2D, plot_3D
-from iexplot.pynData.pynData import nstack
+from iexplot.pynData.pynData import ndstack,nData
 from iexplot.pynData.pynData_ARPES import kmapping_energy_scale
 #from iexplot.IEX_pkg.Plot_IT import pynData_to_ra
 #from pyimagetool import tools
@@ -374,13 +376,13 @@ def _stack_mdaEA_from_list(EA_list,stack_scale, E_unit='BE', **kwargs):
                 else:
                     if kwargs['EDConly']:
                         EDC_list = [EA.EDC for EA in EA_list] 
-                        d = nstack(EDC_list, stack_scale, **kwargs)
-                        d.updateAx('x',E_scale,E_unit)
+                        d = ndstack(EDC_list, stack_scale, **kwargs)
+                        #d.updateAx('x',E_scale,E_unit)
         
                     else:
-                        d = nstack(EA_list, stack_scale, **kwargs)
+                        d = ndstack(EA_list, stack_scale, **kwargs)
                 ax_label={'BE':"Binding Energy (eV)",'KE':"Kinetic Energy (eV)"}       
-                d.updateAx('x',E_scale,ax_label[E_unit])
+                #d.updateAx('x',E_scale,ax_label[E_unit])
             return d
     
         if type(kwargs['E_offset']) == float:

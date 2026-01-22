@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from iexplot.utilities import make_num_list
 from iexplot.plotting import *
 from iexplot.XAS_utilities import plot_Norm2Edge,Norm2Edge
-from iexplot.pynData.pynData import nstack
+from iexplot.pynData.pynData import ndstack
 
 
 class Plot_MDA:
@@ -332,7 +332,7 @@ class Plot_MDA:
                 unit = 'scanNum'
             nData_list.append(self.mda[scanNum].det[detNum])
         
-        d = nstack(nData_list, stack_scale, **kwargs)
+        d = ndstack(nData_list, stack_scale, **kwargs)
         d.updateScale('y',stack_scale)
         d.updateUnit('y',pv)
         return d

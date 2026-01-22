@@ -25,7 +25,7 @@ import numpy as np
 from scipy import interpolate
 
 
-from iexplot.pynData.pynData import nData, nData_h5Group_r, nData_h5Group_w, metadata_stack
+from iexplot.pynData.pynData import nData, nData_h5Group_r, nData_h5Group_w, metadata_dstack
 from iexplot.utilities import *
 from iexplot.plotting import plot_1D
 from iexplot.pynData.ARPES_functions import *
@@ -370,7 +370,7 @@ def kmapping_stack(EA_list, E_unit='BE', **kwargs):
     d = nData(data_new)
     d.updateAx('x',E_new,E_unit)
     d.updateAx('y',k_new,'ky')
-    metadata_stack(EA_list,d)
+    metadata_dstack(EA_list,d)
     return d
         
 ##########################################

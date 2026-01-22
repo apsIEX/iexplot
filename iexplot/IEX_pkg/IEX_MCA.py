@@ -2,7 +2,7 @@ import os
 import numpy as np
 
 from iexplot.IEX_pkg.IEX_MDA import IEX_MDA
-from iexplot.pynData import nstack
+from iexplot.pynData import ndstack
 from iexplot.utilities import _create_dir_shortlist, take_closest_value
 
 
@@ -94,7 +94,7 @@ class IEX_MCA(IEX_MDA):
         nData_list = []
         for scanNum in channels:
             nData_list.append(mda_d[scanNum].det[1])
-        stack = nstack(nData_list,stack_scale=channels,stack_unit='channels')
+        stack = ndstack(nData_list,stack_scale=channels,stack_unit='channels')
         return stack
     
 
