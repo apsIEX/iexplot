@@ -477,7 +477,7 @@ def ndstack(nData_list,dstack_scale=None,dstack_unit="", **kwargs):
                 print('Can only dstack 1D, 2D and 3D data sets')
         else:
             if rank == 1: #dstacking along y
-                dstack=np.vdstack((dstack,d.data))
+                dstack=np.vstack((dstack,d.data))
                 yscale=dstack_scale
                 yunit = dstack_unit
 
