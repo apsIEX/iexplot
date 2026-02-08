@@ -170,3 +170,26 @@ def  _create_dir_shortlist(*scanNums,path,prefix,ext, **kwargs):
         #remove duplicates if any
         shortlist.sort() 
     return shortlist
+
+def get_nested_dict_value(d, key):
+    """
+    Search for a key in a nested dictionary and return its value.
+    d = the dictionary to search (can be nested)
+    key = he key to search for
+    
+    Returns:
+    --------
+    The value associated with the key, or None if not found
+    """
+    # Check if key exists at the top level
+    if key in d:
+        return d[key]
+    
+    # Search recursively in nested dictionaries
+    for value in d.values():
+        if isinstance(value, dict):
+            result = get_nested_dict_value(value, key)
+            if result is not None:
+                return result
+    
+    return None

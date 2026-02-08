@@ -84,15 +84,16 @@ def k_to_kz(kx, ky, KE, V0):
     c = np.sqrt(2*me)/hbar
     kz2 = c**2*(KE - V0) - (kx**2 +ky**2)
     return np.sqrt(kz2)
+    
 
-def KE_to_BE(KE,hv,wk):  
+def KE_to_BE(KE,hv,wk,E_offset=0):  
     ''''''
-    BE = hv-wk-KE 
+    BE = (hv+E_offset) - wk - KE 
     return BE
 
-def BE_to_KE(BE, hv, wk):
+def BE_to_KE(BE, hv, wk, E_offset=0):
     ''''''
-    KE = hv-wk-BE 
+    KE = (hv+E_offset) - wk - BE 
     return KE
     
 def ARPES_angle_k(k_new,img,KE_scale,angle_scale,polar_angle,KE_offset,slit='V'):

@@ -3,12 +3,10 @@ import numpy as np
 from scipy import interpolate
 
 
-from iexplot.utilities import _shortlist, make_num_list 
+from iexplot.utilities import _shortlist, make_num_list, get_nested_dict_value 
 from iexplot.plotting import plot_1D, plot_2D, plot_3D
-from iexplot.pynData.pynData import ndstack,nData
-from iexplot.pynData.pynData_ARPES import kmapping_energy_scale
-#from iexplot.IEX_pkg.Plot_IT import pynData_to_ra
-#from pyimagetool import tools
+from iexplot.pynData.pynData_ARPES import stack_EAs 
+from iexplot.fitting import fit_box, fit_gaussian, fit_lorentzian, fit_poly, fit_step, fit_shirley_background
 
 class Plot_EA:
     """
@@ -109,6 +107,42 @@ class Plot_EA:
         
         if BE:
             plt.xlim(max(x),min(x))
+
+    def fit_EDC(self,scanNum,fit_type,EAnum=1,BE=False,**kwargs):
+        """
+        simple fitting of EDC data
+        fit_type = 'box', 'gaussian', 'lorentzian', 'poly', 'step:', 'shirley'
+
+        EAnum = scan/sweep number 
+                = inf => will sum all spectra
+
+        BE = False; Kinetic Energy scaling
+        BE = True; Binding Energy scaling
+           where BE = hv-KE-wk (wk=None uses workfunction defined in the metadata)
+        
+        """
+        kwargs.setdefault('show_legend',False)
+        kwargs.setdefault('plot',True)
+
+        x,y,xlabel = self.EA_EDC(scanNum,EAnum=EAnum,BE=BE)
+    
+        fit_funcs = {
+            'box':fit_box,
+            'gaussian':fit_gaussian,
+            'lorentzian':fit_lorentzian,
+            'poly':fit_poly,
+            'step:':fit_step,
+            'shirley':fit_shirley_background,
+        }
+
+        if fit_type not in fit_funcs.keys():
+            print('Not a valid fit_type use one of the following'+list(fit_funcs.keys()) )
+            #return
+
+        fit_func = fit_funcs[fit_type]
+        ff = fit_func(x,y,**kwargs)
+        return ff
+  
 
     def plot_EA(self,scanNum,EAnum=1,BE=False,transpose=False,**kwargs):
         """
@@ -255,66 +289,90 @@ class Plot_EA:
         pass
     
     def make_EA_list(self, *nums, **kwargs):
-            """
-            return EA_list, stack_scale, stack_unit, where EA_list is a stack of EA ndata objects
-            nums = list of mda scans to be plotted 
-            
-            **kwargs:      
-                    EAnum = (start,stop,countby) => to plot a subset of EA scans
-                    index = False (default), stack scale by number
+        """
+        return EA_list, stack_scale, stack_unit, where EA_list is a stack of EA ndata objects
+        nums = list of mda scans to be plotted 
+        
+        **kwargs:      
+            EAnum = (start,stop,countby) => to plot a subset of EA scans
+            stack_scale kwargs
+                index = True, stack scale by posiiton in nums list 
+                EA_attr = attribute (hv for example can be anything you see in EA.)
+                EA_extras = key from extras dictionary will search through nests (example: x comes from EA.extras['sample']['x'])
                 
-            """
-            kwargs.setdefault('debug',False) 
-            kwargs.setdefault('index',False)
             
-            scanNumlist = make_num_list(*nums)
-            EA_list = []
-            stack_scale=np.empty((0))
+        """
+        kwargs.setdefault('debug',False) 
+        kwargs.setdefault('index',False)
+        
+        scanNumlist = make_num_list(*nums)
+        EA_list = []
+        
+        stack_scale=np.empty((0))
+        
+        if kwargs['debug']:
+            print('scanNumlist',scanNumlist)
+        
+        #mda scan
+        if len(scanNumlist)==1:
+            stack_scale = np.concatenate((stack_scale,self.mda[scanNum].posy[0].data))
+            stack_unit =self.mda[scanNum].posy[0].pv[1]
+        else:
+            stack_unit = None
+
+        #iterating over mda scans       
+        for scanNum in scanNumlist:
+            if kwargs['debug']:
+                print('scanNumlist: ',scanNumlist)
+        
+            #creating list of all EA numbers
+            ll = list(self.mda[scanNum].EA.keys())
+            
+            #creating shortlist of selected EAnum
+            if 'EAnum' in kwargs:
+                EAlist = _shortlist(*kwargs['EAnum'],llist = ll,**kwargs)  
+            else:
+                EAlist = ll
             
             if kwargs['debug']:
-                print('scanNumlist',scanNumlist)
-
-            for scanNum in scanNumlist:
-                if kwargs['debug']:
-                    print('scanNumlist: ',scanNumlist)
-                if kwargs['index']:
-                    stack_scale = np.arange(0,len(scanNumlist))
+                print('EAlist: ',EAlist)
+        
+            #iterating over EA scans  
+            for EAnum in EAlist:
+                EA = self.mda[scanNum].EA[EAnum]
+                EA_list.append(EA)
+                
+                if 'EA_attr' in kwargs:
+                    stack_unit = kwargs['EA_attr']
+                    try:
+                        val = getattr(EA,kwargs['EA_attr'])
+                        stack_scale = np.concatenate([stack_scale,[val]])
+                    except:
+                        print('EA_attr = '+kwargs['EA_attr']+' does not exist')
+                        return                  
+        
+                elif 'EA_extras' in kwargs:
+                    val = get_nested_dict_value(EA.extras, kwargs['EA_extras'])
+                    stack_scale = np.concatenate([stack_scale,[val]])
+                    stack_unit = kwargs['EA_extras']
+        
+                elif 'index' in kwargs and kwargs['index']:
+                    stack_scale = stack_scale[-1]+1
                     stack_unit = 'index'
-                elif len(scanNumlist)==1:
-                    stack_scale = np.concatenate((stack_scale,self.mda[scanNum].posy[0].data))
-                    stack_unit =self.mda[scanNum].posy[0].pv[1]
+            
                 else:
                     stack_scale = np.append(stack_scale,scanNum)
                     stack_unit='scanNum'
-
-                if kwargs['debug']:
-                    print('stack_scale: ',stack_scale)
-                    print('stack_unit',stack_unit)
-
-
-                #creating list of all EA numbers
-                ll = list(self.mda[scanNum].EA.keys())
-                
-                #creating shortlist of selected EAnum
-                if 'EAnum' in kwargs:
-                    EAlist = _shortlist(*kwargs['EAnum'],llist = ll,**kwargs)  
-                else:
-                    EAlist = ll
-                 
-                if kwargs['debug']:
-                    print('EAlist: ',EAlist)
-
-                #populating EA_list with EA/EDC scans
-                for EAnum in EAlist:
-                    EA_list.append(self.mda[scanNum].EA[EAnum])
-
-                #Truncating stack_scale for number of images        
-                stack_scale = stack_scale[0:len(EA_list)]    
-            
-            if kwargs['debug']:
-                print('make_EA_list:',EA_list)
-
-            return EA_list,stack_scale,stack_unit
+                    
+            #Truncating stack_scale for number of images        
+            stack_scale = stack_scale[0:len(EA_list)]    
+        
+        if kwargs['debug']:
+            print('make_EA_list:',EA_list)
+            print('stack_scale: ',stack_scale)
+            print('stack_unit',stack_unit)
+        
+        return EA_list,stack_scale,stack_unit
     
     def stack_mdaEA(self, *scanNum, BE=True,**kwargs):
             """
@@ -345,104 +403,7 @@ class Plot_EA:
 
             EA_list, stack_scale, stack_unit = self.make_EA_list(*scanNum, **kwargs)
 
-            d = _stack_mdaEA_from_list(EA_list,stack_scale, E_unit,**kwargs)
-            #d.unit['']
+            d = stack_EAs(EA_list,stack_scale,stack_unit,E_unit=E_unit,**kwargs)
 
             return d
-
-def _stack_mdaEA_from_list(EA_list,stack_scale, E_unit='BE', **kwargs):
-        """
-        creates a volume of stacked spectra/or EDCs based on kwargs
-        Note: does not currently account for scaling (dumb stacking)
-
-        E_unit = 'KE' or 'BE'
-
-        **kwargs:                                   
-            E_offset = offset value for each scan based on curve fitting 
-                        can be an np.array or float depending if it varies along stack-directions
-            EDC_only = False
-            
-        """
-        kwargs.setdefault('EDConly',False)
-        kwargs.setdefault('E_offset',0.0)
-        kwargs.setdefault('debug',False)
-        kwargs.setdefault('array_output',True)
-
-        if type(kwargs['E_offset']) == float:
-            if (kwargs['E_offset']) == 0.0:
-                #Stacking data
-                if len(EA_list) == 1:
-                    d = EA_list[0]
-                else:
-                    if kwargs['EDConly']:
-                        EDC_list = [EA.EDC for EA in EA_list] 
-                        d = ndstack(EDC_list, stack_scale, **kwargs)
-                        #d.updateAx('x',E_scale,E_unit)
-        
-                    else:
-                        d = ndstack(EA_list, stack_scale, **kwargs)
-                ax_label={'BE':"Binding Energy (eV)",'KE':"Kinetic Energy (eV)"}       
-                #d.updateAx('x',E_scale,ax_label[E_unit])
-            return d
-    
-        if type(kwargs['E_offset']) == float:
-            E_offset = np.full(len(EA_list),kwargs['E_offset'])
-        elif type(kwargs['E_offset']) == int:
-            E_offset = np.full(len(EA_list),kwargs['E_offset'])
-        else:
-            E_offset = kwargs['E_offset']
-        
-        for n,EA in enumerate(EA_list):
-            if n == 0: 
-                KE_min = np.min(EA.KEscale)+E_offset[n]
-                KE_max = np.max(EA.KEscale)+E_offset[n]
-            _KE_min = np.min(EA.KEscale)+E_offset[n]
-            _KE_max = np.max(EA.KEscale)+E_offset[n]
-            KE_min = min(KE_min, _KE_min)
-            KE_max = max(KE_max, _KE_max)
-            
-        E_delta = EA.KEscale[1]-EA.KEscale[0]
-        
-        if E_unit == 'BE':
-            BE_max = np.max(EA_list[0].BEscale) + np.max(E_offset)
-            BE_min = np.min(EA_list[0].BEscale) + np.min(E_offset)
-            E_scale = np.arange(BE_max,BE_min,-E_delta)
-        else:
-            E_scale = np.arange(KE_min,KE_max,E_delta)
-            
-        angle_scale = EA_list[0].scale['y']
-
-        #BE/KE conversion - usless at the moment
-
-        # Changing offset for each EA img in EA_list
-
-        for i,EA in enumerate(EA_list):
-            img = EA.data
-            if E_unit == 'BE':
-                x_original = EA.BEscale + E_offset[i]
-            else:
-                x_original = EA.KEscale + E_offset[i]
-            y_original = EA.scale['y']
-            
-            new_X, new_Y = np.meshgrid(E_scale, angle_scale)
-            
-            points_new = np.stack([new_X.ravel(), new_Y.ravel()], axis=-1)  # Return a flattened list of coordinates in the new interpolated mesh
-            
-            interpolator = interpolate.interpn(points=(x_original, y_original), values =  np.transpose(img), xi = points_new, method='linear', bounds_error = False, fill_value = 0)
-
-            #Interpolated EA data
-            img_interp = interpolator.reshape(new_X.shape)
-            if i == 0:
-                stack = img_interp
-            else:
-                stack = np.dstack((stack,img_interp))
-
-        nd = nData(stack)
-        nd.updateAx('x',E_scale,E_unit+"(eV)")
-        nd.updateAx('y',angle_scale,"Degree")
-        return nd
-        
-
- 
-
 

@@ -501,8 +501,8 @@ def ndstack(nData_list,dstack_scale=None,dstack_unit="", **kwargs):
         d.updateAx('z', zscale, zunit)
         d.updateAx('y', yscale, yunit)
         d.updateAx('x', xscale, xunit)
-    #metadata_dstack(nData_list,d) temporarily commented out to troubleshoot AJE
-
+    
+    stack_attributes(nData_list,d)
     return d
 
     
@@ -579,30 +579,42 @@ def nAppend(data1,data2,**kwargs):
         nVol.extras.update({'nDataAppend',['data1','data2']})
         return nVol
 	
+def stack_dict(d,key,val_n):
+    """
+    used to stack dictionary values as in update attributes in a stack
+    d = dictionary of stacked values, can be empty for first occurrance
+    key is key for dictionary
+    val_n is value to update 
+    return a stack of d[key] and val_n
+    """
+    if key not in d:
+        d[key] = val_n
+    else:
+        if type(val_n) == list:
+            d[key] = d[key].append(val_n)
+        elif type(val_n) == tuple:    
+            d[key] = d[key].list(val_n)
+        elif type(val_n) == dict:
+            for dk in val_n.keys():
+                d[key] = stack_dict(val_n,dk,val_n[dk])
+        else: 
+            d[key] = np.vstack((d[key],val_n))
+    return d
+    
 
-def metadata_dstack(nData_list,ddstack):
+
+def stack_attributes(stack_list, dstack):
     """
-    dStacking metadata
+    creates a stack of attributes in stack_list and adds them to stack
     """
-    for i,d in enumerate(nData_list): #iterates over each EA in mda
-        keys_i = list(vars(nData_list[i]).keys()) 
-        for key in keys_i: #iterates over each key in EA
-            if key not in ['data','scale','unit']:
-                val_i = getattr(d,key)
-                if i == 0:
-                    setattr(ddstack,key,[val_i]) #sets first key as attribute
-                else:
-                    if type(val_i) == np.ndarray: #arrays get dstacked in dimension 2
-                        val = getattr(ddstack,key)
-                        val = np.vdstack((val_i, val))
-                    elif type(val_i) == str: #strings are put into a list
-                        val = getattr(ddstack,key)
-                        val.append(val_i)
-                    else: #everything else gets put into np arrays
-                        val = np.array(getattr(ddstack,key))
-                        np.append(val,[val_i])
-                    #val = np.array(val)
-                    setattr(ddstack,key,val)
+    metadata = {}
+    for key in set(vars(stack_list[0]).keys()) - set(['data', 'scale', 'unit']):
+        for n,nd in enumerate(stack_list):
+            val_n = getattr(nd,key)
+            metadata = stack_dict(metadata,key,val_n)
+
+    for key in metadata.keys():
+        setattr(dstack,key,metadata[key])
 
 
 

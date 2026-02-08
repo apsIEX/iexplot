@@ -3,11 +3,10 @@ import numpy as np
 import numpy.polynomial.polynomial as poly
 from numpy import log as ln
 from scipy.optimize import curve_fit
-from scipy.special import erfc
+from scipy.special import erfc,wofz
 import matplotlib.pyplot as plt
 import lmfit
 
-from iexplot.plotting import plot_1D
 from iexplot.plotting import find_closest   #index, value
 
 def _xrange(x,y,xrange=[np.inf,np.inf]):
@@ -318,11 +317,15 @@ def _plot_fit(x,y,x_fit,y_fit,fit_vals={},**kwargs):
     """
     kwargs.setdefault('data_label','data')
     kwargs.setdefault('fit_label','fit')
+    kwargs.setdefault('show_legend',True)
+
     data_label = kwargs['data_label']
     kwargs.pop('data_label')
     fit_label = kwargs['fit_label']
     kwargs.pop('fit_label') 
-    print(kwargs)
+    show_legend = kwargs['show_legend']
+    kwargs.pop('show_legend')
+    
 
     txt=""
     for i,key in enumerate(fit_vals.keys()):
@@ -334,8 +337,9 @@ def _plot_fit(x,y,x_fit,y_fit,fit_vals={},**kwargs):
     plt.plot(x,y,label=data_label,marker='x',color='k')
     plt.plot(x_fit,y_fit,label=fit_label,color='r')
     plt.plot([], [], ' ', label=txt[:-1])
-    plt.legend()
-    plt.show()
+    if show_legend:
+        plt.legend()
+    #plt.show()
 
 def find_EF_offset(EA_list, E_unit,fit_type,xrange, plot = False): #need to rewrite this in a more intelligent way AJE
         '''
@@ -368,3 +372,61 @@ def find_EF_offset(EA_list, E_unit,fit_type,xrange, plot = False): #need to rewr
             else:
                 print(fit_type + ' is not a valid fitting function, see doc string')
         return np.array(cen)
+
+def _shirley(y,**kwargs):
+    """
+    # Shirley formula: background at i = y_min + (y_max - y_min) * (integral from i to end of (y-y_bg)) / (total integral)
+    
+
+    """
+    kwargs.setdefault('tol',1e-5)
+    kwargs.setdefault('max_iter',200)
+    kwargs.setdefault('debug',False)
+    
+    y_bkg = np.zeros_like(y)
+    for i in range(kwargs['max_iter']):
+        y_bg_i = y_bkg.copy()
+        integral_total = np.sum(y - y_bkg)
+        #integrating over n
+        for n in range(y.shape[0]):
+            integral_n = np.sum(y[n:] - y_bkg[n:])
+ 
+            y_bkg[n] = y[-1] + (y[0] - y[-1]) * (integral_n / integral_total if integral_total != 0 else 0)
+            tol = np.max(np.abs(y_bkg - y_bg_i))
+            fit_vals = {'iterations':n,
+                         'integral_total': integral_total,
+                         'tolerance': tol,
+                         }
+            if  tol < kwargs['tol']:
+                return y_bkg, fit_vals
+        
+def fit_shirley_background(x,y,**kwargs):
+    """
+    fits a Shirley background to the data
+
+    x,y np.arrays of the the x,y data where x= energy, y = intensity
+
+    **kwargs:
+        plot: True/False plots the data and the fit (default=True)
+        xrange=[x_first,x_last] to fit subrange 
+        coefs_0=[Amplitude,x0,sigma,bkgd] to specifiy initial guesses, otherwise autoguess
+        max_iter: maximum number of iterations (default=200)
+        tolerance = 1e-5
+    Usage examples:
+        x,y = EA_Spectrum(ScanNum,EnergyAxis)
+        x,y,x_name,y_name = mda_1D(ScanNum,detNum)
+
+    """
+    kwargs.setdefault('plot',True)
+    kwargs.setdefault('xrange',[np.inf,np.inf])
+
+    #subrange
+    x_fit, y_fit = _xrange(x,y,kwargs['xrange'])
+
+    #do fit
+    y_fit, fit_vals = _shirley(y_fit,**kwargs)
+
+    if kwargs['plot']:
+        _plot_fit(x,y,x_fit,y_fit,fit_vals,**kwargs)
+
+    return  x_fit,y_fit,fit_vals
