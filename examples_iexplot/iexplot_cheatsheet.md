@@ -16,11 +16,12 @@ The data is loaded into a dictionary to future access
 
 
 ## **<font color = 8a99ad>Initializing the data dictionary</font>**
+    dtype = 'mda' (default), 'mdaEA' (use for ARPES)
 ---
 
 loading a single scan
 
-    data = IEXdata(scanNum,path=path,prefix=prefix)
+    data = IEXdata(scanNum,path=path,prefix=prefix,dtype='mdaEA')
   
 loading a series of scans (last = inf loads to the last scan in the directory)
 
@@ -103,10 +104,12 @@ EDCs (angle-integrated spectra)
     x,y,x_label = data.EAspectraEDC(scanNum)
     
 Metadata / header
-    data.EAheader_all(scanNum,EAnum)
-    data.EAheader_sample(scanNum,EAnum)
-    data.EAheader_HVscanInfo(scanNum,EAnum)
-    data.EAheader_beamline(scanNum,EAnum)
+    data.EA_extras(scanNum,EAnum=1) #all metadata
+    data.EA_exit_slit(scanNum,EAnum=1)
+    data.EA_ringCurrent(scanNum,EAnum=1)
+    data.EA_pass_energy(scanNum,EAnum=1)
+    data.EA_sample(scanNum,EAnum=1)
+
 
 Stacking EA spectra or EDCs
 
@@ -127,6 +130,13 @@ Plotting single or stacked EA scans
 Creating a new IT window from pynData object d
 
     tool.new(d)
+
+Plotting the results of sample_map
+
+    kwargs = {'det_list':[17,18],
+     'title_list':['TEY','EA'],
+     'figsize':(20,10)}
+    data.plot_sample_map(scanNum,**kwargs)
 
 ### **Cursor/Bin**
 
@@ -175,5 +185,10 @@ Use an individual color from a colormap (index "i" out of length "size")
 
     color = colormap_colors(i, size, cmap_name)
 
+legend outside
+
+    plt.legend(bbox_to_anchor=(1,1))
+    
+    
 
 

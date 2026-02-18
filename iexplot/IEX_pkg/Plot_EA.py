@@ -248,10 +248,10 @@ class Plot_EA:
         """
         return self.mda[scanNum].EA[EAnum].extras['beamline']['ringCurrent'] 
 
-    def plot_mdaEA_stack(self,*args,**kwargs):
+    def plot_mdaEA_stack(self,*mdascanNums,**kwargs):
         """
-        *args = scanNum if volume is a single Fermi map scan
-                = scanNum, start, stop, countby for series of mda scans
+        *mdascanNums = scanNum if volume is a single Fermi map scan
+                     = start, stop, countby for series of mda scans
 
         **kwargs:      
             EAnum = (start,stop,countby) => to plot a subset of scans
@@ -273,7 +273,7 @@ class Plot_EA:
     """
         kwargs.setdefault('array_output',True)
 
-        dataArray,scaleArray,unitArray = self.stack_mdaEA(*args,**kwargs)
+        dataArray,scaleArray,unitArray = self.stack_mdaEA(*mdascanNums,**kwargs)
         kwargs.pop('array_output')
         if 'EAnum' in kwargs:
             kwargs.pop('EAnum')
