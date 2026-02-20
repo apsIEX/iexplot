@@ -13,7 +13,7 @@ def plot_nd(*ds,**kwargs):
     '''
     Simple plot for 1D and 2D nData
     *ds pnData files
-	**kwargs see plot_2D and plot_3D
+	
 	**kwargs plot_1D
         xrange=[x_first,x_last] to plot subrange 
         Norm2One: True/False to normalize graph between zero and one
@@ -23,7 +23,17 @@ def plot_nd(*ds,**kwargs):
         scale_mean_index: y /= np.mean(y[scale_mean_index[0]:scale_mean_index[-1]])
         offset_x: x += offset_x 
         scale_x: x *= scale_x
-
+	
+	**kwargs plot_2D and plot_3d
+		dim3 = third axis for plotting (default: 'z')
+		dim2 = second axis for plotting (default: 'y') => vertical in main image
+		xCen = cursor x value (default: np.nan => puts in the middle)
+		xWidthPix = number of pixels to bin in x
+		yCen = cursor y value (default: np.nan => puts in the middle)
+		yWidthPix = number of pixels to bin in y
+		zCen = cursor y value (default: np.nan => puts in the middle)
+		zWidthPix = number of pixels to bin in y
+		cmap = colormap ('BuPu'=default)
 
     '''
     d=ds[0]

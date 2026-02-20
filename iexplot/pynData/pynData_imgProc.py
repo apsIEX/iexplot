@@ -1,5 +1,8 @@
 import numpy as np
-from iexplot.pynData import *
+import matplotlib.pyplot as plt
+from scipy import interpolate
+from iexplot.pynData import nData
+
 #==============================================================================
 # Utils for cropping, rotating and symmetrization
 #==============================================================================

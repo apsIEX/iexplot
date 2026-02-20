@@ -1,12 +1,15 @@
 
 import numpy as np
+from time import sleep
+
 from matplotlib.colors import ListedColormap
 
 from iexplot.plotting import plot_1D, plot_2D, plot_dimage
 from iexplot.utilities import _shortlist
 
-from pyimagetool import tools, RegularDataArray
+from pyimagetool import RegularDataArray
 import pyimagetool.cmaps.CMap
+
 
 
 
@@ -64,7 +67,7 @@ def pynData_to_ra(d):
 
     return ra
 
-def tools_plot_inline(IT_num, plot_name,**kwargs):
+def tools_plot_inline(tools, IT_num, plot_name,**kwargs):
         """
         extract data from an individual plot in imagetool
         
@@ -110,7 +113,7 @@ class Plot_IT:
     def __init__(self):
         pass
 
-    def it_mda(self, scanNum, detNum):
+    def mda_ra(self, scanNum, detNum):
         """
         plot 2D mda data in imagetool
 
@@ -121,14 +124,15 @@ class Plot_IT:
         type = int
 
         """
-        d = data.mda[scanNum].det[detNum]
+        d = self.mda[scanNum].det[detNum]
 
         
         #transposing data so looks the same in imagetool as it does in the plotting 
+        sleep(1)
         ra = pynData_to_ra(d)
-        tools.new(ra)
+        return ra
 
-    def it_EA(self,scanNum,EAnum=1)
+    def EA_ra(self,scanNum,EAnum=1):
         '''
         plot spectra data in imagetool
 
@@ -139,12 +143,13 @@ class Plot_IT:
         type = int
         
         '''
-        d = data.mda[scanNum].EA[EAnum]
+        d = self.mda[scanNum].EA[EAnum]
 
         
         #transposing data so looks the same in imagetool as it does in the plotting 
+        sleep(1)
         ra = pynData_to_ra(d)
-        tools.new(ra)
+        return ra
 
 
 # import numpy as np
