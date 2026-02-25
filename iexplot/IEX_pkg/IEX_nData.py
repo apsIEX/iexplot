@@ -22,7 +22,7 @@ from iexplot.IEX_pkg.Plot_MDA import Plot_MDA
 from iexplot.IEX_pkg.Plot_EA import Plot_EA
 from iexplot.IEX_pkg.Plot_AD import Plot_AD
 from iexplot.IEX_pkg.Plot_MCA import Plot_MCA
-
+from iexplot.IEX_pkg.Plot_IT import Plot_IT
 
  #########################################################################################################
 
@@ -30,7 +30,7 @@ from iexplot.IEX_pkg.Plot_MCA import Plot_MCA
 
 #########################################################################################################
 #########################################################################################################
-class IEX_nData(Plot_MDA,Plot_EA,Plot_AD,Plot_MCA):
+class IEX_nData(Plot_MDA,Plot_EA,Plot_AD,Plot_MCA,Plot_IT):
     """"
     loads IEX (mda, EA, ADtiff) data and returns a dictionary containing pynData objects
         in Igor speak this is your experiment and the pynData objects are the waves

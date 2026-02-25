@@ -1,12 +1,15 @@
 
 import numpy as np
+from time import sleep
+
 from matplotlib.colors import ListedColormap
 
 from iexplot.plotting import plot_1D, plot_2D, plot_dimage
 from iexplot.utilities import _shortlist
 
-from pyimagetool import tools, RegularDataArray
+from pyimagetool import RegularDataArray,tools
 import pyimagetool.cmaps.CMap
+
 
 
 
@@ -64,7 +67,7 @@ def pynData_to_ra(d):
 
     return ra
 
-def tools_plot_inline(IT_num, plot_name,**kwargs):
+def tools_plot_inline(tools, IT_num, plot_name,**kwargs):
         """
         extract data from an individual plot in imagetool
         
@@ -110,7 +113,7 @@ class Plot_IT:
     def __init__(self):
         pass
 
-    def it_mda(self, scanNum, detNum):
+    def mda_ra(self, scanNum, detNum):
         """
         plot 2D mda data in imagetool
 
@@ -121,94 +124,35 @@ class Plot_IT:
         type = int
 
         """
-        #info 
+        d = self.mda[scanNum].det[detNum]
 
-        dataArray = self.mda[scanNum].det[detNum].data
-        x = self.mda[scanNum].posx[0].data[0]
-        y = self.mda[scanNum].posy[0].data
-        x_label = self.mda[scanNum].posx[0].unit['x']
-        y_label = self.mda[scanNum].posy[0].unit['y']
-        delta = [y[1]-y[0],x[1]-x[0]]
-        coord_min = [y[0],x[0]]
-        unitArray = [y_label,x_label]
+        
         #transposing data so looks the same in imagetool as it does in the plotting 
-        ra = RegularDataArray(dataArray.T, delta = delta, coord_min = coord_min, dims = unitArray) 
-        tools.new(ra)
+        sleep(1)
+        ra = pynData_to_ra(d)
+        return ra
 
-    """
-    def it_mdaEA(self, *scanNums, **kwargs)
+    def EA_ra(self,scanNum,EAnum=1):
         '''
-        stack and plot 3D mda EA data in imagetool
+        plot spectra data in imagetool
+
+        scanNum = scan number to plot
+        type = int
+
+        EAnum = which sweep
+        type = int
         
-        self = IEXdata object
-        
-        *scanNums = scanNum if volume is a single Fermi map scan
-            = start, stop, countby for series of mda scans    
-            
-        
-        kwargs:
-            E_unit = KE or BE
-            ang_offset = angle offset
-            y_scale = k or angle
-            EAnum = (start,stop,countby) => to plot a subset of EA scans
-            EDConly = False (default) to stack the full image
-                    = True to stack just the 1D EDCs
-            find_E_offset   = False (default), does not offset data
-                            = True, will apply offset
-            E_offset = energy offset, can be array or single float (default = 0.0)
-            fit_type = fitting function used to calculate offset, 'step' or 'Voigt'
-            fit_xrange = subrange to apply fitting function over
-        
-        ☃    
         '''
+        d = self.mda[scanNum].EA[EAnum]
 
-        kwargs.setdefault('E_unit','KE')
-        kwargs.setdefault('find_E_offset',False)
-        kwargs.setdefault('E_offset',0.0)
-        kwargs.setdefault('fit_type','step')
-        kwargs.setdefault('ang_offset',0.0)
-        kwargs.setdefault('kmap',False)
-        kwargs.setdefault('EAnum',(1,np.inf))
-        #kwargs.setdefault('EDConly', False)
-        kwargs.setdefault('fit_xrange', [-np.inf,np.inf])
-        kwargs.setdefault('debug', False)
-
-        scanNumlist=_shortlist(*scanNums,llist=list(self.mda.keys()),**kwargs)
-
-
-        EA_list, stack_scale = PlotEA.make_EA_list(self, scanNumlist, **kwargs)
         
+        #transposing data so looks the same in imagetool as it does in the plotting 
+        sleep(1)
+        ra = pynData_to_ra(d)
+        return ra
+    
 
-        if kwargs['debug']:
-            print('EA list:',EA_list)
 
-        if kwargs['find_E_offset']:
-            E_offset = find_EF_offset(EA_list, E_unit = kwargs['E_unit'], fit_type = kwargs['fit_type'], xrange = kwargs['fit_xrange'])
-        else: 
-            E_offset = kwargs['E_offset']
-
-            
-        hv_list = []
-        for EA in EA_list:
-            hv_list.append(EA.hv)
-        hv_array = np.array(hv_list)
-        
-        #adjusting angle scaling
-        for EA in EA_list:
-            EA.scaleAngle(kwargs['ang_offset'])
-        
-        if len(EA_list) == 0:
-            d = EA_list[0] ### this is nonsense
-        else:
-            if kwargs['kmap']:
-                d = kmapping_stack(EA_list, E_unit = kwargs['E_unit'], KE_offset = -E_offset, debug = kwargs['debug'])
-            else:
-                d = _stack_mdaEA_from_list(EA_list,stack_scale, E_unit = kwargs['E_unit'], E_offset = -E_offset, debug = kwargs['debug'])
-        
-        if kwargs['E_unit'] == 'BE':
-            d.unit['x'] = 'Binding Energy (ev)'
-        
-        tools.new(d)"""
 
 # import numpy as np
 # from time import sleep

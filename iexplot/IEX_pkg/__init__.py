@@ -8,3 +8,4 @@ The IEX_[].py are all for the loading and extracting the data into then Data obj
 The Plot_[].py add plotting methods to this object
 
 """
+from iexplot.IEX_pkg.Plot_IT import tools_plot_inline,pynData_to_ra,imagetool_cmaps

@@ -1,12 +1,16 @@
+import copy
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import interpolate
+
 
 
 from iexplot.utilities import _shortlist, make_num_list, get_nested_dict_value 
 from iexplot.plotting import plot_1D, plot_2D, plot_3D
 from iexplot.pynData.pynData_ARPES import stack_EAs 
 from iexplot.fitting import fit_box, fit_gaussian, fit_lorentzian, fit_poly, fit_step, fit_shirley_background
+
+from iexplot.pynData.pynData import stack_attributes
 
 class Plot_EA:
     """
@@ -15,25 +19,31 @@ class Plot_EA:
     def __init__(self):
         pass
 
-    def EA_spectra(self,scanNum, EAnum=1, BE=False):
+    def _EA_obj (self,scanNum, EAnum=1,**kwargs):
+        
+        if EAnum != np.inf:
+            EAlist = _shortlist(*EAnum, llist = EAlist,**kwargs)  
+
+        if self.dtype == "EA":
+            EA = self.EA
+        elif self.dtype == "mdaEA" or "mdaAD": 
+            EA = self.mda[scanNum].EA
+        return EA
+            
+
+    def EA_spectra(self,scanNum, EAnum=1, BE=False,**kwargs):
         """
-        returns the array for an EAspectra, and x and y scaling    
-        usage:
-            plt.imgshow(data.EAspectra))
+        returns return img,xscale,yscale,xunit,yunit  
+        
+        EAnum = np.inf sums all EAs within scanNum
             
         """
-        if self.dtype == "EA":
-            EA=self.EA[scanNum]
-            img = EA.data
-
-
-        elif self.dtype == "mdaEA" or "mdaAD":
-            if EAnum == np.inf:
-                EA = self.mda[scanNum].EA[1]
-                img = np.nansum(tuple(self.mda[scanNum].EA[EAnum].data for EAnum in self.mda[scanNum].EA.keys()),axis=0)
-            else:
-                EA = self.mda[scanNum].EA[EAnum]
-                img = EA.data
+        if EAnum != np.inf:
+            EA = self._EA_obj(self,scanNum,EAnum)
+        else:
+            EA = self.EA_spectra_sum(scanNum, EAnum=np.inf,**kwargs)
+        
+        img = EA.data
 
         yscale = EA.scale['y']
         yunit = EA.unit['y']
@@ -46,26 +56,44 @@ class Plot_EA:
             xunit = 'Kinetic Energy (eV)'
             
         return img,xscale,yscale,xunit,yunit
+    
+    
+    
+    def EA_spectra_sum(self,scanNum, EAnum=np.inf,**kwargs):
+        """
+        return pyndata object of summed EA data 
+        EAnum = np.inf, sums all             
+        """
+        #creating shortlist of selected EAnum
+      
         
+        EA = self._EA_obj(self,scanNum,EAnum)
+        EAlist = list(EA.keys())
+
+        EAsummed = copy.deepcopy(EA[EAlist[0]])
         
-    def EA_EDC(self,scanNum,EAnum=1,BE=False):
+        img = np.nansum(tuple(EA[EAnum].data for EAnum in EAlist),axis=0)
+        edc = np.nansum(tuple(EA[EAnum].EDC.data for EAnum in EAlist),axis=0)
+
+        EAsummed.data = img
+        EAsummed.EDC.data = edc
+        
+        return EAsummed
+    
+    def EA_EDC(self,scanNum,EAnum=1,BE=False,**kwargs):
         """
         returns x,y,label =  energy scaling, EDC spectra, units_label
             
         usage:
             plt.plot(data.EAspectraEDC(151))    
         """
-        if self.dtype == "EA":
-            EA=self.EA[scanNum]
-            y = EA.EDC.data
 
-        elif self.dtype == "mdaEA" or "mdaAD":
-            if EAnum == np.inf:
-                EA = self.mda[scanNum].EA[1]
-                y = np.nansum(tuple(self.mda[scanNum].EA[EAnum].EDC.data for EAnum in self.mda[scanNum].EA.keys()),axis=0)
-            else:
-                EA = self.mda[scanNum].EA[EAnum]
-                y = EA.EDC.data
+        if EAnum != np.inf:
+            EA = self._EA_obj(self,scanNum,EAnum)
+        else:
+            EA = self.EA_spectra_sum(scanNum, EAnum=np.inf,**kwargs)
+        
+        y = EA.EDC.data
 
         if BE:
             x = EA.BEscale
@@ -179,50 +207,58 @@ class Plot_EA:
         """
         returns info about beamline
         """
-        return self.mda[scanNum].EA[EAnum].extras['beamline'] 
+        EA = self._EA_obj(self,scanNum,EAnum)
+        return EA.extras['beamline'] 
         
     def EA_HVscanInfo(self,scanNum,EAnum=1):
         """
         returns info about Scienta HV settings
         """
-        return self.mda[scanNum].EA[EAnum].extras['HVscanInfo'] 
+        EA = self._EA_obj(self,scanNum,EAnum)
+        return EA[EAnum].extras['HVscanInfo'] 
         
     def EA_sample(self,scanNum,EAnum=1):
         """
         returns info about Scienta HV settings
         """
-        return self.mda[scanNum].EA[EAnum].extras['sample'] 
+        EA = self._EA_obj(self,scanNum,EAnum)
+        return EA[EAnum].extras['sample'] 
 
     def EA_setting(self,scanNum,EAnum=1):
         """
         returns info about Scienta parameters
         """
-        return self.mda[scanNum].EA[EAnum].extras['EAsettings'] 
+        EA = self._EA_obj(self,scanNum,EAnum)
+        return EA[EAnum].extras['EAsettings'] 
 
     def EA_extras(self,scanNum,EAnum=1):
         """
         returns all the metadata in the file
         """
-        return self.mda[scanNum].EA[EAnum].extras
+        EA = self._EA_obj(self,scanNum,EAnum)
+        return EA[EAnum].extras
 
     def EA_pass_energy(self,scanNum,EAnum=1):
         """
         returns pass energy
         """
-        return self.mda[scanNum].EA[EAnum].extras['EAsettings']['passEnergy'] 
+        EA = self._EA_obj(self,scanNum,EAnum)
+        return EA[EAnum].extras['EAsettings']['passEnergy'] 
         
     def EA_frames(self,scanNum,EAnum=1):
         """
         returns pass frames
         """
-        return self.mda[scanNum].EA[EAnum].extras['EAsettings']['frames'] 
+        EA = self._EA_obj(self,scanNum,EAnum)
+        return EA[EAnum].extras['EAsettings']['frames'] 
 
     def EA_KE(self,scanNum,EAnum=1):
         """
         returns KE_center for fixed mode and baby sweep scans
         returne KE_start,KE_stop_KE_step for swept mode scans
         """
-        d = self.mda[scanNum].EA[EAnum].extras['EAsettings']
+        EA = self._EA_obj(self,scanNum,EAnum)
+        d = EA[EAnum].extras['EAsettings']
         
         if d['acqMode'] ==2:
             return d['kineticEnergy'] 
@@ -234,24 +270,27 @@ class Plot_EA:
         """
         returns photon energy
         """
-        return self.mda[scanNum].EA[EAnum].extras['beamline']['hv'] 
+        EA = self._EA_obj(self,scanNum,EAnum)
+        return EA[EAnum].extras['beamline']['hv'] 
 
     def EA_exit_slit(self,scanNum,EAnum=1):
         """
         returns exitSlit size
         """
-        return self.mda[scanNum].EA[EAnum].extras['beamline']['exitSlit'] 
+        EA = self._EA_obj(self,scanNum,EAnum)
+        return EA[EAnum].extras['beamline']['exitSlit'] 
 
     def EA_ringCurrent(self,scanNum,EAnum=1):
         """
         returns exitSlit size
         """
-        return self.mda[scanNum].EA[EAnum].extras['beamline']['ringCurrent'] 
+        EA = self._EA_obj(self,scanNum,EAnum)
+        return EA[EAnum].extras['beamline']['ringCurrent'] 
 
-    def plot_mdaEA_stack(self,*args,**kwargs):
+    def plot_mdaEA_stack(self,*mdascanNums,**kwargs):
         """
-        *args = scanNum if volume is a single Fermi map scan
-                = scanNum, start, stop, countby for series of mda scans
+        *mdascanNums = scanNum if volume is a single Fermi map scan
+                     = start, stop, countby for series of mda scans
 
         **kwargs:      
             EAnum = (start,stop,countby) => to plot a subset of scans
@@ -273,28 +312,21 @@ class Plot_EA:
     """
         kwargs.setdefault('array_output',True)
 
-        dataArray,scaleArray,unitArray = self.stack_mdaEA(*args,**kwargs)
+        dataArray,scaleArray,unitArray = self.stack_mdaEA(*mdascanNums,**kwargs)
         kwargs.pop('array_output')
         if 'EAnum' in kwargs:
             kwargs.pop('EAnum')
         plot_3D(np.array(dataArray),np.array(scaleArray),unitArray,**kwargs)
-
-
-    def it_EA(self,scanNum,EAnum=1):
-        """
-        plot EA in imagetool
-        """
-        #ra = pynData_to_ra(self.mda[scanNum].EA[EAnum])
-        #tools.new(ra)
-        pass
     
     def make_EA_list(self, *nums, **kwargs):
         """
         return EA_list, stack_scale, stack_unit, where EA_list is a stack of EA ndata objects
         nums = list of mda scans to be plotted 
         
+        
         **kwargs:      
-            EAnum = (start,stop,countby) => to plot a subset of EA scans
+            EAnum = (start,stop,countby) => to plot a subset of EA scans (default is to stack all)
+            EAavg = True to average all sweeps for each scanNum
             stack_scale kwargs
                 index = True, stack scale by posiiton in nums list 
                 EA_attr = attribute (hv for example can be anything you see in EA.)
@@ -304,6 +336,7 @@ class Plot_EA:
         """
         kwargs.setdefault('debug',False) 
         kwargs.setdefault('index',False)
+        kwargs.setdefault('EAavg',False)
         
         scanNumlist = make_num_list(*nums)
         EA_list = []
@@ -315,33 +348,63 @@ class Plot_EA:
         
         #mda scan
         if len(scanNumlist)==1:
-            stack_scale = np.concatenate((stack_scale,self.mda[scanNum].posy[0].data))
-            stack_unit =self.mda[scanNum].posy[0].pv[1]
+            scanNum = scanNumlist[0]
+            #get mda dimensions
+            rank = self.mda[scanNum].header.ScanRecord['rank']
+            if rank == 1:
+                stack_scale = list(self.mda[scanNum].EA.keys())
+                stack_unit = 'sweeps'
+            if rank == 2:
+                stack_scale = np.concatenate((stack_scale,self.mda[scanNum].posy[0].data))
+                stack_unit =self.mda[scanNum].posy[0].pv[1]
+            if rank >2:
+                print('rank > 2 not yet implemented')
+                return
+            if kwargs['debug']:
+                print('stack_scale,stack_unit = ',stack_scale,stack_unit,'# mda positioner derived')
         else:
-            stack_unit = None
+            print('stack_scale,stack_unit = ',stack_scale,stack_unit,' #not from mda positioners')
 
         #iterating over mda scans       
         for scanNum in scanNumlist:
-            if kwargs['debug']:
-                print('scanNumlist: ',scanNumlist)
-        
             #creating list of all EA numbers
             ll = list(self.mda[scanNum].EA.keys())
             
             #creating shortlist of selected EAnum
+            EAlist = ll
             if 'EAnum' in kwargs:
-                EAlist = _shortlist(*kwargs['EAnum'],llist = ll,**kwargs)  
-            else:
-                EAlist = ll
-            
+                if kwargs['EAnum'] == np.inf:
+                    sumEA = True
+                else:
+                    EAlist = _shortlist(*kwargs['EAnum'],llist = ll,**kwargs)  
+                    
             if kwargs['debug']:
                 print('EAlist: ',EAlist)
         
-            #iterating over EA scans  
-            for EAnum in EAlist:
-                EA = self.mda[scanNum].EA[EAnum]
+            #appending EAs
+            if kwargs['EAavg']: #Averaging EAs for each scanNum
+                EA_attrlist = [EAlist[0]] #only taking attributes from first EA
+                img,xscale,yscale,xunit,yunit = self.EA_spectra(scanNum,EAnum=np.inf)    
+                img/len(EAlist)
+                EA = copy.deepcopy(self.mda[scanNum].EA[EAlist[0]])
+                EA.data = img
+                EA.updateAx('x',xscale,xunit)
+                EA.updateAx('y',yscale,yunit)
+                stack_attributes([self.mda[scanNum].EA[EAlist[0]]],EA)
                 EA_list.append(EA)
                 
+            else: #append each EA
+                EA_attrlist = EAlist
+                for EAnum in EAlist:
+                    if kwargs['debug']:
+                        print('scanNum: ',scanNum,'EAnum:',EAnum)
+                    
+                    EA = self.mda[scanNum].EA[EAnum]
+                    EA_list.append(EA)
+                
+            
+            #appending attributes
+            for EAnum in EA_attrlist:
                 if 'EA_attr' in kwargs:
                     stack_unit = kwargs['EA_attr']
                     try:
@@ -374,6 +437,7 @@ class Plot_EA:
         
         return EA_list,stack_scale,stack_unit
     
+    
     def stack_mdaEA(self, *scanNum, BE=True,**kwargs):
             """
             returns a volume of stacked spectra/or EDCs based on kwargs
@@ -395,6 +459,7 @@ class Plot_EA:
                 
             """
             kwargs.setdefault('EDConly',False)
+            kwargs.setdefault('debug',False)
 
             if BE:
                 E_unit = 'BE'
@@ -402,8 +467,13 @@ class Plot_EA:
                 E_unit = 'KE'
 
             EA_list, stack_scale, stack_unit = self.make_EA_list(*scanNum, **kwargs)
+            if kwargs['debug']:
+                print('stack_scale',stack_scale)
 
             d = stack_EAs(EA_list,stack_scale,stack_unit,E_unit=E_unit,**kwargs)
 
             return d
+
+
+
 

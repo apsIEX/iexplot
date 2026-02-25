@@ -15,7 +15,7 @@ def make_nstack_list(obj,*nums,**kwargs):
         nData_list.append(obj[scanNum])
     return nData_list
 
-def make_num_list(*nums,**kwargs):
+def make_num_list(*nums, **kwargs):
     """
     Making a shortlist based on *num
     *num =>
@@ -24,36 +24,40 @@ def make_num_list(*nums,**kwargs):
         first,last,countby: to load a subset
         [num1,num2]: to load a subset does not need to be consecutive  
     """
-    kwargs.setdefault('debug',False)
-    if kwargs['debug']:
-        print('_make_num_list')
-        print('nums: ',*nums)
 
-    num_list=[]
+    kwargs.setdefault('debug', False)
+
+    if kwargs['debug']:
+        print('make_num_list')
+        print('nums:', nums)
+
+    # Single argument
     if len(nums) == 1:
-        if type(nums[0]) == int:
-            num_list = [nums[0]]
-        elif type(nums[0]) == list:
-            num_list = nums[0]
+        if isinstance(nums[0], int):
+            return [nums[0]]
+        elif isinstance(nums[0], list):
+            return nums[0]
         else:
-            print(nums,'not a valid argument, see doc string')    
+            print(nums, 'make_num_list error: nums not a valid argument')
             return None
-    elif len(nums) >= 2:
-        if len(nums) == 2:
-            first,last = nums
-            countby = 1
-        elif len(nums) == 3:
-            first,last,countby = nums
-        else:
-            print(nums,'not a valid argument, see doc string') 
+
+    # Range arguments
+    elif len(nums) in (2, 3):
+
+        if not all(isinstance(n, (int, float)) for n in nums):
+            print(nums, 'make_num_list error: nums must be numeric')
             return None
-        for n in range(int(first),int(last+countby),int(countby)):
-            num_list.append(n)
+
+        first = nums[0]
+        last = nums[1]
+        countby = nums[2] if len(nums) == 3 else 1
+
+        return list(range(int(first), int(last) + int(countby), int(countby)))
+
     else:
-        print(nums,'not a valid argument, see doc string') 
+        print(nums, 'make_num_list error: nums not a valid argument')
         return None
 
-    return num_list
 
 def _shortlist(*nums,llist,**kwargs):
     """

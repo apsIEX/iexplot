@@ -266,56 +266,60 @@ class Plot_MDA:
         units = [yunit,xunit]    
         plot_2D(img,scales,units,**kwargs)
         
+    def endstation_from_saveData(self,scanNum):
+        """
+        gets the endstation from the mda extras saveData_fileName
+        """
+        for key in self.mda[scanNum].header.all.keys():
+            s = key.split(':')
+            if 'saveData_fileName' in s:
+                endstation = s[0][4:]
+                return endstation
 
     def plot_sample_map(self,scanNum,**kwargs):
         """
         plots the relavent detectors for a sample map with an aspect ration of 1
         kwargs:
-            det_list => list of detectors to plot 
-            title_list => list of titles for each detector
+
             figsize => figure size; use to make figure bigger so scales don't overlap (H,V)
-                        
-            defaults:
-            if prefix = 'ARPES_'
-                    det_list = [16,17] 
-                    title_list = ['TEY','EA'] 
+            dets => dictionary of detNum and label           
+                defaults from scanIOC:
+                'ARPES'
+                    dets = {17:'TEY', 18:'EA'}
 
-            if prefix = 'Kappa_'
-                    det_list = [31,34] 
-                    title_list = ['TEY','D4'] 
+                'Kappa'
+                    dets = {31:'TEY', 34:'D4'}
+
         """
-        if self.prefix == 'ARPES_':
-            kwargs.setdefault('det_list',[16,17])
-            kwargs.setdefault('title_list',['TEY','EA'])
-            
-        
-        if self.prefix == 'Kappa_':
-            kwargs.setdefault('det_list',[31,34])
-            kwargs.setdefault('title_list',['TEY','D4'])
-        
-        det_list = kwargs['det_list']
-        kwargs.pop('det_list')
 
-        title_list = kwargs['title_list']
-        kwargs.pop('title_list')
-
+        endstation= self.endstation_from_saveData(scanNum)
+        det_dict = {'ARPES':{17:'TEY', 18:'EA'},
+                    'Kappa':{31:'TEY', 34:'D4'}}
+        
+        kwargs.setdefault('dets',det_dict[endstation])
         kwargs.setdefault('aspect_ratio',1)
+        
+        
         aspect_ratio = kwargs['aspect_ratio']
+        dets = kwargs['dets']
         kwargs.pop('aspect_ratio')
+        kwargs.pop('dets')
 
-        n=len('det_list')
+
+        n=len(dets.keys())
+
         if 'figsize' in kwargs:
             fig = plt.figure(figsize=kwargs['figsize'])
             kwargs.pop('figsize')
         else:
             fig = plt.figure()
 
-        for i, det_num in enumerate(det_list):
+        for i, det_num in enumerate(dets.keys()):
             ax = fig.add_subplot(1,n,i+1)
-            ax.set_title(title_list[i])
+            ax.set_title(dets[det_num])
             ax.set_aspect(aspect_ratio)
-            self.plot_mda(scanNum,det_list[i],**kwargs)
-            
+            self.plot_mda(scanNum,det_num,**kwargs)
+
         
     def mda_stack_1D(self,*scans,detNum=1,pv=None,**kwargs):
         """
