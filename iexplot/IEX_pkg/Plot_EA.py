@@ -1,12 +1,16 @@
+import copy
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import interpolate
+
 
 
 from iexplot.utilities import _shortlist, make_num_list, get_nested_dict_value 
 from iexplot.plotting import plot_1D, plot_2D, plot_3D
 from iexplot.pynData.pynData_ARPES import stack_EAs 
 from iexplot.fitting import fit_box, fit_gaussian, fit_lorentzian, fit_poly, fit_step, fit_shirley_background
+
+from iexplot.pynData.pynData import stack_attributes
 
 class Plot_EA:
     """
@@ -328,8 +332,10 @@ class Plot_EA:
         return EA_list, stack_scale, stack_unit, where EA_list is a stack of EA ndata objects
         nums = list of mda scans to be plotted 
         
+        
         **kwargs:      
-            EAnum = (start,stop,countby) => to plot a subset of EA scans
+            EAnum = (start,stop,countby) => to plot a subset of EA scans (default is to stack all)
+            EAavg = True to average all sweeps for each scanNum
             stack_scale kwargs
                 index = True, stack scale by posiiton in nums list 
                 EA_attr = attribute (hv for example can be anything you see in EA.)
@@ -339,6 +345,7 @@ class Plot_EA:
         """
         kwargs.setdefault('debug',False) 
         kwargs.setdefault('index',False)
+        kwargs.setdefault('EAavg',False)
         
         scanNumlist = make_num_list(*nums)
         EA_list = []
@@ -350,33 +357,63 @@ class Plot_EA:
         
         #mda scan
         if len(scanNumlist)==1:
-            stack_scale = np.concatenate((stack_scale,self.mda[scanNum].posy[0].data))
-            stack_unit =self.mda[scanNum].posy[0].pv[1]
+            scanNum = scanNumlist[0]
+            #get mda dimensions
+            rank = self.mda[scanNum].header.ScanRecord['rank']
+            if rank == 1:
+                stack_scale = list(self.mda[scanNum].EA.keys())
+                stack_unit = 'sweeps'
+            if rank == 2:
+                stack_scale = np.concatenate((stack_scale,self.mda[scanNum].posy[0].data))
+                stack_unit =self.mda[scanNum].posy[0].pv[1]
+            if rank >2:
+                print('rank > 2 not yet implemented')
+                return
+            if kwargs['debug']:
+                print('stack_scale,stack_unit = ',stack_scale,stack_unit,'# mda positioner derived')
         else:
-            stack_unit = None
+            print('stack_scale,stack_unit = ',stack_scale,stack_unit,' #not from mda positioners')
 
         #iterating over mda scans       
         for scanNum in scanNumlist:
-            if kwargs['debug']:
-                print('scanNumlist: ',scanNumlist)
-        
             #creating list of all EA numbers
             ll = list(self.mda[scanNum].EA.keys())
             
             #creating shortlist of selected EAnum
+            EAlist = ll
             if 'EAnum' in kwargs:
-                EAlist = _shortlist(*kwargs['EAnum'],llist = ll,**kwargs)  
-            else:
-                EAlist = ll
-            
+                if kwargs['EAnum'] == np.inf:
+                    sumEA = True
+                else:
+                    EAlist = _shortlist(*kwargs['EAnum'],llist = ll,**kwargs)  
+                    
             if kwargs['debug']:
                 print('EAlist: ',EAlist)
         
-            #iterating over EA scans  
-            for EAnum in EAlist:
-                EA = self.mda[scanNum].EA[EAnum]
+            #appending EAs
+            if kwargs['EAavg']: #Averaging EAs for each scanNum
+                EA_attrlist = [EAlist[0]] #only taking attributes from first EA
+                img,xscale,yscale,xunit,yunit = self.EA_spectra(scanNum,EAnum=np.inf)    
+                img/len(EAlist)
+                EA = copy.deepcopy(self.mda[scanNum].EA[EAlist[0]])
+                EA.data = img
+                EA.updateAx('x',xscale,xunit)
+                EA.updateAx('y',yscale,yunit)
+                stack_attributes([self.mda[scanNum].EA[EAlist[0]]],EA)
                 EA_list.append(EA)
                 
+            else: #append each EA
+                EA_attrlist = EAlist
+                for EAnum in EAlist:
+                    if kwargs['debug']:
+                        print('scanNum: ',scanNum,'EAnum:',EAnum)
+                    
+                    EA = self.mda[scanNum].EA[EAnum]
+                    EA_list.append(EA)
+                
+            
+            #appending attributes
+            for EAnum in EA_attrlist:
                 if 'EA_attr' in kwargs:
                     stack_unit = kwargs['EA_attr']
                     try:
@@ -408,6 +445,7 @@ class Plot_EA:
             print('stack_unit',stack_unit)
         
         return EA_list,stack_scale,stack_unit
+    
     
     def stack_mdaEA(self, *scanNum, BE=True,**kwargs):
             """
@@ -445,125 +483,6 @@ class Plot_EA:
 
             return d
 
-#Jessica needs to add to iexcode - this new version takes averages of sweeps
-from iexplot.utilities import _shortlist
-import copy
 
-def make_EA_list2(self, *nums, **kwargs):
-    """
-    return EA_list, stack_scale, stack_unit, where EA_list is a stack of EA ndata objects
-    nums = list of mda scans to be plotted 
-    
-    
-    **kwargs:      
-        EAnum = (start,stop,countby) => to plot a subset of EA scans (default is to stack all)
-        EAavg = True to average all sweeps for each scanNum
-        stack_scale kwargs
-            index = True, stack scale by posiiton in nums list 
-            EA_attr = attribute (hv for example can be anything you see in EA.)
-            EA_extras = key from extras dictionary will search through nests (example: x comes from EA.extras['sample']['x'])
-            
-        
-    """
-    kwargs.setdefault('debug',False) 
-    kwargs.setdefault('index',False)
-    kwargs.setdefault('EAavg',False)
-    
-    scanNumlist = make_num_list(*nums)
-    EA_list = []
-    
-    stack_scale=np.empty((0))
-    
-    if kwargs['debug']:
-        print('scanNumlist',scanNumlist)
-    
-    #mda scan
-    if len(scanNumlist)==1:
-        scanNum = scanNumlist[0]
-        #get mda dimensions
-        rank = self.mda[scanNum].header.ScanRecord['rank']
-        if rank == 1:
-            stack_scale = list(self.mda[scanNum].EA.keys())
-            stack_unit = 'sweeps'
-        if rank == 2:
-            stack_scale = np.concatenate((stack_scale,self.mda[scanNum].posy[0].data))
-            stack_unit =self.mda[scanNum].posy[0].pv[1]
-        if rank >2:
-            print('rank > 2 not yet implemented')
-            return
-        if kwargs['debug']:
-            print('stack_scale,stack_unit = ',stack_scale,stack_unit,'# mda positioner derived')
-    else:
-        print('stack_scale,stack_unit = ',stack_scale,stack_unit,' #not from mda positioners')
 
-    #iterating over mda scans       
-    for scanNum in scanNumlist:
-        #creating list of all EA numbers
-        ll = list(self.mda[scanNum].EA.keys())
-        
-        #creating shortlist of selected EAnum
-        EAlist = ll
-        if 'EAnum' in kwargs:
-            if kwargs['EAnum'] == np.inf:
-                sumEA = True
-            else:
-                EAlist = _shortlist(*kwargs['EAnum'],llist = ll,**kwargs)  
-                
-        if kwargs['debug']:
-            print('EAlist: ',EAlist)
-    
-        #appending EAs
-        if kwargs['EAavg']: #Averaging EAs for each scanNum
-            EA_attrlist = [EAlist[0]] #only taking attributes from first EA
-            img,xscale,yscale,xunit,yunit = self.EA_spectra(scanNum,EAnum=np.inf)    
-            img/len(EAlist)
-            EA = copy.deepcopy(self.mda[scanNum].EA[EAlist[0]])
-            EA.data = img
-            EA.updateAx('x',xscale,xunit)
-            EA.updateAx('y',yscale,yunit)
-            stack_attributes([self.mda[scanNum].EA[EAlist[0]]],EA)
-            EA_list.append(EA)
-            
-        else: #append each EA
-            EA_attrlist = EAlist
-            for EAnum in EAlist:
-                if kwargs['debug']:
-                    print('scanNum: ',scanNum,'EAnum:',EAnum)
-                
-                EA = self.mda[scanNum].EA[EAnum]
-                EA_list.append(EA)
-            
-        
-        #appending attributes
-        for EAnum in EA_attrlist:
-            if 'EA_attr' in kwargs:
-                stack_unit = kwargs['EA_attr']
-                try:
-                    val = getattr(EA,kwargs['EA_attr'])
-                    stack_scale = np.concatenate([stack_scale,[val]])
-                except:
-                    print('EA_attr = '+kwargs['EA_attr']+' does not exist')
-                    return                  
-    
-            elif 'EA_extras' in kwargs:
-                val = get_nested_dict_value(EA.extras, kwargs['EA_extras'])
-                stack_scale = np.concatenate([stack_scale,[val]])
-                stack_unit = kwargs['EA_extras']
-    
-            elif 'index' in kwargs and kwargs['index']:
-                stack_scale = stack_scale[-1]+1
-                stack_unit = 'index'
-        
-            else:
-                stack_scale = np.append(stack_scale,scanNum)
-                stack_unit='scanNum'
-                
-        #Truncating stack_scale for number of images        
-        stack_scale = stack_scale[0:len(EA_list)]    
-    
-    if kwargs['debug']:
-        print('make_EA_list:',EA_list)
-        print('stack_scale: ',stack_scale)
-        print('stack_unit',stack_unit)
-    
-    return EA_list,stack_scale,stack_unit
+

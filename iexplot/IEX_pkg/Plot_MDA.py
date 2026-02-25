@@ -266,6 +266,11 @@ class Plot_MDA:
         units = [yunit,xunit]    
         plot_2D(img,scales,units,**kwargs)
         
+    def endstation_from_saveData(self):
+        """
+        gets the endstation from the mda extras saveData_fileName
+        """
+        saveData_fileName = None
 
     def plot_sample_map(self,scanNum,**kwargs):
         """
@@ -276,14 +281,15 @@ class Plot_MDA:
             figsize => figure size; use to make figure bigger so scales don't overlap (H,V)
                         
             defaults:
-            if prefix = 'ARPES_'
-                    det_list = [16,17] 
+            if endstation = ARPES'
+                    det_list = [17,18] 
                     title_list = ['TEY','EA'] 
 
-            if prefix = 'Kappa_'
+            if endstation = 'Kappa'
                     det_list = [31,34] 
                     title_list = ['TEY','D4'] 
         """
+        kwargs.setdefault()
         if self.prefix == 'ARPES_':
             kwargs.setdefault('det_list',[16,17])
             kwargs.setdefault('title_list',['TEY','EA'])
