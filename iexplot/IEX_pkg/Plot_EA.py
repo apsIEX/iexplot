@@ -317,15 +317,6 @@ class Plot_EA:
         if 'EAnum' in kwargs:
             kwargs.pop('EAnum')
         plot_3D(np.array(dataArray),np.array(scaleArray),unitArray,**kwargs)
-
-
-    def it_EA(self,scanNum,EAnum=1):
-        """
-        plot EA in imagetool
-        """
-        #ra = pynData_to_ra(self.mda[scanNum].EA[EAnum])
-        #tools.new(ra)
-        pass
     
     def make_EA_list(self, *nums, **kwargs):
         """
