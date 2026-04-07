@@ -25,10 +25,11 @@ def find_closest(x, x_val):
 """ useful plotting routines """
 ########################################################################
 
-def plot_1D(x,y,ax=None,**kwargs):
+def plot_1D(x,y,**kwargs):
     """
     x / y 1D numpy arrays 
     **kwargs
+        ax defaul = plt.gca()
         xrange=[x_first,x_last] to plot subrange 
         Norm2One: True/False to normalize graph between zero and one
         offset: y -= offset 
@@ -38,6 +39,7 @@ def plot_1D(x,y,ax=None,**kwargs):
         offset_x: x += offset_x 
         scale_x: x *= scale_x
     """
+    kwargs.setdefault('ax',plt.gca())
     kwargs.setdefault('Norm2One',False)
     kwargs.setdefault("offset",0)
     kwargs.setdefault("offset_mean_index",None)
@@ -46,8 +48,7 @@ def plot_1D(x,y,ax=None,**kwargs):
     kwargs.setdefault("offset_x",0)
     kwargs.setdefault("scale_x",1)
 
-    if ax == None:
-        ax = plt.gca()
+    ax = kwargs['ax']
 
     if 'xrange' in kwargs: 
         first_index, first_value = find_closest(x,kwargs['xrange'][0])

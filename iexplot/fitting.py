@@ -49,7 +49,7 @@ def _gaussian(x,*coefs):
 
 def fit_gaussian(x,y,**kwargs):
     """
-    fits a gaussian and returns fit_x, fit_y, coefs, covar 
+    fits a gaussian and returns x_fit,y_fit,coefs,covar,fit_vals 
 
     x,y np.arrays of the the x,y data
 
@@ -158,7 +158,7 @@ def _step(x,*coefs):
 
 def fit_step(x,y,**kwargs):
     """
-    fits a lorentzian and returns fit_x, fit_y, coefs, covar 
+    fits a lorentzian and returns x_fit,y_fit,coefs,covar,fit_vals 
 
     x,y np.arrays of the the x,y data
 
@@ -232,7 +232,7 @@ def _box(x, *p):
 
 def fit_box(x,y,**kwargs):
     """
-    fits a box and returns fit_x, fit_y, coefs, covar 
+    fits a box and returns x_fit,y_fit,coefs,covar,fit_vals
 
     x,y np.arrays of the the x,y data
 
@@ -276,7 +276,7 @@ def fit_box(x,y,**kwargs):
 
 def fit_poly(x,y,rank=3,**kwargs):
     """
-    fits a box and returns fit_x, fit_y, coefs, covar 
+    fits a box and returns x_fit,y_fit,coefs,covar,fit_vals
 
     x,y np.arrays of the the x,y data
 
@@ -402,7 +402,7 @@ def _shirley(y,**kwargs):
         
 def fit_shirley_background(x,y,**kwargs):
     """
-    fits a Shirley background to the data
+    fits a Shirley background to the data returns x_fit,y_fit,fit_vals
 
     x,y np.arrays of the the x,y data where x= energy, y = intensity
 

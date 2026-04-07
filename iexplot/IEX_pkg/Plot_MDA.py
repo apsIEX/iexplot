@@ -18,6 +18,13 @@ class Plot_MDA:
     def __init__(self):
         pass
 
+    def mda_scanList(self):
+        """
+        returns a lists of all mda scanNums which are loaded
+        """
+        scanList = list(self.mda.keys())
+        return scanList
+
     def mda_positioners_list(self,scanNum):
         """
         prints the positioners associated with the mda file

@@ -19,29 +19,64 @@ class Plot_EA:
     def __init__(self):
         pass
 
-    def _EA_obj (self,scanNum, EAnum=1,**kwargs):
-        
-        if EAnum != np.inf:
-            EAlist = _shortlist(*EAnum, llist = EAlist,**kwargs)  
 
-        if self.dtype == "EA":
-            EA = self.EA
-        elif self.dtype == "mdaEA" or "mdaAD": 
-            EA = self.mda[scanNum].EA
-        return EA
-            
+    def EA_nd(self,scanNum,EAnum,**kwargs):
+        """
+        returns the EA nData object 
+
+        EAnum = np.inf sums all EAs within scanNum
+        EAnum = (1,8) sums only 1 through 8
+        EAnum = [1,3,4] sums all in list
+        """
+        #get the EA container for both EA and mdaEA data types
+        try:
+            if self.dtype == "EA":
+                EA = self.EA
+            elif self.dtype == "mdaEA" or "mdaAD": 
+                EA = self.mda[scanNum].EA
+
+        except:
+            print('check to see if EAnum is loaded')
+
+        #summing if required
+        if EAnum != np.inf:
+            return EA[EAnum]
+        else:
+            return self._sum_EAs(EA,EAnum,**kwargs)
+        
+    def _sum_EAs(self,EA,EAnum,**kwargs):
+        """
+        EAnum = np.inf sums all EAs within scanNum
+        EAnum = [1,3,4] sums all in list; use make_num_list to county by       
+        """
+        #creating shortlist of selected EAnum
+      
+        if EAnum == np.inf:
+            EAlist = list(EA.keys())
+        else:
+            EAlist = make_num_list(EAnum)
+
+        EAsummed = copy.deepcopy(EA[EAlist[0]])
+        
+        img = np.nansum(tuple(EA[EAnum].data for EAnum in EAlist),axis=0)
+        edc = np.nansum(tuple(EA[EAnum].EDC.data for EAnum in EAlist),axis=0)
+
+        EAsummed.data = img
+        EAsummed.EDC.data = edc
+        
+        return EAsummed
+
 
     def EA_spectra(self,scanNum, EAnum=1, BE=False,**kwargs):
         """
         returns return img,xscale,yscale,xunit,yunit  
         
         EAnum = np.inf sums all EAs within scanNum
+        EAnum = (1,8) sums only 1 through 8
+        EAnum = [1,3,4] sums all in list
             
         """
-        if EAnum != np.inf:
-            EA = self._EA_obj(self,scanNum,EAnum)
-        else:
-            EA = self.EA_spectra_sum(scanNum, EAnum=np.inf,**kwargs)
+        EA = self.EA_nd(scanNum,EAnum,**kwargs)
         
         img = EA.data
 
@@ -59,26 +94,7 @@ class Plot_EA:
     
     
     
-    def EA_spectra_sum(self,scanNum, EAnum=np.inf,**kwargs):
-        """
-        return pyndata object of summed EA data 
-        EAnum = np.inf, sums all             
-        """
-        #creating shortlist of selected EAnum
-      
-        
-        EA = self._EA_obj(self,scanNum,EAnum)
-        EAlist = list(EA.keys())
 
-        EAsummed = copy.deepcopy(EA[EAlist[0]])
-        
-        img = np.nansum(tuple(EA[EAnum].data for EAnum in EAlist),axis=0)
-        edc = np.nansum(tuple(EA[EAnum].EDC.data for EAnum in EAlist),axis=0)
-
-        EAsummed.data = img
-        EAsummed.EDC.data = edc
-        
-        return EAsummed
     
     def EA_EDC(self,scanNum,EAnum=1,BE=False,**kwargs):
         """
@@ -88,10 +104,7 @@ class Plot_EA:
             plt.plot(data.EAspectraEDC(151))    
         """
 
-        if EAnum != np.inf:
-            EA = self._EA_obj(self,scanNum,EAnum)
-        else:
-            EA = self.EA_spectra_sum(scanNum, EAnum=np.inf,**kwargs)
+        EA = self.EA_nd(scanNum,EAnum,**kwargs)
         
         y = EA.EDC.data
 
@@ -207,58 +220,58 @@ class Plot_EA:
         """
         returns info about beamline
         """
-        EA = self._EA_obj(self,scanNum,EAnum)
+        EA = self.EA_nd(scanNum,EAnum)
         return EA.extras['beamline'] 
         
     def EA_HVscanInfo(self,scanNum,EAnum=1):
         """
         returns info about Scienta HV settings
         """
-        EA = self._EA_obj(self,scanNum,EAnum)
-        return EA[EAnum].extras['HVscanInfo'] 
+        EA = self.EA_nd(scanNum,EAnum)
+        return EA.extras['HVscanInfo'] 
         
     def EA_sample(self,scanNum,EAnum=1):
         """
         returns info about Scienta HV settings
         """
-        EA = self._EA_obj(self,scanNum,EAnum)
-        return EA[EAnum].extras['sample'] 
+        EA = self.EA_nd(scanNum,EAnum)
+        return EA.extras['sample'] 
 
     def EA_setting(self,scanNum,EAnum=1):
         """
         returns info about Scienta parameters
         """
-        EA = self._EA_obj(self,scanNum,EAnum)
-        return EA[EAnum].extras['EAsettings'] 
+        EA = self.EA_nd(scanNum,EAnum)
+        return EA.extras['EAsettings'] 
 
     def EA_extras(self,scanNum,EAnum=1):
         """
         returns all the metadata in the file
         """
-        EA = self._EA_obj(self,scanNum,EAnum)
-        return EA[EAnum].extras
+        EA = self.EA_nd(scanNum,EAnum)
+        return EA.extras
 
     def EA_pass_energy(self,scanNum,EAnum=1):
         """
         returns pass energy
         """
-        EA = self._EA_obj(self,scanNum,EAnum)
-        return EA[EAnum].extras['EAsettings']['passEnergy'] 
+        EA = self.EA_nd(scanNum,EAnum)
+        return EA.extras['EAsettings']['passEnergy'] 
         
     def EA_frames(self,scanNum,EAnum=1):
         """
         returns pass frames
         """
-        EA = self._EA_obj(self,scanNum,EAnum)
-        return EA[EAnum].extras['EAsettings']['frames'] 
+        EA = self.EA_nd(scanNum,EAnum)
+        return EA.extras['EAsettings']['frames'] 
 
     def EA_KE(self,scanNum,EAnum=1):
         """
         returns KE_center for fixed mode and baby sweep scans
         returne KE_start,KE_stop_KE_step for swept mode scans
         """
-        EA = self._EA_obj(self,scanNum,EAnum)
-        d = EA[EAnum].extras['EAsettings']
+        EA = self.EA_nd(scanNum,EAnum)
+        d = EA.extras['EAsettings']
         
         if d['acqMode'] ==2:
             return d['kineticEnergy'] 
@@ -270,22 +283,22 @@ class Plot_EA:
         """
         returns photon energy
         """
-        EA = self._EA_obj(self,scanNum,EAnum)
-        return EA[EAnum].extras['beamline']['hv'] 
+        EA = self.EA_nd(scanNum,EAnum)
+        return EA.extras['beamline']['hv'] 
 
     def EA_exit_slit(self,scanNum,EAnum=1):
         """
         returns exitSlit size
         """
-        EA = self._EA_obj(self,scanNum,EAnum)
-        return EA[EAnum].extras['beamline']['exitSlit'] 
+        EA = self.EA_nd(scanNum,EAnum)
+        return EA.extras['beamline']['exitSlit'] 
 
     def EA_ringCurrent(self,scanNum,EAnum=1):
         """
         returns exitSlit size
         """
-        EA = self._EA_obj(self,scanNum,EAnum)
-        return EA[EAnum].extras['beamline']['ringCurrent'] 
+        EA = self.EA_nd(scanNum,EAnum)
+        return EA.extras['beamline']['ringCurrent'] 
 
     def plot_mdaEA_stack(self,*mdascanNums,**kwargs):
         """
@@ -320,10 +333,10 @@ class Plot_EA:
     
     def make_EA_list(self, *nums, **kwargs):
         """
-        return EA_list, stack_scale, stack_unit, where EA_list is a stack of EA ndata objects
+        returns EA_list, stack_scale, stack_unit, where EA_list is a stack of EA ndata objects
+        
         nums = list of mda scans to be plotted 
-        
-        
+
         **kwargs:      
             EAnum = (start,stop,countby) => to plot a subset of EA scans (default is to stack all)
             EAavg = True to average all sweeps for each scanNum
@@ -341,7 +354,8 @@ class Plot_EA:
         scanNumlist = make_num_list(*nums)
         EA_list = []
         
-        stack_scale=np.empty((0))
+        stack_scale = np.empty((0))
+        stack_unit = 'scanNums'
         
         if kwargs['debug']:
             print('scanNumlist',scanNumlist)
@@ -363,7 +377,8 @@ class Plot_EA:
             if kwargs['debug']:
                 print('stack_scale,stack_unit = ',stack_scale,stack_unit,'# mda positioner derived')
         else:
-            print('stack_scale,stack_unit = ',stack_scale,stack_unit,' #not from mda positioners')
+            if kwargs['debug']:
+                print('stack_scale,stack_unit = ',stack_scale,stack_unit,' #not from mda positioners')
 
         #iterating over mda scans       
         for scanNum in scanNumlist:

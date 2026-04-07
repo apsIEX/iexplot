@@ -501,8 +501,10 @@ def ndstack(nData_list,dstack_scale=None,dstack_unit="", **kwargs):
         d.updateAx('z', zscale, zunit)
         d.updateAx('y', yscale, yunit)
         d.updateAx('x', xscale, xunit)
-    
-    stack_attributes(nData_list,d)
+    try:
+        stack_attributes(nData_list,d)
+    except:
+        print('attributes not stacked')
     return d
 
     
