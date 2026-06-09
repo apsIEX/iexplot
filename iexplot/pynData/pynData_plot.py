@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt 
+import copy
 
 from iexplot.pynData.pynData import nData
 from iexplot.plotting import plot_1D,plot_2D,plot_3D
@@ -13,8 +14,8 @@ def plot_nd(*ds,**kwargs):
     '''
     Simple plot for 1D and 2D nData
     *ds pnData files
-	
-	**kwargs plot_1D
+        **kwargs see plot_2D and plot_3D
+        **kwargs plot_1D
         xrange=[x_first,x_last] to plot subrange 
         Norm2One: True/False to normalize graph between zero and one
         offset: y -= offset 
@@ -23,48 +24,37 @@ def plot_nd(*ds,**kwargs):
         scale_mean_index: y /= np.mean(y[scale_mean_index[0]:scale_mean_index[-1]])
         offset_x: x += offset_x 
         scale_x: x *= scale_x
-	
-	**kwargs plot_2D and plot_3d
-		dim3 = third axis for plotting (default: 'z')
-		dim2 = second axis for plotting (default: 'y') => vertical in main image
-		xCen = cursor x value (default: np.nan => puts in the middle)
-		xWidthPix = number of pixels to bin in x
-		yCen = cursor y value (default: np.nan => puts in the middle)
-		yWidthPix = number of pixels to bin in y
-		zCen = cursor y value (default: np.nan => puts in the middle)
-		zWidthPix = number of pixels to bin in y
-		cmap = colormap ('BuPu'=default)
+
 
     '''
-    d=ds[0]
-    try:
+    plt.figure()
+    
+    
+    for d in list(ds):
         dim = len(d.data.shape)
-        for d in list(ds):
-            if dim==1:
-                if(d.data.shape[0]<2):
-                    print("Data is a single point "+str(d.data))
-                else:
-                    x = d.scale['x']
-                    y = d.data
-                    plot_1D(x,y,xlabel=d.unit['x'])
-                    
-            elif dim==2:
-                img = d.data
-                scales = [d.scale['y'],d.scale['x']]
-                units = [d.unit['y'],d.unit['x']]
-                plot_2D(img,scales,units,**kwargs)
-                
-            elif dim==3:
-                img = d.data
-                scales = [d.scale['y'],d.scale['x'],d.scale['z']]
-                units = [d.unit['y'],d.unit['x'],d.unit['z']]
-                plot_3D(img,scales,units,**kwargs)
-				
+        if dim==1:
+            if(d.data.shape[0]<2):
+                print("Data is a single point "+str(d.data))
             else:
-                print('Warning: niceplot can only plot 1d and 2d data.')
-    except:
-            print('Not a valid object')
-    #plt.show()
+                x = d.scale['x']
+                y = d.data
+                plot_1D(x,y,xlabel=d.unit['x'],ylabel=d.pv[0])
+                
+        elif dim==2:
+            img = d.data
+            scales = [d.scale['y'],d.scale['x']]
+            units = [d.unit['y'],d.unit['x']]
+            plot_2D(img,scales,units,**kwargs)
+            
+        elif dim==3:
+            img = d.data
+            scales = [d.scale['y'],d.scale['x'],d.scale['z']]
+            units = [d.unit['y'],d.unit['x'],d.unit['z']]
+            plot_3D(img,scales,units,**kwargs)
+                            
+        else:
+            print('Warning: niceplot can only plot 1d and 2d data.')
+
 
 def nd_avg(d,ax='y',Cen=np.nan,WidthPix=np.nan,**kwargs):
     """
@@ -110,6 +100,19 @@ def plot_nd_avg(d,ax='y',Cen=np.nan,WidthPix=np.nan,**kwargs):
     else:
         print('only works for 2D data')
 
+def nd_sum_1ds(ndlist):
+	"""
+	returns sums all nds in ndlist 
+	"""
+	#intitialize scaling
+	nd = ndlist[0]
+	nd_sum = copy.deepcopy(nd)
+	numdims = len(nd.data.shape)
+
+	for e,nd in enumerate(ndlist[1:]):
+		nd_sum.data += np.interp(nd_sum.scale['x'],nd.scale['x'],nd.data)
+
+	return nd_sum
 
 ####################################################################################################
 def Compare2D(d1,d2,**kwargs): #JM added

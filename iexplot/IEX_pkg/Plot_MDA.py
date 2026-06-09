@@ -9,6 +9,7 @@ from iexplot.utilities import make_num_list
 from iexplot.plotting import *
 from iexplot.XAS_utilities import plot_Norm2Edge,Norm2Edge
 from iexplot.pynData.pynData import ndstack
+from iexplot.pynData.pynData_plot import nd_sum_1ds
 
 
 class Plot_MDA:
@@ -326,6 +327,19 @@ class Plot_MDA:
             ax.set_title(dets[det_num])
             ax.set_aspect(aspect_ratio)
             self.plot_mda(scanNum,det_num,**kwargs)
+    
+    def mda_sum_scans(self,*scans,detNum):
+        """
+        Sums a series of mda scans
+        """
+        scanList = make_num_list(*scans)
+        ndlist = []
+        for i,scanNum in enumerate(scanList):
+            ndlist.append(self.mda[scanNum].det[detNum])
+
+        nd_sum = nd_sum_1ds(ndlist)
+        return nd_sum
+
 
         
     def mda_stack_1D(self,*scans,detNum=1,pv=None,**kwargs):
