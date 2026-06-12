@@ -6,7 +6,7 @@ from scipy import interpolate
 
 
 from iexplot.utilities import _shortlist, make_num_list, get_nested_dict_value 
-from iexplot.plotting import plot_1D, plot_2D, plot_3D
+from iexplot.plotting import plot_1D, plot_2D, plot_3D, find_closest
 from iexplot.pynData.pynData_ARPES import stack_EAs 
 from iexplot.fitting import fit_box, fit_gaussian, fit_lorentzian, fit_poly, fit_step, fit_shirley_background
 
@@ -143,6 +143,13 @@ class Plot_EA:
         
         x=0;y=0            
         x,y,xlabel = self.EA_EDC(scanNum,EAnum=EAnum,BE=BE)
+        
+        if 'xrange' in kwargs: 
+            first_index, first_value = find_closest(x,kwargs['xrange'][0])
+            last_index, last_falue   = find_closest(x,kwargs['xrange'][1])
+            x = x[first_index:last_index]
+            y = y[first_index:last_index]
+            kwargs.pop('xrange')
                 
         plot_1D(x,y,xlabel=xlabel,**kwargs)
         
@@ -152,7 +159,7 @@ class Plot_EA:
     def fit_EDC(self,scanNum,fit_type,EAnum=1,BE=False,**kwargs):
         """
         simple fitting of EDC data
-        fit_type = 'box', 'gaussian', 'lorentzian', 'poly', 'step:', 'shirley'
+        fit_type = 'box', 'gaussian', 'lorentzian', 'poly', 'step', 'shirley'
 
         EAnum = scan/sweep number 
                 = inf => will sum all spectra
@@ -165,14 +172,14 @@ class Plot_EA:
         kwargs.setdefault('show_legend',False)
         kwargs.setdefault('plot',True)
 
-        x,y,xlabel = self.EA_EDC(scanNum,EAnum=EAnum,BE=BE)
+        x,y,xlabel = self.EA_EDC(scanNum,EAnum=EAnum,BE=BE,**kwargs)
     
         fit_funcs = {
             'box':fit_box,
             'gaussian':fit_gaussian,
             'lorentzian':fit_lorentzian,
             'poly':fit_poly,
-            'step:':fit_step,
+            'step':fit_step,
             'shirley':fit_shirley_background,
         }
 
