@@ -204,15 +204,19 @@ def EA_Escale(EA,BE=True,**kwargs):
     **kwargs (all can be a float or a np.array of the same length as KEscale)
         hv = photon energy, default is EA.hv
         wk = work function, default is EA.wk
-        E_offset = Kinetic energy offset, default = 0, can be a list or array if 
+        E_offset = Kinetic energy offset, default = 0, can be a list or array if
                    different for each point in the stack
-    
+        recalc_BE = False (default) uses the stored EA.BEscale attribute as-is;
+                    True recomputes BEscale from KE/hv/wk/E_offset
+
     returns E_scale, E_unit
     """
     kwargs.setdefault('debug',False)
-    
+    kwargs.setdefault('recalc_BE',False)
+
     if BE:
-        EA._BE_calc(**kwargs)
+        if kwargs['recalc_BE']:
+            EA._BE_calc(**kwargs)
         E_scale = EA.BEscale
         E_unit = "Binding Energy (eV)"
 
@@ -229,14 +233,20 @@ def _stack_Escale(EA_list,BE=True,**kwargs):
     EA_list = list of EA objects
     E_offsets = np array of of the same length as EA_list with offset values
         new_scale = E_scale + E_offset
+        when given, the offset is always applied (recomputes BEscale from KE + offset)
+        regardless of recalc_BE
+    recalc_BE = False (default) uses stored EA.BEscale as-is; True recomputes BEscale
+        from KE/hv/wk/E_offset
 
     Note is using for interpolation you will need bounds_error = False, fill_value = np.nan
     """
+    kwargs.setdefault('recalc_BE',False)
 
     for n,EA in enumerate(EA_list):
+        #an explicit offset always shifts BE, even when recalc_BE is False
         if 'E_offsets' in kwargs:
             EA.set_E_offset(kwargs['E_offsets'][n])
-        E_scale, E_unit = EA_Escale(EA,BE=True)   
+        E_scale, E_unit = EA_Escale(EA,BE=BE,recalc_BE=kwargs['recalc_BE'])
        
         if n == 0: 
             E_min = np.min(E_scale)
@@ -267,13 +277,17 @@ def stack_EAs(EA_list,stack_scale,stack_unit,BE=True, **kwargs):
     stack_unit = units for y-scale(z-scale) if EDC_only=True(False)
     BE = True/False for BE/KE scaling
     
-    **kwargs:                                   
-        E_offsets = offset value for each scan based on curve fitting 
+    **kwargs:
+        E_offsets = offset value for each scan based on curve fitting
                     can be an np.array or float depending if it varies along stack-directions
-                    sets the EA.E_offset value for each EA object
+                    sets the EA.E_offset value for each EA object; when given the offset
+                    always shifts BE (recomputes BEscale from KE + offset)
         EDC_only = True/False image/volume (default: false)
+        recalc_BE = False (default) uses the stored EA.BEscale attribute as-is;
+                    True recomputes each BEscale from KE/hv/wk/E_offset
     """
     kwargs.setdefault('EDConly',False)
+    kwargs.setdefault('recalc_BE',False)
     
     #adjusting for E_offset keyword
     if 'E_offset' in kwargs:
@@ -291,45 +305,45 @@ def stack_EAs(EA_list,stack_scale,stack_unit,BE=True, **kwargs):
     #defining the energy scale 
     E_scale,E_unit = _stack_Escale(EA_list,BE=BE,**kwargs)
     
-    #defining the angle scale    
+    #defining the angle scale
     angle_scale = EA_list[0].scale['y']
-    
+
+    #interpolation target grid is invariant across the stack; build it once
+    if not kwargs['EDConly']:
+        new_X, new_Y = np.meshgrid(E_scale, angle_scale)
+        points_new = np.stack([new_X.ravel(), new_Y.ravel()], axis=-1)
+
+    #per-EA energy offsets are already applied in _stack_Escale via set_E_offset
+    img_stack = []
     for i,EA in enumerate(EA_list):
-        if 'EA_offset' in kwargs:
-            EA.set_E_offset(kwargs['E_offset'][i])
-        
         x_original = EA_Escale(EA,BE=BE,**kwargs)[0]
         y_original = EA.scale['y']
-        
+
         #Interpolate the data array
         if kwargs['EDConly']:
             img = EA.EDC.data
             interpolator = interpolate.interp1d(x_original, img, kind='linear',bounds_error = False, fill_value = np.nan)
-            img_interp = interpolator(E_scale)      
-        else:   
-            img = EA.data
-            new_X, new_Y = np.meshgrid(E_scale, angle_scale)
-            points_new = np.stack([new_X.ravel(), new_Y.ravel()], axis=-1)
-    
-            interpolator = interpolate.interpn(points=(x_original, y_original), values =  np.transpose(img), xi = points_new, method='linear', bounds_error = False, fill_value = np.nan)
-            #Interpolated EA data
-            img_interp = interpolator.reshape(new_X.shape)
-        
-        # stack the interpolated 
-        if i == 0:
-            stack = img_interp
+            img_interp = interpolator(E_scale)
         else:
-            if kwargs['EDConly']:
-                stack = np.vstack((stack,img_interp))
-            else:
-                stack = np.dstack((stack,img_interp))
-    
+            img = EA.data
+            img_interp = interpolate.interpn(points=(x_original, y_original), values = np.transpose(img), xi = points_new, method='linear', bounds_error = False, fill_value = np.nan)
+            #Interpolated EA data
+            img_interp = img_interp.reshape(new_X.shape)
+
+        img_stack.append(img_interp)
+
+    # stack the interpolated images in a single allocation
+    if kwargs['EDConly']:
+        stack = np.vstack(img_stack)
+    else:
+        stack = np.stack(img_stack, axis=-1)
+
     nd = nData(stack)
     stack_attributes(EA_list,nd)
 
-    E_unit = "Binding Energy (eV)" if BE else "Kinetic Energy (eV )"
-    nd.updateAx('x',E_scale,E_unit+"(eV)")
-    
+    E_unit = "Binding Energy (eV)" if BE else "Kinetic Energy (eV)"
+    nd.updateAx('x',E_scale,E_unit)
+
     if kwargs['EDConly']:
         nd.updateAx('y',stack_scale,stack_unit)
     else:
@@ -344,32 +358,138 @@ def stack_EAs(EA_list,stack_scale,stack_unit,BE=True, **kwargs):
 # calculating k scaling
 #==============================================================================
 
-def kmap_scan_thetaX(EAstack,**kwargs):
-    '''
-    d type: pynData stack x: KE, y: thetaY, z: thetaX
-    returns pynData (x: ky, y: ky, z: BE)
-    '''
-    KE = EAstack.scale['x']
-    thetaY = EAstack.scale['y']
-    thetaX = EAstack.scale['z'] #scan direction
-    
-    org = EAstack.data #data(thetaY, KE, thetaX)
-    EA = EAstack.data[:,:,0]
-    KE_min, KE_max, kx_min, kx_max, ky_min, ky_max, kz_min, kz_max = kmapping_boundaries_slice(EA)
-    
-    kx_scale  = np.linspace(kx_min,kx_max,len(list(thetaX)))
-    ky_scale  = np.linspace(ky_min,ky_max,len(list(thetaY)))
+def _per_slice_offset(value, n_slices, name):
+    """
+    Normalize an offset kwarg to a length-n_slices np.array.
+    Accepts a scalar (broadcast to every slice) or a per-slice sequence.
+    """
+    if np.isscalar(value):
+        return np.full(n_slices, float(value))
+    arr = np.asarray(value, dtype=float)
+    if arr.shape[0] != n_slices:
+        raise ValueError("{} must be a scalar or have one value per slice "
+                         "({} given, {} slices)".format(name, arr.shape[0], n_slices))
+    return arr
 
-    new = np.zeros((len(ky_scale),len(KE),len(kx_scale)))
-    new = interpolate.RegularGridInterpolator((ky_scale,KE,kx_scale),org, method = 'linear',bounds_error = False, fill_value = np.nan)
-    
-    dnew = nData(new.values.transpose(0,2,1))
-    
-    BE = KE_to_BE(KE,EAstack.hv,EAstack.wk,EAstack.E_offset)
-    nData.updateAx(dnew,'x',kx_scale,'kx')
-    nData.updateAx(dnew,'y',ky_scale,'ky')
-    nData.updateAx(dnew,'z',BE,'BE')
-    
+
+def kmap_scan_thetaX(EA_list, BE=True, **kwargs):
+    '''
+    Converts a thetaX (polar) scan of angle-resolved images into a regular
+    momentum-space cube.
+
+    Each EA in EA_list is a 2D energy-vs-angle image (slit 'V': y = thetaY,
+    x = energy) taken at one polar (thetaX) step; together they form an
+    (angle, energy, thetaX) volume. The two angular axes are remapped to
+    parallel momentum:
+        slit angle  (thetaY / angScale) -> ky   (per-energy, via ARPES_angle_k)
+        polar / scan angle (thetaX)     -> kx   (linear over the scan extent)
+
+    Parameters
+    ----------
+    EA_list : list of pynData_ARPES (EA) objects, one per polar (thetaX) step.
+              (e.g. the list returned by IEXnData.make_EA_list)
+    BE : bool
+        Energy axis in Binding Energy (True, default) or Kinetic Energy (False).
+
+    **kwargs (all optional):
+        slit_offset   : float, degrees added to the slit angle (thetaY /
+                        angScale) before converting to ky. Corrects the slit
+                        angle zero. Default 0.0.
+        thetaX_offset : float, degrees added to the polar (thetaX) angle before
+                        converting to kx/ky. Corrects the manipulator zero.
+                        Default 0.0.
+        E_offset      : float or array (one per slice), eV, Fermi-level energy
+                        offset applied to the Binding-Energy axis
+                        (BE = hv + E_offset - wk - KE). A per-slice array
+                        aligns slices with a drifting Fermi level onto a common
+                        BE grid. Only affects the energy axis, not k.
+                        Default 0.0.
+        KE_offset     : float or array (one per slice), eV, added to the kinetic
+                        energy used *in the k-formula only* (theta_to_k), i.e. a
+                        momentum-magnitude / Fermi-drift correction. Does not
+                        move the energy axis. Default 0.0.
+
+    Returns
+    -------
+    pynData with x: kx, y: ky, z: BE (or KE if BE is False)
+
+    Notes
+    -----
+    - The ky axis is converted per energy row with ARPES_angle_k (theta_to_ky),
+      so it accounts for each slice's polar angle. The kx axis is built as a
+      linear range spanning the polar extent (theta_to_kx at the boundaries) --
+      the near-normal-emission approximation; it does not per-energy regrid the
+      scan-direction curvature.
+    - Only slitDir == 'V' polar scans are supported.
+
+    Changed 2026-08-12: previously took a pre-stacked EAstack and passed a raw
+    numpy slice to kmapping_boundaries_slice (AttributeError). Now takes the
+    list of EA objects, spans the kx range over every slice, and accepts
+    slit_offset / thetaX_offset / E_offset (Fermi level) / KE_offset.
+    '''
+    if len(EA_list) < 2:
+        raise ValueError("kmap_scan_thetaX needs a list of >=2 EA slices (a thetaX scan)")
+
+    EA0 = EA_list[0]
+    if EA0.slitDir != 'V':
+        raise NotImplementedError("kmap_scan_thetaX currently supports slitDir='V' polar scans")
+
+    nky = len(EA0.angScale)   # slit angle -> ky
+    nkx = len(EA_list)        # polar scan -> kx
+
+    #offsets
+    slit_offset   = float(kwargs.get('slit_offset', 0.0))     # deg on thetaY
+    thetaX_offset = float(kwargs.get('thetaX_offset', 0.0))   # deg on thetaX
+    E_offset  = _per_slice_offset(kwargs.get('E_offset', 0.0),  nkx, 'E_offset')   # eV on BE axis
+    KE_offset = _per_slice_offset(kwargs.get('KE_offset', 0.0), nkx, 'KE_offset')  # eV in k-formula
+
+    #momentum boundaries across the whole scan, with offsets applied
+    kx_edges, ky_edges = [], []
+    for n, EA in enumerate(EA_list):
+        thx = EA.thetaX + thetaX_offset
+        KE = np.asarray(EA.KEscale) + KE_offset[n]
+        KE_lo, KE_hi = np.min(KE), np.max(KE)
+        thY = np.asarray(EA.angScale) + slit_offset
+        thY_lo, thY_hi = np.min(thY), np.max(thY)
+        #largest |kx| at highest KE; span both KE ends for safety
+        kx_edges += [theta_to_kx(KE_hi, thx), theta_to_kx(KE_lo, thx)]
+        #ky at the slit extremes, highest KE
+        ky_edges += [theta_to_ky(KE_hi, thx, thY_lo), theta_to_ky(KE_hi, thx, thY_hi)]
+    kx_scale = np.linspace(min(kx_edges), max(kx_edges), nkx)
+    ky_scale = np.linspace(min(ky_edges), max(ky_edges), nky)
+
+    #common energy axis (Fermi-level E_offset lives here, not in k)
+    if BE:
+        E_unit = "Binding Energy (eV)"
+        E_scale = KE_to_BE(np.asarray(EA0.KEscale), EA0.hv, EA0.wk,
+                           float(np.mean(E_offset)))
+    else:
+        E_unit = "Kinetic Energy (eV)"
+        E_scale = np.asarray(EA0.KEscale)
+    #only need per-slice energy regridding when the BE offset varies across slices
+    energy_interp = BE and (not np.allclose(E_offset, E_offset[0]))
+
+    #convert each slit-angle slice to ky (per energy) and stack along kx
+    img_stack = []
+    for n, EA in enumerate(EA_list):
+        thx = EA.thetaX + thetaX_offset
+        thY = np.asarray(EA.angScale) + slit_offset
+        img = ARPES_angle_k(ky_scale, EA.data, np.asarray(EA.KEscale), thY,
+                            thx, KE_offset[n], slit='V')   # (ky, energy)
+        if energy_interp:
+            BE_n = KE_to_BE(np.asarray(EA.KEscale), EA.hv, EA.wk, E_offset[n])
+            f = interpolate.interp1d(BE_n, img, axis=1,
+                                     bounds_error=False, fill_value=np.nan)
+            img = f(E_scale)
+        img_stack.append(img)
+    cube = np.stack(img_stack, axis=1)   # (ky, kx, energy) = (y, x, z)
+
+    dnew = nData(cube)
+    dnew.updateAx('x', kx_scale, 'kx')
+    dnew.updateAx('y', ky_scale, 'ky')
+    dnew.updateAx('z', E_scale, E_unit)
+    stack_attributes(EA_list, dnew)
+
     return dnew
 
 def kmap_scan_hv(d,wk):
@@ -408,9 +528,9 @@ def kmapping_boundaries_slice(EA, V0=10):
     #k_parallel
     if EA.slitDir == 'H':
         thetaX_min = np.min(EA.angScale)+EA.thetaX
-        thetaX_max = np.min(EA.angScale)+EA.thetaX
+        thetaX_max = np.max(EA.angScale)+EA.thetaX
         kx_min = theta_to_kx(KE_max,thetaX_min)
-        kx_max = theta_to_kx(KE_max,thetaX_max)    
+        kx_max = theta_to_kx(KE_max,thetaX_max)
         thetaY = EA.thetaY
         ky_min = theta_to_ky(KE_max,thetaX_min,thetaY)
         ky_max = theta_to_ky(KE_max,thetaX_max,thetaY)
@@ -469,12 +589,12 @@ def kmapping_stack(EA_list, BE=True, **kwargs):
     KE_min, KE_max, kx_min, kx_max, ky_min, ky_max, kz_min, kz_max = kmapping_boundaries(EA_list)
     EA = EA_list[0]
     
-    #energy BE/KE
+    #energy BE/KE (energy mode is set by the BE flag, not an undefined E_unit)
     BE_min = KE_to_BE(np.max(EA.KEscale),EA.hv,EA.wk)
-    BE_max = min(KE_to_BE(KE_min,EA.hv,EA.wk),KE_to_BE(KE_min,EA.hv,EA.wk))
-    if E_unit == 'KE':
+    BE_max = KE_to_BE(KE_min,EA.hv,EA.wk)
+    if not BE:
         E_new = np.arange(KE_min,KE_max,abs(BE_min-BE_max))
-    if E_unit == 'BE':
+    else:
         BE_np = EA.data.shape[1]
         E_new = np.linspace(BE_max,BE_min,BE_np) #swap order for plotting
     E_np = E_new.shape[0]
@@ -506,7 +626,7 @@ def kmapping_stack(EA_list, BE=True, **kwargs):
             KE_offset = kwargs['KE_offset'][n]
         img = ARPES_angle_k(k_new,EA.data,EA.KEscale,EA.angScale,EA.thetaX,KE_offset,EA.slitDir)
         
-        E_scale,E_unit = EA_Escale(EA,BE=True,**kwargs)
+        E_scale,E_unit = EA_Escale(EA,BE=BE,**kwargs)
         if EA.slitDir == 'H':
             img_y = E_scale
             img_x = k_new     

@@ -94,7 +94,7 @@ class IEX_MCA(IEX_MDA):
         nData_list = []
         for scanNum in channels:
             nData_list.append(mda_d[scanNum].det[1])
-        stack = ndstack(nData_list,stack_scale=channels,stack_unit='channels')
+        stack = ndstack(nData_list,dstack_scale=channels,stack_unit='channels')
         return stack
     
 

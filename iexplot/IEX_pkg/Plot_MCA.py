@@ -5,6 +5,7 @@ from iexplot.plotting import *
 from iexplot.pynData import  nData
 
 from iexplot.pynData.pynData_plot import plot_nd, nd_avg
+from iexplot.XAS_utilities import Norm2Edge, plot_Norm2Edge
 
 from iexplot.utilities import  take_closest_value
 
@@ -33,7 +34,7 @@ class Plot_MCA:
    
         """
         nd = self.mda[scanNum].MCA
-        avg = nd_avg(d,ax='y',Cen=np.nan,WidthPix=np.nan,**kwargs)
+        avg = nd_avg(nd,ax=ax,Cen=np.nan,WidthPix=np.nan,**kwargs)
         x = avg.scale['x']
         y = avg.data
 
