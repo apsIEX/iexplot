@@ -11,8 +11,3 @@ from iexplot.mda_quick_plot import *
 from iexplot.XAS_utilities import *
 
 IEXdata = IEX_nData
-
-try:
-    from iexplot.IEX_pkg.Plot_IT import *
-except:
-    pass

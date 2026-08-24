@@ -52,14 +52,14 @@ def pynData_to_ra(d):
         scaleArray = (d.scale['x'],d.scale['y'])
         unitArray = (d.unit['x'],d.unit['y'])
         delta = (scaleArray[0][1]-scaleArray[0][0],scaleArray[1][1]-scaleArray[1][0])
-        coord_min = [scaleArray[0][0],scaleArray[1][1]]
+        coord_min = [scaleArray[0][0],scaleArray[1][0]]
 
     elif len(d.data.shape)==3:
         dataArray = d.data.transpose(1,0,2)
         scaleArray = (d.scale['x'],d.scale['y'],d.scale['z'])
         unitArray = (d.unit['x'],d.unit['y'],d.unit['z'])
         delta = (scaleArray[0][1]-scaleArray[0][0],scaleArray[1][1]-scaleArray[1][0],scaleArray[2][1]-scaleArray[2][0])
-        coord_min = [scaleArray[0][0],scaleArray[1][1],scaleArray[2][2]]
+        coord_min = [scaleArray[0][0],scaleArray[1][0],scaleArray[2][0]]
     else:
         print("don't yet know how to deal with data of shape"+str(d.data.shape))
     

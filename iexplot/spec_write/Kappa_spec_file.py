@@ -21,7 +21,7 @@ def Kappa_get_data(scanNum,path,**kwargs):
         'suffix_format' => '{:04}.mda'
     """
     kwargs.setdefault('prefix',"Kappa_")
-    kwargs.setdefault('suffix_format':'{:04}.mda')
+    kwargs.setdefault('suffix_format','{:04}.mda')
 
     if path[-1]=="/":
         sf = path + prefix

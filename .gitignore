@@ -136,3 +136,7 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# iexplot package index cache (regenerate with build_index.py)
+.iexplot_index.json
+PACKAGE_INDEX.md

@@ -6,8 +6,8 @@ from scipy import interpolate
 
 
 from iexplot.utilities import _shortlist, make_num_list, get_nested_dict_value 
-from iexplot.plotting import plot_1D, plot_2D, plot_3D
-from iexplot.pynData.pynData_ARPES import stack_EAs 
+from iexplot.plotting import plot_1D, plot_2D, plot_3D, find_closest
+from iexplot.pynData.pynData_ARPES import stack_EAs, kmap_scan_thetaX
 from iexplot.fitting import fit_box, fit_gaussian, fit_lorentzian, fit_poly, fit_step, fit_shirley_background
 
 from iexplot.pynData.pynData import stack_attributes
@@ -39,7 +39,7 @@ class Plot_EA:
             print('check to see if EAnum is loaded')
 
         #summing if required
-        if EAnum != np.inf:
+        if type(EAnum) == int:
             return EA[EAnum]
         else:
             return self._sum_EAs(EA,EAnum,**kwargs)
@@ -52,14 +52,14 @@ class Plot_EA:
         #creating shortlist of selected EAnum
       
         if EAnum == np.inf:
-            EAlist = list(EA.keys())
+            EAnum_list = list(EA.keys())
         else:
-            EAlist = make_num_list(EAnum)
+            EAnum_list = make_num_list(*EAnum)
 
-        EAsummed = copy.deepcopy(EA[EAlist[0]])
+        EAsummed = copy.deepcopy(EA[EAnum_list[0]])
         
-        img = np.nansum(tuple(EA[EAnum].data for EAnum in EAlist),axis=0)
-        edc = np.nansum(tuple(EA[EAnum].EDC.data for EAnum in EAlist),axis=0)
+        img = np.nansum(tuple(EA[EAnum].data for EAnum in EAnum_list),axis=0)
+        edc = np.nansum(tuple(EA[EAnum].EDC.data for EAnum in EAnum_list),axis=0)
 
         EAsummed.data = img
         EAsummed.EDC.data = edc
@@ -143,6 +143,13 @@ class Plot_EA:
         
         x=0;y=0            
         x,y,xlabel = self.EA_EDC(scanNum,EAnum=EAnum,BE=BE)
+        
+        if 'xrange' in kwargs: 
+            first_index, first_value = find_closest(x,kwargs['xrange'][0])
+            last_index, last_falue   = find_closest(x,kwargs['xrange'][1])
+            x = x[first_index:last_index]
+            y = y[first_index:last_index]
+            kwargs.pop('xrange')
                 
         plot_1D(x,y,xlabel=xlabel,**kwargs)
         
@@ -152,7 +159,7 @@ class Plot_EA:
     def fit_EDC(self,scanNum,fit_type,EAnum=1,BE=False,**kwargs):
         """
         simple fitting of EDC data
-        fit_type = 'box', 'gaussian', 'lorentzian', 'poly', 'step:', 'shirley'
+        fit_type = 'box', 'gaussian', 'lorentzian', 'poly', 'step', 'shirley'
 
         EAnum = scan/sweep number 
                 = inf => will sum all spectra
@@ -165,14 +172,14 @@ class Plot_EA:
         kwargs.setdefault('show_legend',False)
         kwargs.setdefault('plot',True)
 
-        x,y,xlabel = self.EA_EDC(scanNum,EAnum=EAnum,BE=BE)
+        x,y,xlabel = self.EA_EDC(scanNum,EAnum=EAnum,BE=BE,**kwargs)
     
         fit_funcs = {
             'box':fit_box,
             'gaussian':fit_gaussian,
             'lorentzian':fit_lorentzian,
             'poly':fit_poly,
-            'step:':fit_step,
+            'step':fit_step,
             'shirley':fit_shirley_background,
         }
 
@@ -467,25 +474,61 @@ class Plot_EA:
         
 
             **kwargs:      
-                EAnum = (start,stop,countby) => to plot a subset of scans (only EAnum = 1 by default)                       
+                EAnum = (start,stop,countby) => to plot a subset of scans (only EAnum = 1 by default)
                 E_offset = offset value for each scan based on curve fitting in E_units
-                            can be an array or a single float for the same offset to all  
+                            can be an array or a single float for the same offset to all
                 EDConly = True/False (default = False)
-                
+                recalc_BE = False (default) recomputes BEscale from KE/hv/wk/E_offset;
+                            False uses the stored EA.BEscale attribute as-is
+
             """
+            kwargs.setdefault('recalc_BE',False)
             kwargs.setdefault('EDConly',False)
             kwargs.setdefault('debug',False)
-
-            if BE:
-                E_unit = 'BE'
-            else:
-                E_unit = 'KE'
 
             EA_list, stack_scale, stack_unit = self.make_EA_list(*scanNum, **kwargs)
             if kwargs['debug']:
                 print('stack_scale',stack_scale)
 
-            d = stack_EAs(EA_list,stack_scale,stack_unit,E_unit=E_unit,**kwargs)
+            d = stack_EAs(EA_list,stack_scale,stack_unit,BE=BE,**kwargs)
+
+            return d
+
+    def stack_mdaEA_kmap(self, *scanNum, BE=True, **kwargs):
+            """
+            returns a momentum-space volume (x: kx, y: ky, z: BE/KE) from a
+            thetaX (polar) scan of EA images.
+
+            This is the k-space counterpart of stack_mdaEA: it loads the same
+            EA_list (via make_EA_list) but converts the angular axes to parallel
+            momentum instead of stacking in angle. Only slitDir='V' polar scans
+            are supported.
+
+            *scanNum = scanNum for a single Fermi-map scan
+                     = mda => start, stop, countby for a series of mda scans
+
+            BE = True/False for Binding/Kinetic energy axis
+
+            **kwargs:
+                EAnum, EAavg, ... => passed to make_EA_list (see its docstring)
+                slit_offset       => deg added to the slit angle (thetaY) -> ky
+                thetaX_offset     => deg added to the polar angle (thetaX) -> kx
+                E_offset          => eV Fermi-level offset on the BE axis
+                                     (float, or one value per slice to align a
+                                     drifting Fermi level)
+                KE_offset         => eV added to KE in the k-formula only
+                                     (momentum-magnitude / drift correction)
+
+            See pynData_ARPES.kmap_scan_thetaX for the momentum-conversion
+            details and approximations.
+            """
+            kwargs.setdefault('debug', False)
+
+            EA_list, stack_scale, stack_unit = self.make_EA_list(*scanNum, **kwargs)
+            if kwargs['debug']:
+                print('stack_scale', stack_scale)
+
+            d = kmap_scan_thetaX(EA_list, BE=BE, **kwargs)
 
             return d
 
