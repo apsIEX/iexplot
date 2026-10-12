@@ -93,8 +93,11 @@ class Plot_EA:
         return img,xscale,yscale,xunit,yunit
     
     
-    
-
+    def EAnum_list(self,scanNum):
+        """
+        returns a list of loaded EAnums
+        """
+        return list(self.mda[scanNum].EA.keys())
     
     def EA_EDC(self,scanNum,EAnum=1,BE=False,**kwargs):
         """
@@ -498,8 +501,7 @@ class Plot_EA:
             """
             returns a momentum-space volume (x: kx, y: ky, z: BE/KE) from a
             thetaX (polar) scan of EA images.
-
-            This is the k-space counterpart of stack_mdaEA: it loads the same
+This is the k-space counterpart of stack_mdaEA: it loads the same
             EA_list (via make_EA_list) but converts the angular axes to parallel
             momentum instead of stacking in angle. Only slitDir='V' polar scans
             are supported.

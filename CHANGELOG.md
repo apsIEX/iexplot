@@ -1,4 +1,4 @@
-# Changelog
+  # Changelog
 
 ## 2026-08-12 — k-space (angle→momentum) conversion fixes
 
