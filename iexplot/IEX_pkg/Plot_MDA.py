@@ -10,6 +10,7 @@ from iexplot.plotting import *
 from iexplot.XAS_utilities import plot_Norm2Edge,Norm2Edge
 from iexplot.pynData.pynData import ndstack
 from iexplot.pynData.pynData_plot import nd_sum_1ds
+from iexplot.fitting import fit_box, fit_gaussian, fit_lorentzian, fit_poly, fit_step, fit_shirley_background
 
 
 class Plot_MDA:
@@ -694,7 +695,57 @@ class Plot_MDA:
                 print(d)
         return d
 
+    def fit_mda(self,scanNum,detNum,fit_type,**kwargs):
+        """
+        simple fitting of 1D mda data
+        fit_type = 'box', 'gaussian', 'lorentzian', 'poly', 'step', 'shirley'
+        returns the parameters for the fit functions
+
+        **kwargs:
+            plot True/False 
+
+       
+        """
+        kwargs.setdefault('show_legend',False)
+        kwargs.setdefault('plot',True)
+
+        #x-axis
+        if 'x_detNum' in kwargs:
+            x = self.mda_detector(scanNum,detNum=kwargs['x_detNum'])
+            xlabel = self.mda_detector_label(scanNum,detNum=kwargs['x_detNum'])
+            del kwargs['x_detNum']
+        elif 'posx_Num' in kwargs:
+            x = self.mda_positioner(scanNum,posNum=kwargs['posx_Num'],ax='x')
+            xlabel = self.mda_positioner_label(scanNum,posNum=kwargs['posx_Num'],ax='x')
+            del kwargs['posx_Num']
+        else:
+            x = self.mda_positioner(scanNum,posNum=0,ax='x')
+            xlabel = self.mda_positioner_label(scanNum,posNum=0,ax='x')
+
+        #data
+        y = self.mda_detector(scanNum,detNum)
     
+        if len(y.shape) !=1:
+            print('Current fitting only works for 1D data')
+            return
+    
+
+        fit_funcs = {
+            'box':fit_box,
+            'gaussian':fit_gaussian,
+            'lorentzian':fit_lorentzian,
+            'poly':fit_poly,
+            'step':fit_step,
+            'shirley':fit_shirley_background,
+        }
+
+        if fit_type not in fit_funcs.keys():
+            print('Not a valid fit_type use one of the following'+list(fit_funcs.keys()) )
+            #return
+
+        fit_func = fit_funcs[fit_type]
+        ff = fit_func(x,y,**kwargs)
+        return ff
     
     def it_mda(self,scanNum,detNum):
         """
