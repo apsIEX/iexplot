@@ -747,18 +747,3 @@ class Plot_MDA:
         ff = fit_func(x,y,**kwargs)
         return ff
     
-    def it_mda(self,scanNum,detNum):
-        """
-        plot 2D mda data in imagetool
-
-        scanNum = scan number to plot
-        type = int
-
-        detNum = detector number to plot
-        type = int
-
-        """
-        #info 
-        #ra = pynData_to_ra(self.mda[scanNum].det[detNum])        
-        #tools.new(ra)
-        pass

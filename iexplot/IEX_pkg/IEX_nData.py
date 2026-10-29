@@ -22,7 +22,8 @@ from iexplot.IEX_pkg.Plot_MDA import Plot_MDA
 from iexplot.IEX_pkg.Plot_EA import Plot_EA
 from iexplot.IEX_pkg.Plot_AD import Plot_AD
 from iexplot.IEX_pkg.Plot_MCA import Plot_MCA
-#from iexplot.IEX_pkg.Plot_IT import Plot_IT
+
+
 
  #########################################################################################################
 

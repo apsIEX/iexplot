@@ -9,15 +9,29 @@
 
 ---
 
+# **<font color = 2061aa>Imports</font>**
+
+    %config Completer.use_jedi = False  #for autocomplete
+    %gui qt #qt must be run before imports
+    
+    from iexplot import * 
+<br>
+
+    %matplotlib qt for interactive plotting 
+    %matplotlib inline to plot inline 
+<br>
+
 # **<font color = 2061aa>Loading the data using IEXdata</font>**
 The data is loaded into a dictionary to future access
+
+dtype = 'mda' (default), 'mdaEA' (use for ARPES)
 <br>
 <br>
 
 
 ## **<font color = 8a99ad>Initializing the data dictionary</font>**
-    dtype = 'mda' (default), 'mdaEA' (use for ARPES)
----
+
+
 
 loading a single scan
 
@@ -27,7 +41,7 @@ loading a series of scans (last = inf loads to the last scan in the directory)
 
     data = IEXdata(first,last,path=path,prefix=prefix)
 <br>
-<br>
+
 
 ## **<font color = 8a99ad>Updating the data dicitionary</font>**
 ---
@@ -39,46 +53,50 @@ Only loads unloaded data in the range first,last inclusive
 
     data.update(first,last,overwrite=False)    
 
----
 
-# **<font color = 2061aa>Plotting and accessing the data</font>**
+# **<font color = 2061aa>Plotting and accessing mda data</font>**
 
 For the full data structure see iexplot/examples/IEX_nData. Below are a list of common functions/methods to access the data
 
 
-## **<font color = 8a99ad>mda scans</font>**
+## **<font color = 8a99ad>mda plotting and fitting</font>**
 ---
 
-Plotting of 1D and 2D mda scans #(AJE make function data.plot(scaNum,detNum))
+Plotting of 1D and 2D mda scans
     
-    data.plotmda(scanNum,detNum)
+    data.plot_mda(scanNum,detNum)
 
+Quick fitting of 1D  mda scans #(AJE make function data.plot(scaNum,detNum))
+
+    data.fit_mda(scanNum, detNum, fit_type)
 
 Plotting the results of scan_sample_map with relevant detectors
 
     plot_sample_map(scanNum,detNum)
 
-Positioners - list all #(AJE make function data.posAll(scaNum))
+## **<font color = 8a99ad>mda positioners and detectors</font>**
+Positioners - list all
 
-    data.mda[scanNum].posAll  
+    data.mda_positioners_list(scanNum)
 
 Positioners - extract data #(AJE rename data.posx(scaNum,posNum)m data.posx_label)
 
-    x = data.mdaPos(scanNum,posNum=1) 
-    x_label = data.mdaPos_label(scanNum)
+    x = data.mda_positioner(scanNum,posNum=1) 
+    x_label = data.mda_positioner_label(scanNum)
 
-Detectors - list all #(AJE make function mda_detAll(scaNum))
+Detectors - list all
 
-    data.mda[scanNum].detAll  
+    data.mda_detectors_list(scanNum)
 
-Detector data #(AJE rename data.det(scaNum,detNum))
+Detector data 
 
-    y = data.mdaDet(scanNum,detNum) 
-    y_label = data.mdaDet_label(scanNum,detNum)
+    y = data.mda_detector(scanNum, detNum)
+    y_label = data.mda_detector_label
 
-Metadata / header #(AJE make function data.header(scaNum))
+Metadata / header 
 
-    data.mda[scanNum]header(scanNum)
+    data.mda_extra_pvs_all(scanNum)
+    val = data.mda_extra_pvs(scanNum, search)
 
   
 
@@ -89,21 +107,23 @@ Metadata / header #(AJE make function data.header(scaNum))
 
 Plotting spectra image
 
-    data.plotEA(scanNum)
+    data.plot_EA(scanNum)
 
-Plotting angle integrated (EDC)
+Plotting angle integrated (EDC) or fitting
 
-    data.plotEDC(scanNum,EAnum)
+    data.plot_EDC(scanNum)
+    data.fit_EDC(scanNum)
 
 spectra (image)
 
-    img,xscale,yscale,x_label_,y_label = data.EAspectra(scanNum)
+    img,xscale,yscale,x_label_,y_label = data.EA_spectra(scanNum)
 
 EDCs (angle-integrated spectra)
 
-    x,y,x_label = data.EAspectraEDC(scanNum)
+    x,y,x_label = data.EA_EDC(scanNum)
     
 Metadata / header
+
     data.EA_extras(scanNum,EAnum=1) #all metadata
     data.EA_exit_slit(scanNum,EAnum=1)
     data.EA_ringCurrent(scanNum,EAnum=1)
@@ -113,44 +133,40 @@ Metadata / header
 
 Stacking EA spectra or EDCs
 
-    data.stack_mdaEA(*scanNum)
+    stack = data.stack_mdaEA(*scanNum)
+    k_stack = data.stack_mdaEA_kmap(*scanNum)
 
 ## **<font color = 8a99ad>imagetool</font>**
 ---
 ### **Plotting**
-
-Plotting single mda scan
-
-    data.it_mda(scanNum, detNum)
-
-Plotting single or stacked EA scans
-
-    data.it_mdaEA(scanNum, E_unit = 'KE')
-
-Creating a new IT window from pynData object d
+Creating a new IT window from numpy array or regular array
 
     tool.new(d)
 
-Plotting the results of sample_map
+Regular array from nData
+    tools.new_nd(nd) #example is nd = data.stack_mdaEA
 
-    kwargs = {'det_list':[17,18],
-     'title_list':['TEY','EA'],
-     'figsize':(20,10)}
-    data.plot_sample_map(scanNum,**kwargs)
+
+### **Adding imagetool plotting to data**
+
+    add_IT(data)
+
+Plotting single mda or EA scans
+
+    data.it_mda(scanNum, detNum)
+    data.it_EA(scanNum)
 
 ### **Cursor/Bin**
 
-Retrieve cursor position and binwidth of an IT window:
 
-    tool.get_it_properties(IT_num)
 
-Set cursor position and binwidth of an IT window:
+    tools.get_it_properties(IT_num) # gets cursor position and binwidth of an imagetool
 
-    tool.cursor_bin(IT_num, **kwargs)
+    tools.cursor_bin(IT_num, **kwargs) #set cursor position and binwidth of an imagetool
 
 Link multiple IT windows to set cursor position and binwidth to the same values
 
-    tool.synch(*tool_nums, **kwargs)
+    tools.synch(*tool_nums, **kwargs)
 
 
 
@@ -160,11 +176,11 @@ Link multiple IT windows to set cursor position and binwidth to the same values
 
 Exporting an image/profile from an imagetool window
 
-    tool.plot_export(IT_num, plot_name)
+    tools.plot_export(IT_num, plot_name)
 
 Exporting data from an imagetool window
 
-    tool.export(IT_num, img_prof, plot_name)
+    tools.export(IT_num, img_prof, plot_name)
 
 
 
@@ -173,11 +189,11 @@ Exporting data from an imagetool window
 
 Retrieving list of all current imagetool instances
 
-    data.IT_list()
+    tools.list()
 
 Showing a specific instance of imagetool
 
-    data.IT_show(IT_num)
+    tools.show(IT_num)
 
 ### **Other useful functions**
 

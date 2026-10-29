@@ -105,7 +105,6 @@ def tools_plot_inline(tools, IT_num, plot_name,**kwargs):
             plot_1D(img[0],img[1],xlabel=it.data.dims[dim_x],ylabel = dim_y, **kwargs)
 
 
-
 class Plot_IT:
     """
     adds EA plotting methods to IEXnData class
@@ -150,144 +149,34 @@ class Plot_IT:
         sleep(1)
         ra = pynData_to_ra(d)
         return ra
-    
 
+    def mda_it(self, scanNum, detNum):
+        ra = self.mda_ra(scanNum, detNum)
+        tools.new(ra)
+    
+    def EA_it(self,scanNum,EAnum=1):
+        ra = self.EA_ra(scanNum,EAnum=1)
+        tools.new(ra)
 
+def add_IT(data):
+    """
+    add imagetool plotting to data
+    """
+    if isinstance(data,Plot_IT):
+        pass
+    else:
+        class ADD_IT(Plot_IT,data.__class__):
+            pass
+        data.__class__ = ADD_IT
 
-# import numpy as np
-# from time import sleep
+def remove_it(data):
+    """
+    removes imagetool plotting to data
+    """
+    data.__class__= IEX_nData
 
-# from iexplot.pynData.pynData_ARPES import kmapping_stack
-# from iexplot.utilities import _shortlist
-# from iexplot.fitting import find_EF_offset
-# from iexplot.iexplot_EA import PLOT_EA, _stack_mdaEA_from_list
-
-
-# def it_mdaEA_kitchen_sink(self, *scanNums, **kwargs):
-#     """
-#     stack and plot 3D mda EA data in imagetool
-    
-#     *scanNums = scanNum if volume is a single Fermi map scan
-#         = start, stop, countby for series of mda scans    
-        
-    
-#     kwargs:
-#         E_unit = KE or BE
-#         ang_offset = angle offset
-#         y_scale = k or angle
-#         EAnum = (start,stop,countby) => to plot a subset of EA scans
-#         EDConly = False (default) to stack the full image
-#                 = True to stack just the 1D EDCs
-#         find_E_offset   = False (default), does not offset data
-#                         = True, will apply offset
-#         E_offset = energy offset, can be array or single float (default = 0.0)
-#         fit_type = fitting function used to calculate offset, 'step' or 'Voigt'
-#         fit_xrange = subrange to apply fitting function over
-    
-#     ☃    
-#     """
-
-#     kwargs.setdefault('E_unit','KE')
-#     kwargs.setdefault('find_E_offset',False)
-#     kwargs.setdefault('E_offset',0.0)
-#     kwargs.setdefault('fit_type','step')
-#     kwargs.setdefault('ang_offset',0.0)
-#     kwargs.setdefault('kmap',False)
-#     kwargs.setdefault('EAnum',(1,np.inf))
-#     #kwargs.setdefault('EDConly', False)
-#     kwargs.setdefault('fit_xrange', [-np.inf,np.inf])
-#     kwargs.setdefault('debug', False)
-
-#     scanNumlist=_shortlist(*scanNums,llist=list(self.mda.keys()),**kwargs)
-
-
-#     EA_list, stack_scale = PLOT_EA.make_EA_list(self, scanNumlist, **kwargs)
-    
-
-#     if kwargs['debug']:
-#         print('EA list:',EA_list)
-
-#     if kwargs['find_E_offset']:
-#         E_offset = find_EF_offset(EA_list, E_unit = kwargs['E_unit'], fit_type = kwargs['fit_type'], xrange = kwargs['fit_xrange'])
-#     else: 
-#         E_offset = kwargs['E_offset']
-
-        
-#     hv_list = []
-#     for EA in EA_list:
-#         hv_list.append(EA.hv)
-#     hv_array = np.array(hv_list)
-    
-#     #adjusting angle scaling
-#     for EA in EA_list:
-#         EA.scaleAngle(kwargs['ang_offset'])
-    
-#     if len(EA_list) == 0:
-#         d = EA_list[0] ### this is nonsense
-#     else:
-#         if kwargs['kmap']:
-#             d = kmapping_stack(EA_list, E_unit = kwargs['E_unit'], KE_offset = -E_offset, debug = kwargs['debug'])
-#         else:
-#             d = _stack_mdaEA_from_list(EA_list,stack_scale, E_unit = kwargs['E_unit'], E_offset = -E_offset, debug = kwargs['debug'])
-    
-#     if kwargs['E_unit'] == 'BE':
-#         d.unit['x'] = 'Binding Energy (ev)'
-    
-#     tools.new(d) 
-
-# def it_video(it_name, video_fname,fps,image_folder_path, it_dict = it_dict, **kwargs):
-#     '''
-#     Automatically sweeps cursors and creates a video of an imagetool window
-    
-#     By default, will sweep over 10 points
-    
-#     it_name = str, name of it window in it_dict
-    
-#     **kwargs:
-#         step_size = 5 (default), sweep will use number_of_points to determine step size
-#                         int to manually set the spacing between frames
-#     '''
-    
-#     ### should be updated and moved into the code ###
-    
-    
-#     kwargs.setdefault('step_size',5)
-
-        
-#     it_address = it_dict[it_name]['address']
-#     tool = return_object_from_memory(it_address)
-#     window = tool.pg_win
-    
-#     #select last axis
-#     try:
-#         sweep_axis = tool.data.axes[2]
-#     except:
-#         sweep_axis = tool.data.axes[1]
-    
-    
-#     sweep_indices = []
-#     length = len(sweep_axis)
-    
-#     if type(kwargs['step_size']) == int:
-#         index = 0
-#         while index < length:
-#             sweep_indices.append(index)
-#             index += kwargs['step_size'] 
-#     else:
-#         print('Not a valid step size, must be int')
-    
-#     image_filename_list = []
-    
-#     #update and save IT window
-#     for i in sweep_indices:
-#         it_update_linked(it_dict[it_name], c_z = sweep_axis[i])    
-        
-#         image = window.grab(window.rect())
-#         filename = it_dict[it_name]['tool_name']+'_'+str(i)+'.png'
-#         image.save(filename)
-#         image_filename_list.append(filename)
-    
-#     #make video
-#     make_video(video_fname,fps,image_filename_list,image_folder_path,**kwargs)
-
-    
+def new_nd(nd):
+    ra = pynData_to_ra(d)
+    sleep(1)
+    tools.new(nd)
+tools.new_nd = new_nd
